@@ -19,7 +19,7 @@ import Data.Int
 import Data.List
 import qualified Data.Map.Strict      as M
 import qualified Data.Text            as T
-import qualified Data.Vector.Unboxed  as U
+import qualified Data.Vector.Storable as S
 import Data.Word
 import GHC.Generics (Generic)
 import GHC.Stack
@@ -44,29 +44,29 @@ data NumericFormat = NumericFormat
   , nfVector  :: !VectorType
   } deriving (Eq, Ord, Show, Generic, NFData, Hashable)
 
-data NumericData = NumInt8   (U.Vector Int8)
-                 | NumInt16  (U.Vector Int16)
-                 | NumInt32  (U.Vector Int32)
-                 | NumInt64  (U.Vector Int64)
-                 | NumUnt8   (U.Vector Word8)
-                 | NumUnt16  (U.Vector Word16)
-                 | NumUnt32  (U.Vector Word32)
-                 | NumUnt64  (U.Vector Word64)
-                 | NumFloat  (U.Vector Float)
-                 | NumDouble (U.Vector Double)
+data NumericData = NumInt8   (S.Vector Int8)
+                 | NumInt16  (S.Vector Int16)
+                 | NumInt32  (S.Vector Int32)
+                 | NumInt64  (S.Vector Int64)
+                 | NumUnt8   (S.Vector Word8)
+                 | NumUnt16  (S.Vector Word16)
+                 | NumUnt32  (S.Vector Word32)
+                 | NumUnt64  (S.Vector Word64)
+                 | NumFloat  (S.Vector Float)
+                 | NumDouble (S.Vector Double)
                  deriving (Eq, Ord, Show, Generic, NFData)
 
 instance Hashable NumericData where
-  salt `hashWithSalt` NumInt8   v = salt ## U.toList v
-  salt `hashWithSalt` NumInt16  v = salt ## U.toList v
-  salt `hashWithSalt` NumInt32  v = salt ## U.toList v
-  salt `hashWithSalt` NumInt64  v = salt ## U.toList v
-  salt `hashWithSalt` NumUnt8   v = salt ## U.toList v
-  salt `hashWithSalt` NumUnt16  v = salt ## U.toList v
-  salt `hashWithSalt` NumUnt32  v = salt ## U.toList v
-  salt `hashWithSalt` NumUnt64  v = salt ## U.toList v
-  salt `hashWithSalt` NumFloat  v = salt ## U.toList v
-  salt `hashWithSalt` NumDouble v = salt ## U.toList v
+  salt `hashWithSalt` NumInt8   v = salt ## S.toList v
+  salt `hashWithSalt` NumInt16  v = salt ## S.toList v
+  salt `hashWithSalt` NumInt32  v = salt ## S.toList v
+  salt `hashWithSalt` NumInt64  v = salt ## S.toList v
+  salt `hashWithSalt` NumUnt8   v = salt ## S.toList v
+  salt `hashWithSalt` NumUnt16  v = salt ## S.toList v
+  salt `hashWithSalt` NumUnt32  v = salt ## S.toList v
+  salt `hashWithSalt` NumUnt64  v = salt ## S.toList v
+  salt `hashWithSalt` NumFloat  v = salt ## S.toList v
+  salt `hashWithSalt` NumDouble v = salt ## S.toList v
 
 data VectorType = VtScalar
                 | Vt2
