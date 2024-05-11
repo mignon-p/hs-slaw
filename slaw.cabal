@@ -50,6 +50,7 @@ library
   -- Modules exported by the library.
   exposed-modules:     Data.Slaw.Internal.Util
                      , Data.Slaw.Internal.Exception
+                     , Data.Slaw.Internal.SlawImpl
 
   -- Modules included in this library but not exported.
   -- other-modules:
