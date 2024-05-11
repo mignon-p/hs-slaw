@@ -49,9 +49,19 @@ cabal-version:       >=1.10
 library
   -- Modules exported by the library.
   exposed-modules:     Data.Slaw.Internal.Util
+                     , Data.Slaw.Internal.Exception
 
   -- Modules included in this library but not exported.
   -- other-modules:
+
+  -- LANGUAGE extensions enabled for all modules in this package.
+  default-extensions:  BangPatterns
+                     , DeriveAnyClass
+                     , DeriveFunctor
+                     , DeriveGeneric
+                     , MultiWayIf
+                     , OverloadedStrings
+                     , TupleSections
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
