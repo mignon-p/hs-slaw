@@ -1,7 +1,7 @@
 module Data.Slaw.Internal.Exception
   ( PlasmaException(..)
   , corruptSlaw
-  , cantCoerce
+  , typeMismatch
   ) where
 
 import Control.Exception
@@ -9,7 +9,7 @@ import Control.DeepSeq
 import Data.Default.Class
 import Data.Hashable
 import Data.Int
-import Data.Word
+-- import Data.Word
 import GHC.Generics (Generic)
 import GHC.Stack
 
@@ -62,7 +62,7 @@ instance Default PlasmaException where
         }
 
 data PlasmaExceptionType = EtCorruptSlaw
-                         | EtCantCoerce
+                         | EtTypeMismatch
                          | EtSlawIO
                          | EtPools
                          | EtOther
@@ -75,8 +75,8 @@ corruptSlaw msg = def { peType      = EtCorruptSlaw
                       , peCallstack = Just callStack
                       }
 
-cantCoerce :: HasCallStack => String -> PlasmaException
-cantCoerce msg = def { peType      = EtCantCoerce
-                     , peMessage   = msg
-                     , peCallstack = Just callStack
-                     }
+typeMismatch :: HasCallStack => String -> PlasmaException
+typeMismatch msg = def { peType      = EtTypeMismatch
+                       , peMessage   = msg
+                       , peCallstack = Just callStack
+                       }

@@ -1,10 +1,17 @@
 module Data.Slaw.Internal.SlawImpl
-  (
+  ( Slaw(..)
+  , NumericFormat(..)
+  , NumericData(..)
+  , VectorType(..)
+  , FromSlaw(..)
+  , ToSlaw(..)
+  , Protein(..)
+  , describeSlaw
   ) where
 
 import Control.DeepSeq
 import Control.Exception
-import qualified Data.ByteString      as B
+-- import qualified Data.ByteString      as B
 import qualified Data.ByteString.Lazy as L
 import Data.Default.Class
 import Data.Hashable
