@@ -1,4 +1,4 @@
-module Data.Slaw.Internal.SlawImpl
+module Data.Slaw.Internal.SlawType
   ( Slaw(..)
   , NumericFormat(..)
   , NumericData(..)
