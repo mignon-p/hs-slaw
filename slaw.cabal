@@ -50,6 +50,7 @@ library
   -- Modules exported by the library.
   exposed-modules:     Data.Slaw.Internal.Util
                      , Data.Slaw.Internal.Exception
+                     , Data.Slaw.Internal.NumericTypes
                      , Data.Slaw.Internal.SlawType
                      , Data.Slaw.Internal.SlawConvert
 
