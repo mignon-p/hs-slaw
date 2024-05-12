@@ -34,18 +34,7 @@ import Data.Slaw.Internal.SlawType
 ---- FromSlaw and ToSlaw classes
 
 class FromSlaw a where
-  fromSlawEither :: Slaw -> Either PlasmaException a
-
-  fromSlawMaybe  :: Slaw -> Maybe a
-  fromSlawMaybe s = case fromSlawEither s of
-                      Left  _ -> Nothing
-                      Right x -> Just x
-
-  fromSlaw       :: HasCallStack => Slaw -> a
-  fromSlaw s      = case fromSlawEither s of
-                      Left exc ->
-                        throw $ exc { peCallstack = Just callStack }
-                      Right x  -> x
+  fromSlaw :: Slaw -> Either PlasmaException a
 
 class ToSlaw a where
   toSlaw :: a -> Slaw
@@ -58,31 +47,36 @@ class ToSlaw a where
 š = toSlaw
 
 -- "from slaw" because arrow points away from "s"
-{-# INLINE ŝ #-}
+{-# INLINABLE ŝ #-}
 ŝ :: (HasCallStack, FromSlaw a) => Slaw -> a
-ŝ s = withFrozenCallStack $ fromSlaw s
+ŝ s = case fromSlaw s of
+        Left exc ->
+          throw $ exc { peCallstack = Just callStack }
+        Right x  -> x
 
 -- "from slaw, maybe"
-{-# INLINE ŝm #-}
+{-# INLINABLE ŝm #-}
 ŝm :: FromSlaw a => Slaw -> Maybe a
-ŝm = fromSlawMaybe
+ŝm s = case fromSlaw s of
+         Left  _ -> Nothing
+         Right x -> Just x
 
 -- "from slaw, either string"
 {-# INLINABLE ŝes #-}
 ŝes :: FromSlaw a => Slaw -> Either String a
-ŝes s = case fromSlawEither s of
+ŝes s = case fromSlaw s of
           Left exc -> Left $ displayException exc
           Right x  -> Right x
 
 -- "from slaw, either exception"
 {-# INLINE ŝee #-}
 ŝee :: FromSlaw a => Slaw -> Either PlasmaException a
-ŝee = fromSlawEither
+ŝee = fromSlaw
 
 -- from slaw, with default value
 {-# INLINABLE (?:) #-}
 (?:) :: FromSlaw a => Slaw -> a -> a
-s ?: dflt = case fromSlawEither s of
+s ?: dflt = case fromSlaw s of
               Left  _ -> dflt
               Right x -> x
 
