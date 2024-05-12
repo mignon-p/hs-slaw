@@ -21,8 +21,10 @@ import qualified Data.Map.Strict      as M
 import qualified Data.Text            as T
 import qualified Data.Vector.Storable as S
 import Data.Word
+import Foreign.Storable
 import GHC.Generics (Generic)
 import GHC.Stack
+import System.IO.Unsafe (unsafePerformIO)
 
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Util
@@ -57,16 +59,24 @@ data NumericData = NumInt8   (S.Vector Int8)
                  deriving (Eq, Ord, Show, Generic, NFData)
 
 instance Hashable NumericData where
-  salt `hashWithSalt` NumInt8   v = salt ## S.toList v
-  salt `hashWithSalt` NumInt16  v = salt ## S.toList v
-  salt `hashWithSalt` NumInt32  v = salt ## S.toList v
-  salt `hashWithSalt` NumInt64  v = salt ## S.toList v
-  salt `hashWithSalt` NumUnt8   v = salt ## S.toList v
-  salt `hashWithSalt` NumUnt16  v = salt ## S.toList v
-  salt `hashWithSalt` NumUnt32  v = salt ## S.toList v
-  salt `hashWithSalt` NumUnt64  v = salt ## S.toList v
+  salt `hashWithSalt` NumInt8   v = salt `hashRawVector` v
+  salt `hashWithSalt` NumInt16  v = salt `hashRawVector` v
+  salt `hashWithSalt` NumInt32  v = salt `hashRawVector` v
+  salt `hashWithSalt` NumInt64  v = salt `hashRawVector` v
+  salt `hashWithSalt` NumUnt8   v = salt `hashRawVector` v
+  salt `hashWithSalt` NumUnt16  v = salt `hashRawVector` v
+  salt `hashWithSalt` NumUnt32  v = salt `hashRawVector` v
+  salt `hashWithSalt` NumUnt64  v = salt `hashRawVector` v
   salt `hashWithSalt` NumFloat  v = salt ## S.toList v
   salt `hashWithSalt` NumDouble v = salt ## S.toList v
+
+hashRawVector :: Storable a => Int -> S.Vector a -> Int
+hashRawVector salt v
+  | len == 0  = salt ## (0xdefacedbadfacade :: Word64)
+  | otherwise = unsafePerformIO $ S.unsafeWith v $ \ptr -> do
+      let byteLen = len * sizeOf (S.head v)
+      hashPtrWithSalt ptr byteLen salt
+  where len = S.length v
 
 data VectorType = VtScalar
                 | Vt2
