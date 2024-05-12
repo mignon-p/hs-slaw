@@ -1,6 +1,12 @@
 module Data.Slaw.Internal.SlawConvert
   ( FromSlaw(..)
   , ToSlaw(..)
+  , š
+  , ŝ
+  , ŝm
+  , ŝes
+  , ŝee
+  , (?:)
   , Protein(..)
   ) where
 
@@ -25,6 +31,8 @@ import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.SlawType
 -- import Data.Slaw.Internal.Util
 
+---- FromSlaw and ToSlaw classes
+
 class FromSlaw a where
   fromSlawEither :: Slaw -> Either PlasmaException a
 
@@ -41,6 +49,44 @@ class FromSlaw a where
 
 class ToSlaw a where
   toSlaw :: a -> Slaw
+
+---- shorthand functions for converting to/from slaw
+
+-- "to slaw" because arrow points towards "s"
+{-# INLINE š #-}
+š :: ToSlaw a => a -> Slaw
+š = toSlaw
+
+-- "from slaw" because arrow points away from "s"
+{-# INLINE ŝ #-}
+ŝ :: (HasCallStack, FromSlaw a) => Slaw -> a
+ŝ s = withFrozenCallStack $ fromSlaw s
+
+-- "from slaw, maybe"
+{-# INLINE ŝm #-}
+ŝm :: FromSlaw a => Slaw -> Maybe a
+ŝm = fromSlawMaybe
+
+-- "from slaw, either string"
+{-# INLINABLE ŝes #-}
+ŝes :: FromSlaw a => Slaw -> Either String a
+ŝes s = case fromSlawEither s of
+          Left exc -> Left $ displayException exc
+          Right x  -> Right x
+
+-- "from slaw, either exception"
+{-# INLINE ŝee #-}
+ŝee :: FromSlaw a => Slaw -> Either PlasmaException a
+ŝee = fromSlawEither
+
+-- from slaw, with default value
+{-# INLINABLE (?:) #-}
+(?:) :: FromSlaw a => Slaw -> a -> a
+s ?: dflt = case fromSlawEither s of
+              Left  _ -> dflt
+              Right x -> x
+
+---- types
 
 data Protein = Protein
   { pDescrips :: [T.Text]
