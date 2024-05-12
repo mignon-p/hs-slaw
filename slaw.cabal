@@ -51,6 +51,7 @@ library
   exposed-modules:     Data.Slaw.Internal.Util
                      , Data.Slaw.Internal.Exception
                      , Data.Slaw.Internal.SlawType
+                     , Data.Slaw.Internal.SlawConvert
 
   -- Modules included in this library but not exported.
   -- other-modules:
