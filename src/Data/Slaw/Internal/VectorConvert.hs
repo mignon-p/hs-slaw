@@ -3,7 +3,9 @@
 module Data.Slaw.Internal.VectorConvert
   ( ByteOrder(..) -- re-export
   , nativeByteOrder
+  , oppositeByteOrder
   , vToBs
+  , bsToV
   ) where
 
 import Control.Monad
@@ -21,6 +23,10 @@ import System.IO.Unsafe
 
 nativeByteOrder :: ByteOrder
 nativeByteOrder = targetByteOrder
+
+oppositeByteOrder :: ByteOrder -> ByteOrder
+oppositeByteOrder BigEndian    = LittleEndian
+oppositeByteOrder LittleEndian = BigEndian
 
 class Storable a => Swappable a where
   getSwapFunc :: a -> Maybe (Ptr () -> Int -> IO ())
@@ -47,6 +53,12 @@ instance Swappable Int32 where
   getSwapFunc _ = Just swapArray32
 
 instance Swappable Int64 where
+  getSwapFunc _ = Just swapArray64
+
+instance Swappable Float where
+  getSwapFunc _ = Just swapArray32
+
+instance Swappable Double where
   getSwapFunc _ = Just swapArray64
 
 swapArray16 :: Ptr () -> Int -> IO ()
@@ -102,3 +114,37 @@ copyAndSwap sf elemSize oldPtr nElems = do
       copyBytes newP oldP nBytes
     sf newP nElems
   return newPtr
+
+bsToV :: forall a. Swappable a => ByteOrder -> B.ByteString -> S.Vector a
+bsToV bo (B.BS bsPtr bsLen) = S.unsafeFromForeignPtr0 vPtr vLen
+  where
+    size     = sizeOf (undefined :: a)
+    swapFunc = if bo == nativeByteOrder
+               then Nothing
+               else getSwapFunc (undefined :: a)
+    vPtr0    = castForeignPtr bsPtr
+    vLen     = bsLen `div` size
+    vPtr     = if size == 1
+               then vPtr0
+               else unsafePerformIO $ bs2v2 swapFunc size vPtr0 vLen
+
+bs2v2 :: Storable a
+      => Maybe (Ptr () -> Int -> IO ())
+      -> Int
+      -> ForeignPtr a
+      -> Int
+      -> IO (ForeignPtr a)
+bs2v2 sf elemSize oldPtr nElems = withForeignPtr oldPtr $ \oldP -> do
+  if nuthin sf && isAligned oldP
+    then return oldPtr
+    else castForeignPtr <$>
+         copyAndSwap (unmabify sf) elemSize (castForeignPtr oldPtr) nElems
+
+nuthin :: Maybe a -> Bool
+nuthin Nothing = True
+nuthin _       = False
+
+unmabify :: Maybe (Ptr () -> Int -> IO ())
+         -> Ptr () -> Int -> IO ()
+unmabify Nothing   = \_ _ -> return ()
+unmabify (Just sf) = sf
