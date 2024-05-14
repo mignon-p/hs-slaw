@@ -68,7 +68,8 @@ library
                      , TupleSections
 
   -- LANGUAGE extensions used by modules in this package.
-  -- other-extensions:
+  other-extensions:    PatternSynonyms
+                     , ScopedTypeVariables
 
   -- Other library packages from which modules are imported.
   build-depends:       base                 >= 4.12      && < 4.13

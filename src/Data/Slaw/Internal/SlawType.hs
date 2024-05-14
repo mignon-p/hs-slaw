@@ -1,5 +1,7 @@
+{-# LANGUAGE PatternSynonyms            #-}
+
 module Data.Slaw.Internal.SlawType
-  ( Slaw(..)
+  ( Slaw(.., SlawProtein)
   , NumericFormat(..)
   , NumericData(..)
   , VectorType(..)
@@ -15,7 +17,7 @@ import Data.Hashable
 import Data.Int
 import Data.List
 -- import qualified Data.Map.Strict      as M
-import qualified Data.Text            as T
+-- import qualified Data.Text            as T
 import qualified Data.Vector.Storable as S
 import Data.Word
 import Foreign.Storable
@@ -26,16 +28,22 @@ import System.IO.Unsafe (unsafePerformIO)
 -- import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Util
 
-data Slaw = SlawProtein (Maybe Slaw) (Maybe Slaw) L.ByteString
-          | SlawBool    !Bool
+data Slaw = SlawProteinRude (Maybe Slaw) (Maybe Slaw) L.ByteString
+          | SlawBool        !Bool
           | SlawNil
-          | SlawString  T.Text
-          | SlawList    [Slaw]
-          | SlawMap     [(Slaw, Slaw)]
-          | SlawCons    Slaw Slaw
-          | SlawNumeric !NumericFormat NumericData
-          | SlawError   String
+          | SlawString      L.ByteString -- UTF-8 encoded
+          | SlawList        [Slaw]
+          | SlawMap         [(Slaw, Slaw)]
+          | SlawCons        Slaw Slaw
+          | SlawNumeric     !NumericFormat NumericData
+          | SlawError       String
           deriving (Eq, Ord, Show, Generic, NFData, Hashable)
+
+pattern SlawProtein :: Maybe Slaw -> Maybe Slaw -> Slaw
+pattern SlawProtein ing des <- SlawProteinRude ing des _ where
+  SlawProtein ing des = SlawProteinRude ing des L.empty
+
+{-# COMPLETE SlawProtein, SlawBool, SlawNil, SlawString, SlawList, SlawMap, SlawCons, SlawNumeric, SlawError #-}
 
 data NumericFormat = NumericFormat
   { nfArray   :: !Bool
@@ -115,7 +123,7 @@ describeVectorType Vt4mv = ["4-multivector of"]
 describeVectorType Vt5mv = ["5-multivector of"]
 
 describeSlaw :: Slaw -> String
-describeSlaw (SlawProtein _ _ _) = "protein"
+describeSlaw (SlawProtein _ _  ) = "protein"
 describeSlaw (SlawBool    _    ) = "boolean"
 describeSlaw (SlawNil          ) = "nil"
 describeSlaw (SlawString  _    ) = "string"
