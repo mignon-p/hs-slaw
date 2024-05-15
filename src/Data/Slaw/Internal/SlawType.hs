@@ -5,6 +5,7 @@ module Data.Slaw.Internal.SlawType
   , NumericFormat(..)
   , NumericData(..)
   , VectorType(..)
+  , Symbol
   , describeSlaw
   ) where
 
@@ -28,9 +29,12 @@ import System.IO.Unsafe (unsafePerformIO)
 -- import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Util
 
+type Symbol = Word64
+
 data Slaw = SlawProteinRude (Maybe Slaw) (Maybe Slaw) L.ByteString
           | SlawBool        !Bool
           | SlawNil
+          | SlawSymbol      !Symbol
           | SlawString      L.ByteString -- UTF-8 encoded
           | SlawList        [Slaw]
           | SlawMap         [(Slaw, Slaw)]
@@ -43,7 +47,7 @@ pattern SlawProtein :: Maybe Slaw -> Maybe Slaw -> Slaw
 pattern SlawProtein ing des <- SlawProteinRude ing des _ where
   SlawProtein ing des = SlawProteinRude ing des L.empty
 
-{-# COMPLETE SlawProtein, SlawBool, SlawNil, SlawString, SlawList, SlawMap, SlawCons, SlawNumeric, SlawError #-}
+{-# COMPLETE SlawProtein, SlawBool, SlawNil, SlawSymbol, SlawString, SlawList, SlawMap, SlawCons, SlawNumeric, SlawError #-}
 
 data NumericFormat = NumericFormat
   { nfArray   :: !Bool
@@ -124,8 +128,9 @@ describeVectorType Vt5mv = ["5-multivector of"]
 
 describeSlaw :: Slaw -> String
 describeSlaw (SlawProtein _ _  ) = "protein"
-describeSlaw (SlawBool    _    ) = "boolean"
+describeSlaw (SlawBool    b    ) = "boolean " ++ show b
 describeSlaw (SlawNil          ) = "nil"
+describeSlaw (SlawSymbol  s    ) = "symbol " ++ show s
 describeSlaw (SlawString  _    ) = "string"
 describeSlaw (SlawList    _    ) = "list"
 describeSlaw (SlawMap     _    ) = "map"
