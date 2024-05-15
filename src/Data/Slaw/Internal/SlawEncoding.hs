@@ -9,13 +9,13 @@ module Data.Slaw.Internal.SlawEncoding
   ) where
 
 import Control.DeepSeq
-import qualified Data.ByteString         as B
+-- import qualified Data.ByteString         as B
 import qualified Data.ByteString.Builder as R
 import qualified Data.ByteString.Lazy    as L
 import Data.Hashable
-import Data.Int
-import qualified Data.Vector.Storable    as S
-import Data.Word
+-- import Data.Int
+-- import qualified Data.Vector.Storable    as S
+-- import Data.Word
 import GHC.Generics (Generic)
 
 import Data.Slaw.Internal.SlawType
@@ -72,16 +72,35 @@ encodeSlaw1  SlawNil                       = encSym     SymNil
 encodeSlaw1 (SlawError       _           ) = encSym     SymError
 encodeSlaw1 (SlawSymbol      sym         ) = encSymbol  sym
 encodeSlaw1 (SlawString      lbs         ) = encString  lbs
-encodeSlaw1 (SlawList        ss          ) = encList    ss
+encodeSlaw1 (SlawList        ss          ) = encList    NibList ss
 encodeSlaw1 (SlawMap         pairs       ) = encMap     pairs
-encodeSlaw1 (SlawCons        car cdr     ) = encCons    car cdr
-encodeSlaw1 (SlawNumeric     nf  nd      ) = enNumeric  nf  nd
+encodeSlaw1 (SlawCons        car cdr     ) = encList    NibCons [car, cdr]
+encodeSlaw1 (SlawNumeric     nf  nd      ) = encNumeric nf  nd
+
+encProtein :: (?bo::ByteOrder)
+           => Maybe Slaw
+           -> Maybe Slaw
+           -> L.ByteString
+           -> Octs
+encProtein = undefined
 
 encSym :: (?bo::ByteOrder, Enum a) => a -> Octs
 encSym = encSymbol . fromIntegral . fromEnum
 
 encSymbol :: (?bo::ByteOrder) => Symbol -> Octs
 encSymbol = undefined
+
+encString :: (?bo::ByteOrder) => L.ByteString -> Octs
+encString = undefined
+
+encList :: (?bo::ByteOrder) => Nib -> [Slaw] -> Octs
+encList = undefined
+
+encMap :: (?bo::ByteOrder) => [(Slaw, Slaw)] -> Octs
+encMap = undefined
+
+encNumeric :: (?bo::ByteOrder) => NumericFormat -> NumericData -> Octs
+encNumeric = undefined
 
 decodeSlaw :: ByteOrder -> L.ByteString -> Slaw
 decodeSlaw = undefined
