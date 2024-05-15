@@ -9,17 +9,21 @@ module Data.Slaw.Internal.SlawEncoding
   ) where
 
 import Control.DeepSeq
--- import qualified Data.ByteString         as B
+import Data.Bits
+import qualified Data.ByteString         as B
 import qualified Data.ByteString.Builder as R
 import qualified Data.ByteString.Lazy    as L
 import Data.Hashable
 -- import Data.Int
 -- import qualified Data.Vector.Storable    as S
--- import Data.Word
+import Data.Word
 import GHC.Generics (Generic)
 
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.VectorConvert
+
+infixr 9 #>
+infixr 9 ##>
 
 data Nib =
     NibSwappedProtein   --  0
@@ -47,6 +51,8 @@ data Sym =
   | SymError -- 3
   deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
 
+type Oct = Word64
+
 data Octs = Octs
   { oLen :: {-# UNPACK #-} !Int
   , oBld ::                R.Builder
@@ -58,6 +64,13 @@ instance Semigroup Octs where
 instance Monoid Octs where
   mempty = Octs 0 mempty
   mconcat xs = Octs (sum $ map oLen xs) (mconcat $ map oBld xs)
+
+(#>) :: Nib -> Oct -> Oct
+nib #> wrd = wrd .|. (nib' `shiftL` 56)
+  where nib' = (fromIntegral . fromEnum) nib
+
+(##>) :: Word8 -> Oct -> Oct
+nib ##> wrd = wrd .|. (fromIntegral nib `shiftL` 56)
 
 encodeSlaw :: ByteOrder -> Slaw -> L.ByteString
 encodeSlaw bo = R.toLazyByteString . encodeSlaw' bo
@@ -101,6 +114,24 @@ encMap = undefined
 
 encNumeric :: (?bo::ByteOrder) => NumericFormat -> NumericData -> Octs
 encNumeric = undefined
+
+encHeader :: (?bo::ByteOrder) => Oct -> Octs
+encHeader !o = Octs 1 bld
+  where bld = case ?bo of
+                BigEndian    -> R.word64BE o
+                LittleEndian -> R.word64LE o
+
+encHeader' :: (?bo::ByteOrder) => Oct -> B.ByteString -> Octs
+encHeader' o bs = encHeader (o .|. encSpecial ?bo bs)
+
+encSpecial :: ByteOrder -> B.ByteString -> Oct
+encSpecial BigEndian    = encSp1 0 . B.unpack
+encSpecial LittleEndian = encSp1 0 . B.unpack . B.reverse
+
+encSp1 :: Oct -> [Word8] -> Oct
+encSp1 !o [] = o
+encSp1 !o (w8:rest) = encSp1 o' rest
+  where o' = fromIntegral w8 .|. (o `shiftL` 8)
 
 decodeSlaw :: ByteOrder -> L.ByteString -> Slaw
 decodeSlaw = undefined
