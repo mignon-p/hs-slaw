@@ -68,16 +68,19 @@ data NumericData = NumInt8   (S.Vector Int8)
                  deriving (Eq, Ord, Show, Generic, NFData)
 
 instance Hashable NumericData where
-  salt `hashWithSalt` NumInt8   v = salt `hashRawVector` v
-  salt `hashWithSalt` NumInt16  v = salt `hashRawVector` v
-  salt `hashWithSalt` NumInt32  v = salt `hashRawVector` v
-  salt `hashWithSalt` NumInt64  v = salt `hashRawVector` v
-  salt `hashWithSalt` NumUnt8   v = salt `hashRawVector` v
-  salt `hashWithSalt` NumUnt16  v = salt `hashRawVector` v
-  salt `hashWithSalt` NumUnt32  v = salt `hashRawVector` v
-  salt `hashWithSalt` NumUnt64  v = salt `hashRawVector` v
-  salt `hashWithSalt` NumFloat  v = salt ## S.toList v
-  salt `hashWithSalt` NumDouble v = salt ## S.toList v
+  salt `hashWithSalt` NumInt8   v = hh salt 0 `hashRawVector` v
+  salt `hashWithSalt` NumInt16  v = hh salt 1 `hashRawVector` v
+  salt `hashWithSalt` NumInt32  v = hh salt 2 `hashRawVector` v
+  salt `hashWithSalt` NumInt64  v = hh salt 3 `hashRawVector` v
+  salt `hashWithSalt` NumUnt8   v = hh salt 4 `hashRawVector` v
+  salt `hashWithSalt` NumUnt16  v = hh salt 5 `hashRawVector` v
+  salt `hashWithSalt` NumUnt32  v = hh salt 6 `hashRawVector` v
+  salt `hashWithSalt` NumUnt64  v = hh salt 7 `hashRawVector` v
+  salt `hashWithSalt` NumFloat  v = hh salt 8 ## S.toList v
+  salt `hashWithSalt` NumDouble v = hh salt 9 ## S.toList v
+
+hh :: Int -> Int -> Int
+hh salt slug = salt ## (37619* slug)
 
 hashRawVector :: Storable a => Int -> S.Vector a -> Int
 hashRawVector salt v
