@@ -49,6 +49,13 @@ pattern SlawProtein ing des <- SlawProteinRude ing des _ where
 
 {-# COMPLETE SlawProtein, SlawBool, SlawNil, SlawSymbol, SlawString, SlawList, SlawMap, SlawCons, SlawNumeric, SlawError #-}
 
+instance Monoid Slaw where
+  mempty = SlawNil
+  mconcat = catSlaw . filter (not . isNil)
+
+instance Semigroup Slaw where
+  x <> y = mconcat [x, y]
+
 data NumericFormat = NumericFormat
   { nfArray   :: !Bool
   , nfComplex :: !Bool
@@ -142,3 +149,81 @@ describeSlaw (SlawNumeric nf nd) = intercalate " " (nfl ++ ndl)
   where nfl =  describeNumericFormat nf
         ndl = [describeNumericData   nd]
 describeSlaw (SlawError   _    ) = "corrupt slaw"
+
+dnf :: NumericFormat -> String
+dnf nf = case describeNumericFormat nf of
+           [] -> "scalar"
+           xs -> let str      = intercalate " " xs
+                     len      = length str
+                     sfx      = " of"
+                     sfxLen   = length sfx
+                     (s1, s2) = splitAt (len - sfxLen) str
+                 in if sfx == s2 then s1 else str
+
+isNil :: Slaw -> Bool
+isNil SlawNil = True
+isNil _       = False
+
+typeMismatch :: String
+typeMismatch = "type mismatch: "
+
+cantCat :: String -> String -> String
+cantCat s1 s2 =
+  concat [typeMismatch, "Can't concatenate ", s1, " and ", s2]
+
+catSlaw :: [Slaw] -> Slaw
+catSlaw []                        = SlawNil
+catSlaw [s]                       = s
+catSlaw (s@(SlawError   _)   : _) = s
+catSlaw ss@(SlawString  _    : _) = doCat getString       catStrings ss
+catSlaw ss@(SlawList    _    : _) = doCat getList         catLists   ss
+catSlaw ss@(SlawMap     _    : _) = doCat getMap          catMaps    ss
+catSlaw ss@(SlawNumeric nf _ : _) = doCat (getNumeric nf) catNumeric ss
+catSlaw (_ : s@(SlawError _) : _) = s
+catSlaw (s1 : s2             : _) =
+  SlawError $ describeSlaw s1 `cantCat` describeSlaw s2
+
+doCat :: (Slaw -> Either String a)
+      -> ([a] -> Slaw)
+      -> [Slaw]
+      -> Slaw
+doCat chkFunc catFunc ss =
+  case mapM chkFunc ss of
+    Left msg -> SlawError msg
+    Right xs -> catFunc   xs
+
+getString :: Slaw -> Either String L.ByteString
+getString (SlawString lbs) = Right lbs
+getString (SlawError  msg) = Left msg
+getString s                = Left $ "string" `cantCat` describeSlaw s
+
+getList :: Slaw -> Either String [Slaw]
+getList (SlawList   ss ) = Right ss
+getList (SlawError  msg) = Left msg
+getList s                = Left $ "list" `cantCat` describeSlaw s
+
+getMap :: Slaw -> Either String [(Slaw, Slaw)]
+getMap (SlawMap   ss ) = Right ss
+getMap (SlawError msg) = Left msg
+getMap s               = Left $ "map" `cantCat` describeSlaw s
+
+getNumeric :: NumericFormat -> Slaw -> Either String NumericData
+getNumeric nf0 (SlawNumeric nf nd) =
+  if nfComplex nf0 == nfComplex nf && nfVector nf0 == nfVector nf
+  then Right nd
+  else Left $ dnf nf0 `cantCat` dnf nf
+getNumeric _   (SlawError   msg  ) = Left msg
+getNumeric nf0  s                  =
+  Left $ dnf nf0 `cantCat` describeSlaw s
+
+catStrings :: [L.ByteString] -> Slaw
+catStrings ss = SlawString (mconcat ss)
+
+catLists :: [[Slaw]] -> Slaw
+catLists ss = SlawList (concat ss)
+
+catMaps :: [[(Slaw, Slaw)]] -> Slaw
+catMaps = undefined
+
+catNumeric :: [NumericData] -> Slaw
+catNumeric = undefined
