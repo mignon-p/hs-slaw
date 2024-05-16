@@ -13,7 +13,7 @@ module Data.Slaw.Internal.SlawType
 import Control.Arrow (second)
 import Control.DeepSeq
 -- import Control.Exception
--- import qualified Data.ByteString      as B
+import qualified Data.ByteString      as B
 import qualified Data.ByteString.Lazy as L
 -- import Data.Default.Class
 import Data.Hashable
@@ -31,6 +31,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 -- import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Util
+import Data.Slaw.Internal.VectorConvert
 
 type Symbol = Word64
 
@@ -99,6 +100,19 @@ hashRawVector salt v
       let byteLen = len * sizeOf (S.head v)
       hashPtrWithSalt ptr byteLen salt
   where len = S.length v
+
+data NumericType =
+    TypInt8
+  | TypInt16
+  | TypInt32
+  | TypInt64
+  | TypUnt8
+  | TypUnt16
+  | TypUnt32
+  | TypUnt64
+  | TypFloat
+  | TypDouble
+  deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
 
 data VectorType = VtScalar
                 | Vt2
@@ -181,7 +195,7 @@ catSlaw (s@(SlawError   _)   : _) = s
 catSlaw ss@(SlawString  _    : _) = doCat getString       catStrings ss
 catSlaw ss@(SlawList    _    : _) = doCat getList         catLists   ss
 catSlaw ss@(SlawMap     _    : _) = doCat getMap          catMaps    ss
-catSlaw ss@(SlawNumeric nf _ : _) = doCat (getNumeric nf) catNumeric ss
+catSlaw ss@(SlawNumeric nf _ : _) = doCat (getNumeric nf) (catNumeric nf) ss
 catSlaw (_ : s@(SlawError _) : _) = s
 catSlaw (s1 : s2             : _) =
   SlawError $ describeSlaw s1 `cantCat` describeSlaw s2
@@ -240,5 +254,49 @@ removeDups pairs = map (second snd) l4
         l3          = HM.toList hm
         l4          = sortOn (fst . snd) l3
 
-catNumeric :: [NumericData] -> Slaw
-catNumeric = undefined
+catNumeric :: NumericFormat -> [NumericData] -> Slaw
+catNumeric nf nds = SlawNumeric nf' nd
+  where
+    nf'         = nf { nfArray = True }
+    pairs       = map extractNumeric nds
+    (typs, bss) = unzip pairs
+    typ0        = head typs
+    sameType    = all (== typ0) typs
+    nd          = if sameType
+                  then restoreNumeric typ0 $ mconcat bss
+                  else listToNum $ concatMap numToList nds
+
+extractNumeric :: NumericData -> (NumericType, B.ByteString)
+extractNumeric (NumInt8   v) = (TypInt8  , vToBs nativeByteOrder v)
+extractNumeric (NumInt16  v) = (TypInt16 , vToBs nativeByteOrder v)
+extractNumeric (NumInt32  v) = (TypInt32 , vToBs nativeByteOrder v)
+extractNumeric (NumInt64  v) = (TypInt64 , vToBs nativeByteOrder v)
+extractNumeric (NumUnt8   v) = (TypUnt8  , vToBs nativeByteOrder v)
+extractNumeric (NumUnt16  v) = (TypUnt16 , vToBs nativeByteOrder v)
+extractNumeric (NumUnt32  v) = (TypUnt32 , vToBs nativeByteOrder v)
+extractNumeric (NumUnt64  v) = (TypUnt64 , vToBs nativeByteOrder v)
+extractNumeric (NumFloat  v) = (TypFloat , vToBs nativeByteOrder v)
+extractNumeric (NumDouble v) = (TypDouble, vToBs nativeByteOrder v)
+
+restoreNumeric :: NumericType -> B.ByteString -> NumericData
+restoreNumeric TypInt8   bs = NumInt8   (bsToV nativeByteOrder bs)
+restoreNumeric TypInt16  bs = NumInt16  (bsToV nativeByteOrder bs)
+restoreNumeric TypInt32  bs = NumInt32  (bsToV nativeByteOrder bs)
+restoreNumeric TypInt64  bs = NumInt64  (bsToV nativeByteOrder bs)
+restoreNumeric TypUnt8   bs = NumUnt8   (bsToV nativeByteOrder bs)
+restoreNumeric TypUnt16  bs = NumUnt16  (bsToV nativeByteOrder bs)
+restoreNumeric TypUnt32  bs = NumUnt32  (bsToV nativeByteOrder bs)
+restoreNumeric TypUnt64  bs = NumUnt64  (bsToV nativeByteOrder bs)
+restoreNumeric TypFloat  bs = NumFloat  (bsToV nativeByteOrder bs)
+restoreNumeric TypDouble bs = NumDouble (bsToV nativeByteOrder bs)
+
+data NumElem = ElemInt    !Integer
+             | ElemFloat  !Float
+             | ElemDouble !Double
+             deriving (Eq, Ord, Show, Generic, NFData, Hashable)
+
+numToList :: NumericData -> [NumElem]
+numToList = undefined
+
+listToNum :: [NumElem] -> NumericData
+listToNum = undefined
