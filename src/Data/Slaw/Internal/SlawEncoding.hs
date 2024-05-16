@@ -51,6 +51,12 @@ data Sym =
   | SymError -- 3
   deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
 
+data NumTyp =
+    NumTypSigned   -- 0
+  | NumTypUnsigned -- 1
+  | NumTypFloat    -- 2
+  deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
+
 type Oct = Word64
 
 data Octs = Octs
@@ -164,6 +170,23 @@ computePad len =
   in if r == 0
      then (q, r)
      else (q + 1, 8 - r)
+
+{-
+computeBsize :: NumericFormat -> Int -> Int
+computeBsize = undefined
+
+classifyNumeric :: NumericData -> (NumTyp, Int)
+classifyNumeric (NumInt8   _) = (NumTypSigned,   1)
+classifyNumeric (NumInt16  _) = (NumTypSigned,   2)
+classifyNumeric (NumInt32  _) = (NumTypSigned,   4)
+classifyNumeric (NumInt64  _) = (NumTypSigned,   8)
+classifyNumeric (NumUnt8   _) = (NumTypUnsigned, 1)
+classifyNumeric (NumUnt16  _) = (NumTypUnsigned, 2)
+classifyNumeric (NumUnt32  _) = (NumTypUnsigned, 4)
+classifyNumeric (NumUnt64  _) = (NumTypUnsigned, 8)
+classifyNumeric (NumFloat  _) = (NumTypFloat,    4)
+classifyNumeric (NumDouble _) = (NumTypFloat,    8)
+-}
 
 decodeSlaw :: ByteOrder -> L.ByteString -> Slaw
 decodeSlaw = undefined
