@@ -69,8 +69,8 @@ instance Monoid Octs where
 nib #> wrd = wrd .|. (nib' `shiftL` 60)
   where nib' = (fromIntegral . fromEnum) nib
 
-(##>) :: Word8 -> Oct -> Oct
-nib ##> wrd = wrd .|. (fromIntegral nib `shiftL` 60)
+(##>) :: Integral a => a -> Oct -> Oct
+bite ##> wrd = wrd .|. (fromIntegral bite `shiftL` 56)
 
 encodeSlaw :: ByteOrder -> Slaw -> L.ByteString
 encodeSlaw bo = R.toLazyByteString . encodeSlaw' bo
@@ -109,12 +109,10 @@ encString lbs =
   let lbs'   = lbs <> L.singleton 0
       len    = L.length lbs'
   in if len <= 7
-     then let lenNib = fromIntegral len `shiftL` 56
-          in encHeader' (NibWeeString #> lenNib) (L.toStrict lbs')
+     then encHeader' (NibWeeString #> len ##> 0) (L.toStrict lbs')
      else let (body, nPad) = padLbs lbs'
-              padNib = nPad `shiftL` 56
               octLen = 1 + oLen body
-              hdr    = encHeader (NibFullString #> padNib .|. octLen)
+              hdr    = encHeader (NibFullString #> nPad ##> octLen)
           in hdr <> body
 
 encList :: (?bo::ByteOrder) => Nib -> [Slaw] -> Octs
