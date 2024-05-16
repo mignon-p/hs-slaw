@@ -27,6 +27,7 @@ import Data.Slaw.Internal.VectorConvert
 
 infixr 9 #>
 infixr 9 ##>
+infix  5 #!
 
 data Nib =
     NibSwappedProtein   --  0
@@ -174,9 +175,27 @@ computePad len =
      then (q, r)
      else (q + 1, 8 - r)
 
-{-
+upperBits :: NumericFormat -> NumericData -> Int
+upperBits nf nd = sum [ bsize - 1
+                      , vectBits `shiftL` 8
+                      , cplxBit  `shiftL` 11
+                      , sizBits  `shiftL` 12
+                      , fuBits   `shiftL` 14
+                      , arrayBit `shiftL` 16
+                      , 1        `shiftL` 17
+                      ]
+  where arrayBit   = (fromEnum . nfArray) nf
+        (typ, siz) = classifyNumeric nd
+        fuBits     = fromEnum typ
+        sizBits    = " 01 2   3" #! siz
+        cplxBit    = (fromEnum . nfComplex) nf
+        vectBits   = (fromEnum . nfVector ) nf
+        bsize      = computeBsize nf siz
+
 computeBsize :: NumericFormat -> Int -> Int
-computeBsize = undefined
+computeBsize nf size = size * cplxSize * vectSize
+  where cplxSize = if nfComplex nf then 2 else 1
+        vectSize = "123448@P" #! fromEnum (nfVector nf)
 
 classifyNumeric :: NumericData -> (NumTyp, Int)
 classifyNumeric (NumInt8   _) = (NumTypSigned,   1)
@@ -189,7 +208,9 @@ classifyNumeric (NumUnt32  _) = (NumTypUnsigned, 4)
 classifyNumeric (NumUnt64  _) = (NumTypUnsigned, 8)
 classifyNumeric (NumFloat  _) = (NumTypFloat,    4)
 classifyNumeric (NumDouble _) = (NumTypFloat,    8)
--}
+
+(#!) :: (Integral a, Integral b) => B.ByteString -> a -> b
+bs #! idx = fromIntegral $ (bs `B.index` fromIntegral idx) - 48
 
 removeDups :: [(Slaw, Slaw)] -> [(Slaw, Slaw)]
 removeDups pairs = map (second snd) l4
