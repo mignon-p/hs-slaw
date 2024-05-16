@@ -65,6 +65,7 @@ library
                      , DeriveFunctor
                      , DeriveGeneric
                      , MultiWayIf
+                     , NumericUnderscores
                      , OverloadedStrings
                      , TupleSections
 

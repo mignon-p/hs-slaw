@@ -295,8 +295,48 @@ data NumElem = ElemInt    !Integer
              | ElemDouble !Double
              deriving (Eq, Ord, Show, Generic, NFData, Hashable)
 
+data NumRange = RangeInt  { rangeLo :: !Integer, rangeHi :: !Integer }
+              | RangeFloat
+              | RangeDouble
+              deriving (Eq, Ord, Show, Generic, NFData, Hashable)
+
 numToList :: NumericData -> [NumElem]
-numToList = undefined
+numToList (NumInt8   v) = intToList    v
+numToList (NumInt16  v) = intToList    v
+numToList (NumInt32  v) = intToList    v
+numToList (NumInt64  v) = intToList    v
+numToList (NumUnt8   v) = intToList    v
+numToList (NumUnt16  v) = intToList    v
+numToList (NumUnt32  v) = intToList    v
+numToList (NumUnt64  v) = intToList    v
+numToList (NumFloat  v) = floatToList  v
+numToList (NumDouble v) = doubleToList v
+
+intToList :: (Integral a, Storable a) => S.Vector a -> [NumElem]
+intToList = map (ElemInt . toInteger) . S.toList
+
+floatToList :: S.Vector Float -> [NumElem]
+floatToList = map ElemFloat . S.toList
+
+doubleToList :: S.Vector Double -> [NumElem]
+doubleToList = map ElemDouble . S.toList
 
 listToNum :: [NumElem] -> NumericData
 listToNum = undefined
+
+addToRange :: NumRange -> NumElem -> NumRange
+addToRange RangeDouble      _              = RangeDouble
+addToRange _                (ElemDouble _) = RangeDouble
+addToRange (RangeInt lo hi) (ElemInt x)    = RangeInt lo' hi'
+  where lo' = lo `min` x
+        hi' = hi `max` x
+addToRange RangeFloat       (ElemFloat _)  = RangeFloat
+addToRange RangeFloat       (ElemInt x)
+  | fitsInFloat x = RangeFloat
+  | otherwise     = RangeDouble
+addToRange (RangeInt lo hi) (ElemFloat _)
+  | fitsInFloat lo && fitsInFloat hi = RangeFloat
+  | otherwise                        = RangeDouble
+
+fitsInFloat :: Integer -> Bool
+fitsInFloat x = abs x <= 0x1_00_00_00
