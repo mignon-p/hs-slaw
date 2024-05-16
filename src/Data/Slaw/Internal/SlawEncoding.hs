@@ -14,7 +14,7 @@ import qualified Data.ByteString         as B
 import qualified Data.ByteString.Builder as R
 import qualified Data.ByteString.Lazy    as L
 import Data.Hashable
--- import Data.Int
+import Data.Int
 -- import qualified Data.Vector.Storable    as S
 import Data.Word
 import GHC.Generics (Generic)
@@ -54,7 +54,7 @@ data Sym =
 type Oct = Word64
 
 data Octs = Octs
-  { oLen :: {-# UNPACK #-} !Int
+  { oLen :: {-# UNPACK #-} !Word64
   , oBld ::                R.Builder
   } deriving (Show)
 
@@ -66,11 +66,11 @@ instance Monoid Octs where
   mconcat xs = Octs (sum $ map oLen xs) (mconcat $ map oBld xs)
 
 (#>) :: Nib -> Oct -> Oct
-nib #> wrd = wrd .|. (nib' `shiftL` 56)
+nib #> wrd = wrd .|. (nib' `shiftL` 60)
   where nib' = (fromIntegral . fromEnum) nib
 
 (##>) :: Word8 -> Oct -> Oct
-nib ##> wrd = wrd .|. (fromIntegral nib `shiftL` 56)
+nib ##> wrd = wrd .|. (fromIntegral nib `shiftL` 60)
 
 encodeSlaw :: ByteOrder -> Slaw -> L.ByteString
 encodeSlaw bo = R.toLazyByteString . encodeSlaw' bo
@@ -101,10 +101,21 @@ encSym :: (?bo::ByteOrder, Enum a) => a -> Octs
 encSym = encSymbol . fromIntegral . fromEnum
 
 encSymbol :: (?bo::ByteOrder) => Symbol -> Octs
-encSymbol = undefined
+encSymbol sym = encHeader (NibSymbol #> sym)
 
 encString :: (?bo::ByteOrder) => L.ByteString -> Octs
-encString = undefined
+encString lbs =
+  -- Slaw format requires string to include a terminating NUL
+  let lbs'   = lbs <> L.singleton 0
+      len    = L.length lbs'
+  in if len <= 7
+     then let lenNib = fromIntegral len `shiftL` 56
+          in encHeader' (NibWeeString #> lenNib) (L.toStrict lbs')
+     else let (body, nPad) = padLbs lbs'
+              padNib = nPad `shiftL` 56
+              octLen = 1 + oLen body
+              hdr    = encHeader (NibFullString #> padNib .|. octLen)
+          in hdr <> body
 
 encList :: (?bo::ByteOrder) => Nib -> [Slaw] -> Octs
 encList = undefined
@@ -132,6 +143,21 @@ encSp1 :: Oct -> [Word8] -> Oct
 encSp1 !o [] = o
 encSp1 !o (w8:rest) = encSp1 o' rest
   where o' = fromIntegral w8 .|. (o `shiftL` 8)
+
+padLbs :: L.ByteString -> (Octs, Word64)
+padLbs lbs = (body, fromIntegral nPad)
+  where (nOcts, nPad) = computePad $ L.length lbs
+        padding       = L.replicate nPad 0
+        bld           = R.lazyByteString lbs <> R.lazyByteString padding
+        body          = Octs (fromIntegral nOcts) bld
+
+-- returns total number of octs, and bytes of padding in last oct
+computePad :: Int64 -> (Int64, Int64)
+computePad len =
+  let (q, r) = len `divMod` 8
+  in if r == 0
+     then (q, r)
+     else (q + 1, 8 - r)
 
 decodeSlaw :: ByteOrder -> L.ByteString -> Slaw
 decodeSlaw = undefined
