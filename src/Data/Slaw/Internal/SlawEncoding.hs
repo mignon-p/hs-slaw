@@ -8,13 +8,16 @@ module Data.Slaw.Internal.SlawEncoding
   , decodeSlaw
   ) where
 
+import Control.Arrow (second)
 import Control.DeepSeq
 import Data.Bits
 import qualified Data.ByteString         as B
 import qualified Data.ByteString.Builder as R
 import qualified Data.ByteString.Lazy    as L
 import Data.Hashable
+import qualified Data.HashMap.Strict     as HM
 import Data.Int
+import Data.List
 -- import qualified Data.Vector.Storable    as S
 import Data.Word
 import GHC.Generics (Generic)
@@ -133,7 +136,7 @@ encList nib ss = hdr <> body
         hdr    = if ext then hdr1 <> hdr2 else hdr1
 
 encMap :: (?bo::ByteOrder) => [(Slaw, Slaw)] -> Octs
-encMap = undefined
+encMap = encList NibMap . map (uncurry SlawCons) . removeDups
 
 encNumeric :: (?bo::ByteOrder) => NumericFormat -> NumericData -> Octs
 encNumeric = undefined
@@ -187,6 +190,15 @@ classifyNumeric (NumUnt64  _) = (NumTypUnsigned, 8)
 classifyNumeric (NumFloat  _) = (NumTypFloat,    4)
 classifyNumeric (NumDouble _) = (NumTypFloat,    8)
 -}
+
+removeDups :: [(Slaw, Slaw)] -> [(Slaw, Slaw)]
+removeDups pairs = map (second snd) l4
+  where pairs1      = zipWith f1 pairs [(1 :: Word64)..]
+        f1 (k, v) n = (k, (n, v))
+        hm          = HM.fromListWith f2 pairs1
+        f2 (_, newV) (oldN, _) = (oldN, newV)
+        l3          = HM.toList hm
+        l4          = sortOn (fst . snd) l3
 
 decodeSlaw :: ByteOrder -> L.ByteString -> Slaw
 decodeSlaw = undefined
