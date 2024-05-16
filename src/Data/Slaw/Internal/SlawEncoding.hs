@@ -116,7 +116,15 @@ encString lbs =
           in hdr <> body
 
 encList :: (?bo::ByteOrder) => Nib -> [Slaw] -> Octs
-encList = undefined
+encList nib ss = hdr <> body
+  where len    = fromIntegral $ length ss
+        body   = mconcat $ map encodeSlaw1 ss
+        ext    = len >= 15
+        len'   = if ext then 15 else len
+        octLen = oLen body + if ext then 2 else 1
+        hdr1   = encHeader (nib #> len' ##> octLen)
+        hdr2   = encHeader len
+        hdr    = if ext then hdr1 <> hdr2 else hdr1
 
 encMap :: (?bo::ByteOrder) => [(Slaw, Slaw)] -> Octs
 encMap = undefined
