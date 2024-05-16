@@ -7,14 +7,17 @@ module Data.Slaw.Internal.SlawType
   , VectorType(..)
   , Symbol
   , describeSlaw
+  , removeDups
   ) where
 
+import Control.Arrow (second)
 import Control.DeepSeq
 -- import Control.Exception
 -- import qualified Data.ByteString      as B
 import qualified Data.ByteString.Lazy as L
 -- import Data.Default.Class
 import Data.Hashable
+import qualified Data.HashMap.Strict     as HM
 import Data.Int
 import Data.List
 -- import qualified Data.Map.Strict      as M
@@ -217,13 +220,25 @@ getNumeric nf0  s                  =
   Left $ dnf nf0 `cantCat` describeSlaw s
 
 catStrings :: [L.ByteString] -> Slaw
-catStrings ss = SlawString (mconcat ss)
+catStrings = SlawString . mconcat
 
 catLists :: [[Slaw]] -> Slaw
-catLists ss = SlawList (concat ss)
+catLists = SlawList  . concat
 
 catMaps :: [[(Slaw, Slaw)]] -> Slaw
-catMaps = undefined
+catMaps = SlawMap . removeDups . concat
+
+-- Remove duplicate keys while preserving order.
+-- Keeps the *last* value for a key, but at the position
+-- where the key *first* appeared.
+removeDups :: [(Slaw, Slaw)] -> [(Slaw, Slaw)]
+removeDups pairs = map (second snd) l4
+  where pairs1      = zipWith f1 pairs [(1 :: Word64)..]
+        f1 (k, v) n = (k, (n, v))
+        hm          = HM.fromListWith f2 pairs1
+        f2 (_, newV) (oldN, _) = (oldN, newV)
+        l3          = HM.toList hm
+        l4          = sortOn (fst . snd) l3
 
 catNumeric :: [NumericData] -> Slaw
 catNumeric = undefined
