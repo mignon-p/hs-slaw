@@ -139,7 +139,36 @@ encMap :: (?bo::ByteOrder) => [(Slaw, Slaw)] -> Octs
 encMap = encList NibMap . map (uncurry SlawCons) . removeDups
 
 encNumeric :: (?bo::ByteOrder) => NumericFormat -> NumericData -> Octs
-encNumeric = undefined
+encNumeric nf nd =
+  let (nt, bs)       = extractNumeric ?bo nd
+      (uBits, bsize) = upperBits nf nt
+      breadth        = B.length bs `div` bsize
+      -- This won't be necessary if numeric data is well-formed,
+      -- but just in case it isn't, chop off any extra bytes that
+      -- aren't a multiple of bsize.
+      bs'            = B.take (bsize * breadth) bs
+      (nf', uBits')  = if breadth /= 1 && not (nfArray nf)
+                       then let nf2 = nf { nfArray = True }
+                                ub2 = fst (upperBits nf2 nt)
+                            in (nf2, ub2)
+                       else (nf, uBits)
+  in encNumeric2 nf' bs' uBits' breadth
+
+encNumeric2 :: (?bo::ByteOrder)
+            => NumericFormat
+            -> B.ByteString
+            -> Int
+            -> Int
+            -> Octs
+encNumeric2 nf bs uBits breadth =
+  let isArray  = nfArray nf
+      len      = B.length bs
+      wee      = not isArray && len <= 4
+      hBreadth = if isArray then fromIntegral breadth else 0
+      hdr      = (fromIntegral uBits `shiftL` 46) .|. hBreadth
+  in if wee
+     then encHeader' hdr bs
+     else encHeader  hdr <> (fst . padLbs . L.fromStrict) bs
 
 encHeader :: (?bo::ByteOrder) => Oct -> Octs
 encHeader !o = Octs 1 bld
@@ -174,15 +203,9 @@ computePad len =
      then (q, r)
      else (q + 1, 8 - r)
 
-upperBits :: NumericFormat -> NumericType -> Int
-upperBits nf nt = sum [ bsize - 1
-                      , vectBits `shiftL` 8
-                      , cplxBit  `shiftL` 11
-                      , sizBits  `shiftL` 12
-                      , fuBits   `shiftL` 14
-                      , arrayBit `shiftL` 16
-                      , 1        `shiftL` 17
-                      ]
+-- returns (top 18 bits of header oct, bsize)
+upperBits :: NumericFormat -> NumericType -> (Int, Int)
+upperBits nf nt = (uBits, bsize)
   where arrayBit   = (fromEnum . nfArray) nf
         (typ, siz) = classifyNumeric nt
         fuBits     = fromEnum typ
@@ -190,6 +213,14 @@ upperBits nf nt = sum [ bsize - 1
         cplxBit    = (fromEnum . nfComplex) nf
         vectBits   = (fromEnum . nfVector ) nf
         bsize      = computeBsize nf siz
+        uBits      = sum [ bsize - 1
+                         , vectBits `shiftL` 8
+                         , cplxBit  `shiftL` 11
+                         , sizBits  `shiftL` 12
+                         , fuBits   `shiftL` 14
+                         , arrayBit `shiftL` 16
+                         , 1        `shiftL` 17
+                         ]
 
 computeBsize :: NumericFormat -> Int -> Int
 computeBsize nf size = size * cplxSize * vectSize
