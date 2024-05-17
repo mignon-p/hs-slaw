@@ -325,7 +325,7 @@ listToNum :: [NumElem] -> NumericData
 listToNum nes =
   let range = foldl' addToRange (baseRange nes) nes
       typ   = typeFromRange range
-  in undefined
+  in typeToNum typ nes
 
 baseRange :: [NumElem] -> NumRange
 baseRange []                 = RangeInt 0 0 -- shouldn't happen
@@ -383,3 +383,26 @@ mkRange :: (Integral a, Bounded a)
 mkRange dummy typ = ((toInteger lo, toInteger hi), typ)
   where lo = minBound `asTypeOf` dummy
         hi = maxBound `asTypeOf` dummy
+
+typeToNum :: NumericType -> [NumElem] -> NumericData
+typeToNum TypInt8   = NumInt8   . S.fromList . map intCoerce
+typeToNum TypInt16  = NumInt16  . S.fromList . map intCoerce
+typeToNum TypInt32  = NumInt32  . S.fromList . map intCoerce
+typeToNum TypInt64  = NumInt64  . S.fromList . map intCoerce
+typeToNum TypUnt8   = NumUnt8   . S.fromList . map intCoerce
+typeToNum TypUnt16  = NumUnt16  . S.fromList . map intCoerce
+typeToNum TypUnt32  = NumUnt32  . S.fromList . map intCoerce
+typeToNum TypUnt64  = NumUnt64  . S.fromList . map intCoerce
+typeToNum TypFloat  = NumFloat  . S.fromList . map floatCoerce
+typeToNum TypDouble = NumDouble . S.fromList . map doubleCoerce
+
+intCoerce :: (Integral a, Storable a) => NumElem -> a
+intCoerce (ElemInt    x) = fromInteger x
+intCoerce (ElemFloat  x) = round x -- shouldn't happen
+intCoerce (ElemDouble x) = round x -- shouldn't happen
+
+floatCoerce :: NumElem -> Float
+floatCoerce = undefined
+
+doubleCoerce :: NumElem -> Double
+doubleCoerce = undefined
