@@ -1,10 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 
 module Data.Slaw.Internal.VectorConvert
-  ( ByteOrder(..) -- re-export
-  , nativeByteOrder
-  , oppositeByteOrder
-  , vToBs
+  ( vToBs
   , bsToV
   ) where
 
@@ -18,15 +15,9 @@ import Foreign.ForeignPtr
 import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
-import GHC.ByteOrder
 import System.IO.Unsafe
 
-nativeByteOrder :: ByteOrder
-nativeByteOrder = targetByteOrder
-
-oppositeByteOrder :: ByteOrder -> ByteOrder
-oppositeByteOrder BigEndian    = LittleEndian
-oppositeByteOrder LittleEndian = BigEndian
+import Data.Slaw.Internal.Util
 
 class Storable a => Swappable a where
   getSwapFunc :: a -> Maybe (Ptr () -> Int -> IO ())

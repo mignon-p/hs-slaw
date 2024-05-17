@@ -21,7 +21,8 @@ import Data.Word
 import GHC.Generics (Generic)
 
 import Data.Slaw.Internal.SlawType
-import Data.Slaw.Internal.VectorConvert
+import Data.Slaw.Internal.Util
+-- import Data.Slaw.Internal.VectorConvert
 
 infixr 9 #>
 infixr 9 ##>
