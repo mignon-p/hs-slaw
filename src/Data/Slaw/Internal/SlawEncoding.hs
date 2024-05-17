@@ -104,7 +104,17 @@ encProtein :: (?bo::ByteOrder)
            -> Maybe Slaw
            -> L.ByteString
            -> Octs
-encProtein = undefined
+encProtein ing des rude =
+  let (iOcts, iBool) = encIngDes ing
+      (dOcts, dBool) = encIngDes des
+      rudeLen        = L.length rude
+      weeRude        = rudeLen <= 7
+      top5           = undefined -- mkTop5
+  in undefined
+
+encIngDes :: (?bo::ByteOrder) => Maybe Slaw -> (Octs, Bool)
+encIngDes Nothing  = (mempty,        False)
+encIngDes (Just s) = (encodeSlaw1 s, True)
 
 encSym :: (?bo::ByteOrder, Enum a) => a -> Octs
 encSym = encSymbol . fromIntegral . fromEnum
