@@ -8,6 +8,8 @@ module Data.Slaw.Internal.SlawType
   , Symbol
   , describeSlaw
   , removeDups
+  , extractNumeric
+  , restoreNumeric
   ) where
 
 import Control.Arrow (second)
@@ -257,38 +259,39 @@ removeDups pairs = map (second snd) l4
 catNumeric :: NumericFormat -> [NumericData] -> Slaw
 catNumeric nf nds = SlawNumeric nf' nd
   where
+    bo          = nativeByteOrder
     nf'         = nf { nfArray = True }
-    pairs       = map extractNumeric nds
+    pairs       = map (extractNumeric bo) nds
     (typs, bss) = unzip pairs
     typ0        = head typs
     sameType    = all (== typ0) typs
     nd          = if sameType
-                  then restoreNumeric typ0 $ mconcat bss
+                  then restoreNumeric bo typ0 $ mconcat bss
                   else listToNum $ concatMap numToList nds
 
-extractNumeric :: NumericData -> (NumericType, B.ByteString)
-extractNumeric (NumInt8   v) = (TypInt8  , vToBs nativeByteOrder v)
-extractNumeric (NumInt16  v) = (TypInt16 , vToBs nativeByteOrder v)
-extractNumeric (NumInt32  v) = (TypInt32 , vToBs nativeByteOrder v)
-extractNumeric (NumInt64  v) = (TypInt64 , vToBs nativeByteOrder v)
-extractNumeric (NumUnt8   v) = (TypUnt8  , vToBs nativeByteOrder v)
-extractNumeric (NumUnt16  v) = (TypUnt16 , vToBs nativeByteOrder v)
-extractNumeric (NumUnt32  v) = (TypUnt32 , vToBs nativeByteOrder v)
-extractNumeric (NumUnt64  v) = (TypUnt64 , vToBs nativeByteOrder v)
-extractNumeric (NumFloat  v) = (TypFloat , vToBs nativeByteOrder v)
-extractNumeric (NumDouble v) = (TypDouble, vToBs nativeByteOrder v)
+extractNumeric :: ByteOrder -> NumericData -> (NumericType, B.ByteString)
+extractNumeric bo (NumInt8   v) = (TypInt8  , vToBs bo v)
+extractNumeric bo (NumInt16  v) = (TypInt16 , vToBs bo v)
+extractNumeric bo (NumInt32  v) = (TypInt32 , vToBs bo v)
+extractNumeric bo (NumInt64  v) = (TypInt64 , vToBs bo v)
+extractNumeric bo (NumUnt8   v) = (TypUnt8  , vToBs bo v)
+extractNumeric bo (NumUnt16  v) = (TypUnt16 , vToBs bo v)
+extractNumeric bo (NumUnt32  v) = (TypUnt32 , vToBs bo v)
+extractNumeric bo (NumUnt64  v) = (TypUnt64 , vToBs bo v)
+extractNumeric bo (NumFloat  v) = (TypFloat , vToBs bo v)
+extractNumeric bo (NumDouble v) = (TypDouble, vToBs bo v)
 
-restoreNumeric :: NumericType -> B.ByteString -> NumericData
-restoreNumeric TypInt8   bs = NumInt8   (bsToV nativeByteOrder bs)
-restoreNumeric TypInt16  bs = NumInt16  (bsToV nativeByteOrder bs)
-restoreNumeric TypInt32  bs = NumInt32  (bsToV nativeByteOrder bs)
-restoreNumeric TypInt64  bs = NumInt64  (bsToV nativeByteOrder bs)
-restoreNumeric TypUnt8   bs = NumUnt8   (bsToV nativeByteOrder bs)
-restoreNumeric TypUnt16  bs = NumUnt16  (bsToV nativeByteOrder bs)
-restoreNumeric TypUnt32  bs = NumUnt32  (bsToV nativeByteOrder bs)
-restoreNumeric TypUnt64  bs = NumUnt64  (bsToV nativeByteOrder bs)
-restoreNumeric TypFloat  bs = NumFloat  (bsToV nativeByteOrder bs)
-restoreNumeric TypDouble bs = NumDouble (bsToV nativeByteOrder bs)
+restoreNumeric :: ByteOrder -> NumericType -> B.ByteString -> NumericData
+restoreNumeric bo TypInt8   bs = NumInt8   (bsToV bo bs)
+restoreNumeric bo TypInt16  bs = NumInt16  (bsToV bo bs)
+restoreNumeric bo TypInt32  bs = NumInt32  (bsToV bo bs)
+restoreNumeric bo TypInt64  bs = NumInt64  (bsToV bo bs)
+restoreNumeric bo TypUnt8   bs = NumUnt8   (bsToV bo bs)
+restoreNumeric bo TypUnt16  bs = NumUnt16  (bsToV bo bs)
+restoreNumeric bo TypUnt32  bs = NumUnt32  (bsToV bo bs)
+restoreNumeric bo TypUnt64  bs = NumUnt64  (bsToV bo bs)
+restoreNumeric bo TypFloat  bs = NumFloat  (bsToV bo bs)
+restoreNumeric bo TypDouble bs = NumDouble (bsToV bo bs)
 
 data NumElem = ElemInt    !Integer
              | ElemFloat  !Float
