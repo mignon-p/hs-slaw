@@ -402,7 +402,11 @@ intCoerce (ElemFloat  x) = round x -- shouldn't happen
 intCoerce (ElemDouble x) = round x -- shouldn't happen
 
 floatCoerce :: NumElem -> Float
-floatCoerce = undefined
+floatCoerce (ElemInt    x) = fromInteger  x
+floatCoerce (ElemFloat  x) = x
+floatCoerce (ElemDouble x) = double2Float x -- shouldn't happen
 
 doubleCoerce :: NumElem -> Double
-doubleCoerce = undefined
+doubleCoerce (ElemInt    x) = fromInteger  x
+doubleCoerce (ElemFloat  x) = float2Double x
+doubleCoerce (ElemDouble x) = x
