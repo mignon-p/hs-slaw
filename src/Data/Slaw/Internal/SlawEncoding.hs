@@ -174,8 +174,8 @@ computePad len =
      then (q, r)
      else (q + 1, 8 - r)
 
-upperBits :: NumericFormat -> NumericData -> Int
-upperBits nf nd = sum [ bsize - 1
+upperBits :: NumericFormat -> NumericType -> Int
+upperBits nf nt = sum [ bsize - 1
                       , vectBits `shiftL` 8
                       , cplxBit  `shiftL` 11
                       , sizBits  `shiftL` 12
@@ -184,7 +184,7 @@ upperBits nf nd = sum [ bsize - 1
                       , 1        `shiftL` 17
                       ]
   where arrayBit   = (fromEnum . nfArray) nf
-        (typ, siz) = classifyNumeric nd
+        (typ, siz) = classifyNumeric nt
         fuBits     = fromEnum typ
         sizBits    = " 01 2   3" #! siz
         cplxBit    = (fromEnum . nfComplex) nf
@@ -196,17 +196,17 @@ computeBsize nf size = size * cplxSize * vectSize
   where cplxSize = if nfComplex nf then 2 else 1
         vectSize = "123448@P" #! fromEnum (nfVector nf)
 
-classifyNumeric :: NumericData -> (NumTyp, Int)
-classifyNumeric (NumInt8   _) = (NumTypSigned,   1)
-classifyNumeric (NumInt16  _) = (NumTypSigned,   2)
-classifyNumeric (NumInt32  _) = (NumTypSigned,   4)
-classifyNumeric (NumInt64  _) = (NumTypSigned,   8)
-classifyNumeric (NumUnt8   _) = (NumTypUnsigned, 1)
-classifyNumeric (NumUnt16  _) = (NumTypUnsigned, 2)
-classifyNumeric (NumUnt32  _) = (NumTypUnsigned, 4)
-classifyNumeric (NumUnt64  _) = (NumTypUnsigned, 8)
-classifyNumeric (NumFloat  _) = (NumTypFloat,    4)
-classifyNumeric (NumDouble _) = (NumTypFloat,    8)
+classifyNumeric :: NumericType -> (NumTyp, Int)
+classifyNumeric TypInt8   = (NumTypSigned  , 1)
+classifyNumeric TypInt16  = (NumTypSigned  , 2)
+classifyNumeric TypInt32  = (NumTypSigned  , 4)
+classifyNumeric TypInt64  = (NumTypSigned  , 8)
+classifyNumeric TypUnt8   = (NumTypUnsigned, 1)
+classifyNumeric TypUnt16  = (NumTypUnsigned, 2)
+classifyNumeric TypUnt32  = (NumTypUnsigned, 4)
+classifyNumeric TypUnt64  = (NumTypUnsigned, 8)
+classifyNumeric TypFloat  = (NumTypFloat   , 4)
+classifyNumeric TypDouble = (NumTypFloat   , 8)
 
 (#!) :: (Integral a, Integral b) => B.ByteString -> a -> b
 bs #! idx = fromIntegral $ (bs `B.index` fromIntegral idx) - 48

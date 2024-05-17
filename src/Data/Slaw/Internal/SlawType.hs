@@ -8,6 +8,7 @@ module Data.Slaw.Internal.SlawType
   , Symbol
   , describeSlaw
   , removeDups
+  , NumericType(..)
   , extractNumeric
   , restoreNumeric
   ) where
