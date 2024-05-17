@@ -322,7 +322,16 @@ doubleToList :: S.Vector Double -> [NumElem]
 doubleToList = map ElemDouble . S.toList
 
 listToNum :: [NumElem] -> NumericData
-listToNum = undefined
+listToNum nes =
+  let range = foldl' addToRange (baseRange nes) nes
+      typ   = typeFromRange range
+  in undefined
+
+baseRange :: [NumElem] -> NumRange
+baseRange []                 = RangeInt 0 0 -- shouldn't happen
+baseRange (ElemInt    x : _) = RangeInt x x
+baseRange (ElemFloat  _ : _) = RangeFloat
+baseRange (ElemDouble _ : _) = RangeDouble
 
 addToRange :: NumRange -> NumElem -> NumRange
 addToRange RangeDouble      _              = RangeDouble
@@ -340,3 +349,37 @@ addToRange (RangeInt lo hi) (ElemFloat _)
 
 fitsInFloat :: Integer -> Bool
 fitsInFloat x = abs x <= 0x1_00_00_00
+
+typeFromRange :: NumRange -> NumericType
+typeFromRange RangeFloat  = TypFloat
+typeFromRange RangeDouble = TypDouble
+typeFromRange (RangeInt lo hi) =
+  case find (checkRange lo hi) ranges of
+    Nothing       -> TypDouble
+    Just (_, typ) -> typ
+
+checkRange :: Integer
+           -> Integer
+           -> ((Integer, Integer), a)
+           -> Bool
+checkRange lo hi ((lo', hi'), _) = lo >= lo' && hi <= hi'
+
+ranges :: [((Integer, Integer), NumericType)]
+ranges =
+  [ mkRange (0 :: Word8 ) TypUnt8
+  , mkRange (0 :: Word16) TypUnt16
+  , mkRange (0 :: Word32) TypUnt32
+  , mkRange (0 :: Word64) TypUnt64
+  , mkRange (0 :: Int8  ) TypInt8
+  , mkRange (0 :: Int16 ) TypInt16
+  , mkRange (0 :: Int32 ) TypInt32
+  , mkRange (0 :: Int64 ) TypInt64
+  ]
+
+mkRange :: (Integral a, Bounded a)
+        => a
+        -> NumericType
+        -> ((Integer, Integer), NumericType)
+mkRange dummy typ = ((toInteger lo, toInteger hi), typ)
+  where lo = minBound `asTypeOf` dummy
+        hi = maxBound `asTypeOf` dummy
