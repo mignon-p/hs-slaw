@@ -105,12 +105,37 @@ encProtein :: (?bo::ByteOrder)
            -> L.ByteString
            -> Octs
 encProtein des ing rude =
-  let (dOcts, dBool) = encDesIng des
-      (iOcts, iBool) = encDesIng ing
-      rudeLen        = L.length rude
-      weeRude        = rudeLen <= 7
-      top5           = undefined -- mkTop5
-  in undefined
+  let (dOcts, dBool)    = encDesIng des
+      (iOcts, iBool)    = encDesIng ing
+      rudeLen           = L.length rude
+      weeRude           = rudeLen <= 7
+      top5              = mkTop5 dBool iBool (not weeRude)
+      (h2Oct, rudeOcts) = encP2 weeRude (fromIntegral rudeLen) top5 rude
+      body              = mconcat [h2Oct, dOcts, iOcts, rudeOcts]
+      octLen            = 1 + oLen body
+      oLenLo            = octLen .&. 0xf
+      oLenHi            = (octLen .&. complement 0xf) `shiftL` 4
+      splitLen          = oLenHi .|. oLenLo
+      hOct              = encHeader (NibProtein #> splitLen)
+  in hOct <> body
+
+encP2 :: (?bo::ByteOrder)
+      => Bool
+      -> Word64
+      -> Word64
+      -> L.ByteString
+      -> (Octs, Octs)
+encP2 True  rudeLen top5 rude =
+  (encHeader' (rudeLen ##> top5) (L.toStrict rude), mempty)
+encP2 False rudeLen top5 rude =
+  (encHeader  (rudeLen .|. top5), (fst . padLbs) rude)
+
+mkTop5 :: Bool -> Bool -> Bool -> Word64
+mkTop5 dFlag iFlag bigRude =
+  sum [ if dFlag   then bit 62 else 0
+      , if iFlag   then bit 61 else 0
+      , if bigRude then bit 59 else 0
+      ]
 
 encDesIng :: (?bo::ByteOrder) => Maybe Slaw -> (Octs, Bool)
 encDesIng Nothing  = (mempty,        False)
