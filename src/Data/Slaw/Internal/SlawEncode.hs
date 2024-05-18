@@ -1,6 +1,6 @@
 {-# LANGUAGE ImplicitParams             #-}
 
-module Data.Slaw.Internal.SlawEncoding
+module Data.Slaw.Internal.SlawEncode
   ( ByteOrder(..)     -- re-export
   , nativeByteOrder   -- re-export
   , oppositeByteOrder -- re-export

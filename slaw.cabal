@@ -53,7 +53,7 @@ library
                      , Data.Slaw.Internal.VectorConvert
                      , Data.Slaw.Internal.NumericTypes
                      , Data.Slaw.Internal.SlawType
-                     , Data.Slaw.Internal.SlawEncoding
+                     , Data.Slaw.Internal.SlawEncode
                      , Data.Slaw.Internal.SlawConvert
 
   -- Modules included in this library but not exported.
