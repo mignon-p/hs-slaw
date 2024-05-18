@@ -88,7 +88,7 @@ encodeSlaw' :: ByteOrder -> Slaw -> R.Builder
 encodeSlaw' bo s = let ?bo = bo in oBld $ encodeSlaw1 s
 
 encodeSlaw1 :: (?bo::ByteOrder) => Slaw -> Octs
-encodeSlaw1 (SlawProteinRude ing des rude) = encProtein ing des rude
+encodeSlaw1 (SlawProteinRude des ing rude) = encProtein des ing rude
 encodeSlaw1 (SlawBool        b           ) = encSym     b
 encodeSlaw1  SlawNil                       = encSym     SymNil
 encodeSlaw1 (SlawError       _           ) = encSym     SymError
@@ -104,17 +104,17 @@ encProtein :: (?bo::ByteOrder)
            -> Maybe Slaw
            -> L.ByteString
            -> Octs
-encProtein ing des rude =
-  let (iOcts, iBool) = encIngDes ing
-      (dOcts, dBool) = encIngDes des
+encProtein des ing rude =
+  let (dOcts, dBool) = encDesIng des
+      (iOcts, iBool) = encDesIng ing
       rudeLen        = L.length rude
       weeRude        = rudeLen <= 7
       top5           = undefined -- mkTop5
   in undefined
 
-encIngDes :: (?bo::ByteOrder) => Maybe Slaw -> (Octs, Bool)
-encIngDes Nothing  = (mempty,        False)
-encIngDes (Just s) = (encodeSlaw1 s, True)
+encDesIng :: (?bo::ByteOrder) => Maybe Slaw -> (Octs, Bool)
+encDesIng Nothing  = (mempty,        False)
+encDesIng (Just s) = (encodeSlaw1 s, True)
 
 encSym :: (?bo::ByteOrder, Enum a) => a -> Octs
 encSym = encSymbol . fromIntegral . fromEnum

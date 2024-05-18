@@ -51,8 +51,8 @@ data Slaw = SlawProteinRude (Maybe Slaw) (Maybe Slaw) L.ByteString
           deriving (Eq, Ord, Show, Generic, NFData, Hashable)
 
 pattern SlawProtein :: Maybe Slaw -> Maybe Slaw -> Slaw
-pattern SlawProtein ing des <- SlawProteinRude ing des _ where
-  SlawProtein ing des = SlawProteinRude ing des L.empty
+pattern SlawProtein des ing <- SlawProteinRude des ing _ where
+  SlawProtein des ing = SlawProteinRude des ing L.empty
 
 {-# COMPLETE SlawProtein, SlawBool, SlawNil, SlawSymbol, SlawString, SlawList, SlawMap, SlawCons, SlawNumeric, SlawError #-}
 
