@@ -5,7 +5,12 @@ module Data.Slaw.Internal.SlawEncode
   , nativeByteOrder   -- re-export
   , oppositeByteOrder -- re-export
   , encodeSlaw
-  , decodeSlaw
+  , Nib(..)
+  , Sym(..)
+  , NumTyp(..)
+  , Oct
+  , computeBsize
+  , classifyNumeric
   ) where
 
 import Control.DeepSeq
@@ -276,6 +281,3 @@ classifyNumeric TypDouble = (NumTypFloat   , 8)
 
 (#!) :: (Integral a, Integral b) => B.ByteString -> a -> b
 bs #! idx = fromIntegral $ (bs `B.index` fromIntegral idx) - 48
-
-decodeSlaw :: ByteOrder -> L.ByteString -> Slaw
-decodeSlaw = undefined

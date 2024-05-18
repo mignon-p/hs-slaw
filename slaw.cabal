@@ -54,6 +54,7 @@ library
                      , Data.Slaw.Internal.NumericTypes
                      , Data.Slaw.Internal.SlawType
                      , Data.Slaw.Internal.SlawEncode
+                     , Data.Slaw.Internal.SlawDecode
                      , Data.Slaw.Internal.SlawConvert
 
   -- Modules included in this library but not exported.
@@ -90,4 +91,4 @@ library
   -- Base language which the package is written in.
   default-language:    Haskell2010
 
-  ghc-options:         -Wall -Wno-unused-do-bind -Wno-incomplete-uni-patterns -Wno-unused-top-binds
+  ghc-options:         -Wall -Wno-unused-do-bind -Wno-incomplete-uni-patterns -Wno-unused-top-binds -Wno-unused-imports
