@@ -212,10 +212,12 @@ sym2slaw SymError = SlawError msg
   where msg = "(The result of round-tripping a previously detected error)"
 
 lenWstr :: Oct -> Either String (Word64, Word)
-lenWstr = undefined
+lenWstr o = do
+  checkBits [(59, "reserved")] o
+  return (1, penultimateNibble o)
 
 decWstr :: Oct -> Special -> Input -> Either String Slaw
-decWstr = undefined
+decWstr _ spec _ = (Right . SlawString . trimNul . L.fromStrict) spec
 
 lenList :: Oct -> Either String (Word64, Word)
 lenList = undefined
@@ -260,6 +262,16 @@ decUnk o _ inp = mkErr inp [unkMsg o]
 unkMsg :: Oct -> String
 unkMsg o = printf "Most-significant nibble is reserved value 0x%x" nib
   where nib = o `shiftR` 60
+
+penultimateNibble :: Integral a => Oct -> a
+penultimateNibble o = fromIntegral $ 0xf .&. (o `shiftR` 56)
+
+-- If the string ends in a NUL byte (which it should), remove it.
+trimNul :: L.ByteString -> L.ByteString
+trimNul lbs =
+  case L.unsnoc lbs of
+    Just (lbs', 0) -> lbs'
+    _              -> lbs
 
 checkBits :: [(Int, String)] -> Oct -> Either String ()
 checkBits pairs o =
