@@ -103,14 +103,14 @@ data NibInfo = NibInfo
   }
 
 nibInfo :: Nib -> NibInfo
-nibInfo NibSwappedProtein = NibInfo "protein"    lenPro' decPro'
-nibInfo NibProtein        = NibInfo "protein"    lenPro  decPro
-nibInfo NibSymbol         = NibInfo "symbol"     lenSym  decSym
-nibInfo NibWeeString      = NibInfo "wee string" lenWstr decWstr
-nibInfo NibList           = NibInfo "list"       lenList decList
-nibInfo NibMap            = NibInfo "map"        lenMap  decMap
-nibInfo NibCons           = NibInfo "cons"       lenCons decCons
-nibInfo NibFullString     = NibInfo "string"     lenStr  decStr
+nibInfo NibSwappedProtein = NibInfo "protein"    lenPro'      decPro'
+nibInfo NibProtein        = NibInfo "protein"    lenPro       decPro
+nibInfo NibSymbol         = NibInfo "symbol"     lenSym       decSym
+nibInfo NibWeeString      = NibInfo "wee string" lenWstr      decWstr
+nibInfo NibList           = NibInfo "list"       lenContainer decList
+nibInfo NibMap            = NibInfo "map"        lenContainer decMap
+nibInfo NibCons           = NibInfo "cons"       lenCons      decCons
+nibInfo NibFullString     = NibInfo "string"     lenStr       decStr
 nibInfo NibSingleSint  = NibInfo "signed numeric"
                          (lenNum False) (decNum (False, NumTypSigned))
 nibInfo NibSingleUint  = NibInfo "unsigned numeric"
@@ -218,23 +218,61 @@ lenWstr o = do
 decWstr :: Oct -> Special -> Input -> Either String Slaw
 decWstr _ spec _ = (Right . SlawString . trimNul . L.fromStrict) spec
 
-lenList :: Oct -> Either String (Word64, Word)
-lenList = undefined
-
 decList :: Oct -> Special -> Input -> Either String Slaw
-decList = undefined
+decList o _ inp = do
+  let nElems0 = penultimateNibble o
+  (nElems, inp') <- if nElems0 < 15
+                    then return (nElems0, inp)
+                    else longerLen inp
+  return $ SlawList $ decodeSequence nElems 0 inp'
 
-lenMap :: Oct -> Either String (Word64, Word)
-lenMap = undefined
+decodeSequence :: Word64 -> Word64 -> Input -> [Slaw]
+decodeSequence !nElems !idx inp =
+  let exhausted = (L.null . iLbs) inp
+      finished  = idx >= nElems
+      slawE xs  = [ (SlawError . fmtErr inp) xs ]
+  in case (exhausted, finished) of
+       (True, True)  -> []
+       (False, True) -> slawE [ "There should have been "
+                              , show nElems
+                              , " elements, but there "
+                              , "are more than that"
+                              ]
+       (True, False) -> slawE [ "Expected "
+                              , show nElems
+                              , " elements, but only got "
+                              , show idx
+                              ]
+       (False, False) ->
+         case decodeSlaw1 inp of
+           Left msg        -> [SlawError msg]
+           Right (s, inp') -> s : decodeSequence nElems (idx + 1) inp'
+
+longerLen :: Input -> Either String (Word64, Input)
+longerLen inp = do
+  (inp1, inp2) <- inp // 1
+  let bs = (L.toStrict . iLbs) inp1
+  return (decodeOct (iBo inp1) bs, inp2)
 
 decMap :: Oct -> Special -> Input -> Either String Slaw
 decMap = undefined
 
 lenCons :: Oct -> Either String (Word64, Word)
-lenCons = undefined
+lenCons o =
+  let nElems = penultimateNibble o
+  in if nElems /= (2 :: Int)
+     then Left $ concat [ "Cons should have 2 elements, "
+                        , "but claims to have "
+                        , show nElems
+                        , " elements"
+                        ]
+     else lenContainer o
 
 decCons :: Oct -> Special -> Input -> Either String Slaw
 decCons = undefined
+
+lenContainer :: Oct -> Either String (Word64, Word)
+lenContainer o = Right (lo56 o, 0)
 
 lenStr :: Oct -> Either String (Word64, Word)
 lenStr o = do
