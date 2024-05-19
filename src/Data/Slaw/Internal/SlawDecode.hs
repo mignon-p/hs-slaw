@@ -194,8 +194,7 @@ lenSym :: Oct -> Either String (Word64, Word)
 lenSym _ = Right (1, 0)
 
 decSym :: Oct -> Special -> Input -> Either String Slaw
-decSym o _ _ = Right $ symbol2slaw s
-  where s = o .&. complement 0xff00_0000_0000_0000
+decSym o _ _ = (Right . symbol2slaw . lo56) o
 
 symbol2slaw :: Symbol -> Slaw
 symbol2slaw s
@@ -213,7 +212,7 @@ sym2slaw SymError = SlawError msg
 
 lenWstr :: Oct -> Either String (Word64, Word)
 lenWstr o = do
-  checkBits [(59, "reserved")] o
+  checkBits stringReservedBit o
   return (1, penultimateNibble o)
 
 decWstr :: Oct -> Special -> Input -> Either String Slaw
@@ -238,10 +237,14 @@ decCons :: Oct -> Special -> Input -> Either String Slaw
 decCons = undefined
 
 lenStr :: Oct -> Either String (Word64, Word)
-lenStr = undefined
+lenStr o = do
+  checkBits stringReservedBit o
+  return (lo56 o, 0)
 
 decStr :: Oct -> Special -> Input -> Either String Slaw
-decStr = undefined
+decStr o _ inp = (Right . SlawString . trimNul) lbs
+  where padding = penultimateNibble o
+        lbs     = L.dropEnd padding (iLbs inp)
 
 lenNum :: Bool -> Oct -> Either String (Word64, Word)
 lenNum = undefined
@@ -262,6 +265,12 @@ decUnk o _ inp = mkErr inp [unkMsg o]
 unkMsg :: Oct -> String
 unkMsg o = printf "Most-significant nibble is reserved value 0x%x" nib
   where nib = o `shiftR` 60
+
+lo56 :: Oct -> Word64
+lo56 = (.&. complement 0xff00_0000_0000_0000)
+
+stringReservedBit :: [(Int, String)]
+stringReservedBit = [(59, "reserved")]
 
 penultimateNibble :: Integral a => Oct -> a
 penultimateNibble o = fromIntegral $ 0xf .&. (o `shiftR` 56)
