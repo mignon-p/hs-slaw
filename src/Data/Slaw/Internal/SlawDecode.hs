@@ -1,5 +1,3 @@
-{-# LANGUAGE ImplicitParams             #-}
-
 module Data.Slaw.Internal.SlawDecode
  ( decodeSlaw
  , decodeProtein
@@ -31,13 +29,15 @@ data Input = Input
   { iLbs ::                 L.ByteString
   , iOff :: {-# UNPACK #-} !Word64       -- byte offset into file/stream
   , iSrc ::                 String       -- name of file/stream
+  , iBo  ::                !ByteOrder
   }
 
-makeInput :: HasCallStack => String -> L.ByteString -> Input
-makeInput what lbs = Input { iLbs = lbs
-                           , iOff = 0
-                           , iSrc = what ++ extra
-                           }
+makeInput :: HasCallStack => ByteOrder -> String -> L.ByteString -> Input
+makeInput bo what lbs = Input { iLbs = lbs
+                              , iOff = 0
+                              , iSrc = what ++ extra
+                              , iBo  = bo
+                              }
   where extra = case getCallStack callStack of
                   (func, loc) : _ ->
                     " passed to " ++ func ++ " at " ++ prettySrcLoc loc
@@ -117,14 +117,15 @@ handleSlawResult (Right (s, _)) = s
 
 decodeSlaw :: HasCallStack => ByteOrder -> L.ByteString -> Slaw
 decodeSlaw bo lbs = withFrozenCallStack $
-  let ?bo = bo in handleSlawResult $ decodeSlaw1 $ makeInput "slaw" lbs
+  handleSlawResult $ decodeSlaw1 $ makeInput bo "slaw" lbs
 
-decodeSlaw1 :: (?bo::ByteOrder) => Input -> Either String (Slaw, Input)
+decodeSlaw1 :: Input -> Either String (Slaw, Input)
 decodeSlaw1 = undefined
 
 decodeProtein :: L.ByteString -> Slaw
 decodeProtein lbs = withFrozenCallStack $
-  handleSlawResult $ decodeProtein1 $ makeInput "protein" lbs
+  handleSlawResult $ decodeProtein1 $ makeInput bo "protein" lbs
+  where bo = nativeByteOrder
 
 decodeProtein1 :: Input -> Either String (Slaw, Input)
 decodeProtein1 inp = do
@@ -134,10 +135,7 @@ decodeProtein1 inp = do
               (NibSwappedProtein, NibProtein) -> return LittleEndian
               (NibProtein, NibSwappedProtein) -> return BigEndian
               _                               -> proteinErr inp
-  decodeProtein2 bo inp
-
-decodeProtein2 :: ByteOrder -> Input -> Either String (Slaw, Input)
-decodeProtein2 bo inp = let ?bo = bo in decProtein inp
+  decodeSlaw1 $ inp { iBo = bo }
 
 proteinErr :: Input -> Either String a
 proteinErr inp =
@@ -145,9 +143,6 @@ proteinErr inp =
       msg    = "does not appear to be a protein"
       msg'   = intercalate " " (bites ++ [msg])
   in mkErr inp [msg']
-
-decProtein :: (?bo::ByteOrder) => Input -> Either String (Slaw, Input)
-decProtein = undefined
 
 lenPro' :: Oct -> Either String (Word64, Word)
 lenPro' = undefined
