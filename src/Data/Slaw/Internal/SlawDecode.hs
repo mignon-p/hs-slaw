@@ -191,10 +191,25 @@ decPro :: Oct -> Special -> Input -> Either String Slaw
 decPro = undefined
 
 lenSym :: Oct -> Either String (Word64, Word)
-lenSym = undefined
+lenSym _ = Right (1, 0)
 
 decSym :: Oct -> Special -> Input -> Either String Slaw
-decSym = undefined
+decSym o _ _ = Right $ symbol2slaw s
+  where s = o .&. complement 0xff00_0000_0000_0000
+
+symbol2slaw :: Symbol -> Slaw
+symbol2slaw s
+  | s <= maxSymbol = sym2slaw $ toEnum $ fromIntegral s
+  | otherwise      = SlawSymbol s
+  where maxSym    = maxBound :: Sym
+        maxSymbol = (fromIntegral . fromEnum) maxSym
+
+sym2slaw :: Sym -> Slaw
+sym2slaw SymFalse = SlawBool False
+sym2slaw SymTrue  = SlawBool True
+sym2slaw SymNil   = SlawNil
+sym2slaw SymError = SlawError msg
+  where msg = "(The result of round-tripping a previously detected error)"
 
 lenWstr :: Oct -> Either String (Word64, Word)
 lenWstr = undefined
@@ -237,10 +252,14 @@ decNum :: (Bool, NumTyp)
 decNum = undefined
 
 lenUnk :: Oct -> Either String (Word64, Word)
-lenUnk = undefined
+lenUnk = Left . unkMsg
 
 decUnk :: Oct -> Special -> Input -> Either String Slaw
-decUnk = undefined
+decUnk o _ inp = mkErr inp [unkMsg o]
+
+unkMsg :: Oct -> String
+unkMsg o = printf "Most-significant nibble is reserved value 0x%x" nib
+  where nib = o `shiftR` 60
 
 numMap :: M.Map (NumTyp, Int) NumericType
 numMap = M.fromList $ map f [minBound..maxBound]
