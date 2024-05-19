@@ -153,10 +153,11 @@ proteinErr inp =
   in mkErr inp [msg']
 
 lenPro' :: Oct -> Either String (Word64, Word)
-lenPro' = undefined
+lenPro' = lenPro . byteSwap64
 
 decPro' :: Oct -> L.ByteString -> Input -> Either String Slaw
-decPro' = undefined
+decPro' o _ inp = decPro (byteSwap64 o) L.empty inp'
+  where inp' = inp { iBo = oppositeByteOrder (iBo inp) }
 
 lenPro :: Oct -> Either String (Word64, Word)
 lenPro = undefined
@@ -230,3 +231,18 @@ unclassifyNumeric pair@(t, nb) =
                      , (map toLower . drop 6 . show) t
                      , " not supported"
                      ]
+
+decodeOct :: ByteOrder -> L.ByteString -> Oct
+decodeOct bo lbs = sum xs
+  where xs      = zipWith f (L.unpack lbs) (bitPositions bo)
+        f x pos = fromIntegral x `shiftL` pos
+
+bitPositions :: ByteOrder -> [Int]
+bitPositions LittleEndian = [0,8..56]
+bitPositions BigEndian    = [56,48..0]
+
+getSpecial :: ByteOrder -> L.ByteString -> Word -> L.ByteString
+getSpecial _            _   0 = L.empty
+getSpecial LittleEndian lbs n = L.take (fromIntegral n) lbs
+getSpecial BigEndian    lbs n = L.take (fromIntegral n) lbs'
+  where lbs' = L.drop (8 - fromIntegral n) lbs
