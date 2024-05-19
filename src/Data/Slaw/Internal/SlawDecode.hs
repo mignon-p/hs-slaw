@@ -12,11 +12,12 @@ import qualified Data.ByteString.Builder as R
 import qualified Data.ByteString.Lazy    as L
 import Data.Hashable
 import Data.Int
--- import Data.List
+import Data.List
 -- import qualified Data.Vector.Storable    as S
 import Data.Word
 import GHC.Generics (Generic)
 import GHC.Stack
+import Text.Printf
 
 import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
@@ -67,14 +68,51 @@ inp // nOcts =
                     ]
      else Right (inp1, inp2)
 
-decodeSlaw :: ByteOrder -> L.ByteString -> Slaw
-decodeSlaw = undefined
+getNib :: Oct -> Nib
+getNib o = toEnum $ fromIntegral $ o `shiftR` 60
+
+getNib8 :: Word8 -> Nib
+getNib8 o = toEnum $ fromIntegral $ o `shiftR` 4
+
+ethMay :: Maybe a -> Either String a
+ethMay Nothing  = Left "decoding error"
+ethMay (Just x) = Right x
+
+handleSlawResult :: Either String (Slaw, a) -> Slaw
+handleSlawResult (Left  msg   ) = SlawError msg
+handleSlawResult (Right (s, _)) = s
+
+decodeSlaw :: HasCallStack => ByteOrder -> L.ByteString -> Slaw
+decodeSlaw bo lbs = withFrozenCallStack $
+  let ?bo = bo in handleSlawResult $ decodeSlaw1 $ makeInput "slaw" lbs
 
 decodeSlaw1 :: (?bo::ByteOrder) => Input -> Either String (Slaw, Input)
 decodeSlaw1 = undefined
 
 decodeProtein :: L.ByteString -> Slaw
-decodeProtein = undefined
+decodeProtein lbs = withFrozenCallStack $
+  handleSlawResult $ decodeProtein1 $ makeInput "protein" lbs
 
 decodeProtein1 :: Input -> Either String (Slaw, Input)
-decodeProtein1 = undefined
+decodeProtein1 inp = do
+  (o, _) <- inp // 1
+  byte0  <- ethMay $ iLbs o L.!? 0
+  byte7  <- ethMay $ iLbs o L.!? 7
+  bo     <- case (getNib8 byte0, getNib8 byte7) of
+              (NibSwappedProtein, NibProtein) -> return LittleEndian
+              (NibProtein, NibSwappedProtein) -> return BigEndian
+              _                               -> proteinErr o
+  decodeProtein2 bo inp
+
+decodeProtein2 :: ByteOrder -> Input -> Either String (Slaw, Input)
+decodeProtein2 bo inp = let ?bo = bo in decProtein inp
+
+proteinErr :: Input -> Either String a
+proteinErr inp =
+  let bites  = map (printf "%02X") $ L.unpack (iLbs inp)
+      msg    = "does not appear to be a protein"
+      msg'   = intercalate " " (bites ++ [msg])
+  in mkErr inp [msg']
+
+decProtein :: (?bo::ByteOrder) => Input -> Either String (Slaw, Input)
+decProtein = undefined
