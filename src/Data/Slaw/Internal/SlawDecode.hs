@@ -221,28 +221,35 @@ numMap :: M.Map (NumTyp, Int) NumericType
 numMap = M.fromList $ map f [minBound..maxBound]
   where f nt = (classifyNumeric nt, nt)
 
-unclassifyNumeric :: (NumTyp, Int) -> Either String NumericType
+unclassifyNumeric :: (NumTyp, Int) -> Either [String] NumericType
 unclassifyNumeric pair@(t, nb) =
   case pair `M.lookup` numMap of
     Just nt -> Right nt
     Nothing -> Left msg
-  where msg = concat [ show (8 * nb)
-                     , "-bit "
-                     , (map toLower . drop 6 . show) t
-                     , " not supported"
-                     ]
+  where msg = [ show (8 * nb)
+              , "-bit "
+              , (map toLower . drop 6 . show) t
+              , " not supported"
+              ]
 
-decodeOct :: ByteOrder -> L.ByteString -> Oct
+decodeOct :: ByteOrder -> B.ByteString -> Oct
 decodeOct bo lbs = sum xs
-  where xs      = zipWith f (L.unpack lbs) (bitPositions bo)
+  where xs      = zipWith f (B.unpack lbs) (bitPositions bo)
         f x pos = fromIntegral x `shiftL` pos
 
 bitPositions :: ByteOrder -> [Int]
 bitPositions LittleEndian = [0,8..56]
 bitPositions BigEndian    = [56,48..0]
 
-getSpecial :: ByteOrder -> L.ByteString -> Word -> L.ByteString
-getSpecial _            _   0 = L.empty
-getSpecial LittleEndian lbs n = L.take (fromIntegral n) lbs
-getSpecial BigEndian    lbs n = L.take (fromIntegral n) lbs'
-  where lbs' = L.drop (8 - fromIntegral n) lbs
+getSpecial :: ByteOrder -> B.ByteString -> Word -> B.ByteString
+getSpecial _            _   0 = B.empty
+getSpecial LittleEndian lbs n = B.take (fromIntegral n) lbs
+getSpecial BigEndian    lbs n = B.take (fromIntegral n) lbs'
+  where lbs' = B.drop (8 - fromIntegral n) lbs
+
+showOct :: Oct -> String
+showOct o = printf "%04X_%04X_%04X_%04X" (f 3) (f 2) (f 1) (f 0)
+  where f = get16 o
+
+get16 :: Oct -> Int -> Word16
+get16 o n = fromIntegral $ o `shiftR` (n * 16)
