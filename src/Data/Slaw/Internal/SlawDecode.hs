@@ -261,6 +261,34 @@ unkMsg :: Oct -> String
 unkMsg o = printf "Most-significant nibble is reserved value 0x%x" nib
   where nib = o `shiftR` 60
 
+checkBits :: [(Int, String)] -> Oct -> Either String ()
+checkBits pairs o =
+  let badBits    = filter f pairs
+      f (pos, _) = o `testBit` pos
+  in case badBits of
+       []    -> Right ()
+       [_]   -> Left $ bitMsg "bit"  "was"  " "  badBits
+       [_,_] -> Left $ bitMsg "bits" "were" " "  badBits
+       _     -> Left $ bitMsg "bits" "were" ", " badBits
+
+bitMsg :: String -> String -> String -> [(Int, String)] -> String
+bitMsg noun verb sep pairs = (ucFirst . concat . reverse) revStrs
+  where
+    revPairs = reverse pairs
+    bm0      = bitMsg0 noun
+    sfx      = " " ++ verb ++ " unexpectedly set"
+    revStrs  = zipWith bm0 revPairs [sfx, sep ++ "and ", cycle sep]
+
+bitMsg0 :: String -> (Int, String) -> String -> String
+bitMsg0 noun (pos, desc) sep = concat [ noun
+                                      , " "
+                                      , show pos
+                                      , optDesc desc
+                                      , sep
+                                      ]
+  where optDesc "" = ""
+        optDesc x  = " (" ++ x ++ ")"
+
 numMap :: M.Map (NumTyp, Int) NumericType
 numMap = M.fromList $ map f [minBound..maxBound]
   where f nt = (classifyNumeric nt, nt)

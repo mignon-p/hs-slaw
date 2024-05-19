@@ -6,8 +6,10 @@ module Data.Slaw.Internal.Util
   , oppositeByteOrder
   , float2Double -- re-export
   , double2Float -- re-export
+  , ucFirst
   ) where
 
+import Data.Char
 import Data.Hashable
 import GHC.ByteOrder
 import GHC.Float
@@ -30,3 +32,7 @@ nativeByteOrder = targetByteOrder
 oppositeByteOrder :: ByteOrder -> ByteOrder
 oppositeByteOrder BigEndian    = LittleEndian
 oppositeByteOrder LittleEndian = BigEndian
+
+ucFirst :: String -> String
+ucFirst [] = []
+ucFirst (x:rest) = toUpper x : rest
