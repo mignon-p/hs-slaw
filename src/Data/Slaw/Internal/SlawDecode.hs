@@ -219,15 +219,18 @@ decWstr :: Oct -> Special -> Input -> Either String Slaw
 decWstr _ spec _ = (Right . SlawString . trimNul . L.fromStrict) spec
 
 decList :: Oct -> Special -> Input -> Either String Slaw
-decList o _ inp = do
+decList o _ inp = SlawList <$> decodeSequence0 "list" o inp
+
+decodeSequence0 :: String -> Oct -> Input -> Either String [Slaw]
+decodeSequence0 what o inp = do
   let nElems0 = penultimateNibble o
   (nElems, inp') <- if nElems0 < 15
                     then return (nElems0, inp)
                     else longerLen inp
-  return $ SlawList $ decodeSequence nElems 0 inp'
+  return $ decodeSequence what nElems 0 inp'
 
-decodeSequence :: Word64 -> Word64 -> Input -> [Slaw]
-decodeSequence !nElems !idx inp =
+decodeSequence :: String -> Word64 -> Word64 -> Input -> [Slaw]
+decodeSequence what !nElems !idx inp =
   let exhausted = (L.null . iLbs) inp
       finished  = idx >= nElems
       slawE xs  = [ (SlawError . fmtErr inp) xs ]
@@ -235,18 +238,22 @@ decodeSequence !nElems !idx inp =
        (True, True)  -> []
        (False, True) -> slawE [ "There should have been "
                               , show nElems
-                              , " elements, but there "
-                              , "are more than that"
+                              , " elements in "
+                              , what
+                              , ", but there are more than that"
                               ]
        (True, False) -> slawE [ "Expected "
                               , show nElems
-                              , " elements, but only got "
+                              , " elements in "
+                              , what
+                              , ", but only got "
                               , show idx
                               ]
        (False, False) ->
          case decodeSlaw1 inp of
            Left msg        -> [SlawError msg]
-           Right (s, inp') -> s : decodeSequence nElems (idx + 1) inp'
+           Right (s, inp') ->
+             s : decodeSequence what nElems (idx + 1) inp'
 
 longerLen :: Input -> Either String (Word64, Input)
 longerLen inp = do
@@ -255,7 +262,15 @@ longerLen inp = do
   return (decodeOct (iBo inp1) bs, inp2)
 
 decMap :: Oct -> Special -> Input -> Either String Slaw
-decMap = undefined
+decMap o _ inp = do
+  elems <- decodeSequence0 "map" o inp
+  return $ SlawMap $ zipWith cons2Pair elems [0..]
+
+cons2Pair :: Slaw -> Word64 -> (Slaw, Slaw)
+cons2Pair (SlawCons car cdr) _ = (car, cdr)
+cons2Pair s@(SlawError _)    _ = (s,   s  )
+cons2Pair s                  n = (SlawError msg, s)
+  where msg = printf "Element %u of map was not a cons" n
 
 lenCons :: Oct -> Either String (Word64, Word)
 lenCons o =
