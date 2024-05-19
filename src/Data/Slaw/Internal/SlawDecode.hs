@@ -8,9 +8,11 @@ import Data.Bits
 import qualified Data.ByteString         as B
 import qualified Data.ByteString.Builder as R
 import qualified Data.ByteString.Lazy    as L
+import Data.Char
 import Data.Hashable
 import Data.Int
 import Data.List
+import qualified Data.Map.Strict         as M
 -- import qualified Data.Vector.Storable    as S
 import Data.Word
 import GHC.Generics (Generic)
@@ -103,13 +105,19 @@ nibInfo NibList           = NibInfo "list"       lenList decList
 nibInfo NibMap            = NibInfo "map"        lenMap  decMap
 nibInfo NibCons           = NibInfo "cons"       lenCons decCons
 nibInfo NibFullString     = NibInfo "string"     lenStr  decStr
-nibInfo NibSingleSint     = NibInfo "signed numeric"         lenNum decNum
-nibInfo NibSingleUint     = NibInfo "unsigned numeric"       lenNum decNum
-nibInfo NibSingleFloat    = NibInfo "floating-point numeric" lenNum decNum
-nibInfo NibArraySint      = NibInfo "signed array"           lenNum decNum
-nibInfo NibArrayUint      = NibInfo "unsigned array"         lenNum decNum
-nibInfo NibArrayFloat     = NibInfo "floating-point array"   lenNum decNum
-nibInfo _                 = NibInfo "unknown slaw"           lenUnk decUnk
+nibInfo NibSingleSint  = NibInfo "signed numeric"
+                         (lenNum False) (decNum (False, NumTypSigned))
+nibInfo NibSingleUint  = NibInfo "unsigned numeric"
+                         (lenNum False) (decNum (False, NumTypUnsigned))
+nibInfo NibSingleFloat = NibInfo "floating-point numeric"
+                         (lenNum False) (decNum (False, NumTypFloat))
+nibInfo NibArraySint   = NibInfo "signed array"
+                         (lenNum True)  (decNum (True,  NumTypSigned))
+nibInfo NibArrayUint   = NibInfo "unsigned array"
+                         (lenNum True)  (decNum (True,  NumTypUnsigned))
+nibInfo NibArrayFloat  = NibInfo "floating-point array"
+                         (lenNum True)  (decNum (True,  NumTypFloat))
+nibInfo _              = NibInfo "unknown slaw"  lenUnk  decUnk
 
 handleSlawResult :: Either String (Slaw, a) -> Slaw
 handleSlawResult (Left  msg   ) = SlawError msg
@@ -192,10 +200,14 @@ lenStr = undefined
 decStr :: Oct -> L.ByteString -> Input -> Either String Slaw
 decStr = undefined
 
-lenNum :: Oct -> Either String (Word64, Word)
+lenNum :: Bool -> Oct -> Either String (Word64, Word)
 lenNum = undefined
 
-decNum :: Oct -> L.ByteString -> Input -> Either String Slaw
+decNum :: (Bool, NumTyp)
+       -> Oct
+       -> L.ByteString
+       -> Input
+       -> Either String Slaw
 decNum = undefined
 
 lenUnk :: Oct -> Either String (Word64, Word)
@@ -203,3 +215,18 @@ lenUnk = undefined
 
 decUnk :: Oct -> L.ByteString -> Input -> Either String Slaw
 decUnk = undefined
+
+numMap :: M.Map (NumTyp, Int) NumericType
+numMap = M.fromList $ map f [minBound..maxBound]
+  where f nt = (classifyNumeric nt, nt)
+
+unclassifyNumeric :: (NumTyp, Int) -> Either String NumericType
+unclassifyNumeric pair@(t, nb) =
+  case pair `M.lookup` numMap of
+    Just nt -> Right nt
+    Nothing -> Left msg
+  where msg = concat [ show (8 * nb)
+                     , "-bit "
+                     , (map toLower . drop 6 . show) t
+                     , " not supported"
+                     ]
