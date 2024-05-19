@@ -25,6 +25,7 @@ import Data.Slaw.Internal.Util
 -- import Data.Slaw.Internal.VectorConvert
 
 infix 5 //
+infix 5 !?
 
 data Input = Input
   { iLbs ::                 L.ByteString
@@ -74,9 +75,41 @@ getNib o = toEnum $ fromIntegral $ o `shiftR` 60
 getNib8 :: Word8 -> Nib
 getNib8 o = toEnum $ fromIntegral $ o `shiftR` 4
 
-ethMay :: Maybe a -> Either String a
-ethMay Nothing  = Left "decoding error"
-ethMay (Just x) = Right x
+(!?) :: Input -> Word64 -> Either String Word8
+inp !? idx =
+  let lbs  = iLbs inp
+      idx' = fromIntegral idx
+  in case lbs L.!? idx' of
+       Just w8 -> Right w8
+       Nothing -> mkErr inp [ "tried to get byte "
+                            , show idx
+                            , " but only "
+                            , show (L.length lbs)
+                            , " bytes were present"
+                            ]
+
+data NibInfo = NibInfo
+  { niName   :: String
+  , niLen    :: Oct -> Either String (Word64, Word)
+  , niDecode :: Oct -> L.ByteString -> Input -> Either String Slaw
+  }
+
+nibInfo :: Nib -> NibInfo
+nibInfo NibSwappedProtein = NibInfo "protein"    lenPro' decPro'
+nibInfo NibProtein        = NibInfo "protein"    lenPro  decPro
+nibInfo NibSymbol         = NibInfo "symbol"     lenSym  decSym
+nibInfo NibWeeString      = NibInfo "wee string" lenWstr decWstr
+nibInfo NibList           = NibInfo "list"       lenList decList
+nibInfo NibMap            = NibInfo "map"        lenMap  decMap
+nibInfo NibCons           = NibInfo "cons"       lenCons decCons
+nibInfo NibFullString     = NibInfo "string"     lenStr  decStr
+nibInfo NibSingleSint     = NibInfo "signed numeric"         lenNum decNum
+nibInfo NibSingleUint     = NibInfo "unsigned numeric"       lenNum decNum
+nibInfo NibSingleFloat    = NibInfo "floating-point numeric" lenNum decNum
+nibInfo NibArraySint      = NibInfo "signed array"           lenNum decNum
+nibInfo NibArrayUint      = NibInfo "unsigned array"         lenNum decNum
+nibInfo NibArrayFloat     = NibInfo "floating-point array"   lenNum decNum
+nibInfo _                 = NibInfo "unknown slaw"           lenUnk decUnk
 
 handleSlawResult :: Either String (Slaw, a) -> Slaw
 handleSlawResult (Left  msg   ) = SlawError msg
@@ -95,13 +128,12 @@ decodeProtein lbs = withFrozenCallStack $
 
 decodeProtein1 :: Input -> Either String (Slaw, Input)
 decodeProtein1 inp = do
-  (o, _) <- inp // 1
-  byte0  <- ethMay $ iLbs o L.!? 0
-  byte7  <- ethMay $ iLbs o L.!? 7
+  byte0  <- inp !? 0
+  byte7  <- inp !? 7
   bo     <- case (getNib8 byte0, getNib8 byte7) of
               (NibSwappedProtein, NibProtein) -> return LittleEndian
               (NibProtein, NibSwappedProtein) -> return BigEndian
-              _                               -> proteinErr o
+              _                               -> proteinErr inp
   decodeProtein2 bo inp
 
 decodeProtein2 :: ByteOrder -> Input -> Either String (Slaw, Input)
@@ -109,10 +141,70 @@ decodeProtein2 bo inp = let ?bo = bo in decProtein inp
 
 proteinErr :: Input -> Either String a
 proteinErr inp =
-  let bites  = map (printf "%02X") $ L.unpack (iLbs inp)
+  let bites  = map (printf "%02X") $ L.unpack $ L.take 8 $ iLbs inp
       msg    = "does not appear to be a protein"
       msg'   = intercalate " " (bites ++ [msg])
   in mkErr inp [msg']
 
 decProtein :: (?bo::ByteOrder) => Input -> Either String (Slaw, Input)
 decProtein = undefined
+
+lenPro' :: Oct -> Either String (Word64, Word)
+lenPro' = undefined
+
+decPro' :: Oct -> L.ByteString -> Input -> Either String Slaw
+decPro' = undefined
+
+lenPro :: Oct -> Either String (Word64, Word)
+lenPro = undefined
+
+decPro :: Oct -> L.ByteString -> Input -> Either String Slaw
+decPro = undefined
+
+lenSym :: Oct -> Either String (Word64, Word)
+lenSym = undefined
+
+decSym :: Oct -> L.ByteString -> Input -> Either String Slaw
+decSym = undefined
+
+lenWstr :: Oct -> Either String (Word64, Word)
+lenWstr = undefined
+
+decWstr :: Oct -> L.ByteString -> Input -> Either String Slaw
+decWstr = undefined
+
+lenList :: Oct -> Either String (Word64, Word)
+lenList = undefined
+
+decList :: Oct -> L.ByteString -> Input -> Either String Slaw
+decList = undefined
+
+lenMap :: Oct -> Either String (Word64, Word)
+lenMap = undefined
+
+decMap :: Oct -> L.ByteString -> Input -> Either String Slaw
+decMap = undefined
+
+lenCons :: Oct -> Either String (Word64, Word)
+lenCons = undefined
+
+decCons :: Oct -> L.ByteString -> Input -> Either String Slaw
+decCons = undefined
+
+lenStr :: Oct -> Either String (Word64, Word)
+lenStr = undefined
+
+decStr :: Oct -> L.ByteString -> Input -> Either String Slaw
+decStr = undefined
+
+lenNum :: Oct -> Either String (Word64, Word)
+lenNum = undefined
+
+decNum :: Oct -> L.ByteString -> Input -> Either String Slaw
+decNum = undefined
+
+lenUnk :: Oct -> Either String (Word64, Word)
+lenUnk = undefined
+
+decUnk :: Oct -> L.ByteString -> Input -> Either String Slaw
+decUnk = undefined
