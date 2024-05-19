@@ -4,6 +4,7 @@ module Data.Slaw.Internal.SlawDecode
  ) where
 
 import Control.DeepSeq
+import Control.Monad
 import Data.Bits
 import qualified Data.ByteString         as B
 import qualified Data.ByteString.Builder as R
@@ -27,6 +28,8 @@ import Data.Slaw.Internal.Util
 infix 5 //
 infix 5 !?
 
+type Special = B.ByteString
+
 data Input = Input
   { iLbs ::                 L.ByteString
   , iOff :: {-# UNPACK #-} !Word64       -- byte offset into file/stream
@@ -46,7 +49,10 @@ makeInput bo what lbs = Input { iLbs = lbs
                   _               -> ""
 
 mkErr :: Input -> [String] -> Either String a
-mkErr inp ss = Left $ concat $ ss ++ ss'
+mkErr inp ss = Left $ fmtErr inp ss
+
+fmtErr :: Input -> [String] -> String
+fmtErr inp ss = concat $ ss ++ ss'
   where ss' = [ ", at byte offset "
               , show (iOff inp)
               , " of "
@@ -93,7 +99,7 @@ inp !? idx =
 data NibInfo = NibInfo
   { niName   :: String
   , niLen    :: Oct -> Either String (Word64, Word)
-  , niDecode :: Oct -> L.ByteString -> Input -> Either String Slaw
+  , niDecode :: Oct -> Special -> Input -> Either String Slaw
   }
 
 nibInfo :: Nib -> NibInfo
@@ -128,7 +134,26 @@ decodeSlaw bo lbs = withFrozenCallStack $
   handleSlawResult $ decodeSlaw1 $ makeInput bo "slaw" lbs
 
 decodeSlaw1 :: Input -> Either String (Slaw, Input)
-decodeSlaw1 = undefined
+decodeSlaw1 inp = do
+  (hdr, rest) <- inp // 1
+  let hdrBs = (L.toStrict . iLbs) hdr
+      bo    = iBo hdr
+      oHdr  = decodeOct bo hdrBs
+      nib   = getNib oHdr
+      info  = nibInfo nib
+      ctx   = [ "in "
+              , niName info
+              , " (header oct "
+              , showOct oHdr
+              , "), "
+              ]
+  (octLen, nSpecial) <- withMore (addCtx hdr ctx) $ niLen info oHdr
+  let special = getSpecial bo hdrBs nSpecial
+  when (octLen == 0) $ mkErr inp $ ctx ++ ["octlen of 0 is not allowed"]
+  (body, leftover) <- withMore (addCtx rest ctx) $ rest // (octLen - 1)
+  case niDecode info oHdr special body of
+    Left msg -> Right (SlawError $ concat $ ctx ++ [msg], leftover)
+    Right s  -> Right (s, leftover)
 
 decodeProtein :: L.ByteString -> Slaw
 decodeProtein lbs = withFrozenCallStack $
@@ -155,50 +180,50 @@ proteinErr inp =
 lenPro' :: Oct -> Either String (Word64, Word)
 lenPro' = lenPro . byteSwap64
 
-decPro' :: Oct -> L.ByteString -> Input -> Either String Slaw
-decPro' o _ inp = decPro (byteSwap64 o) L.empty inp'
+decPro' :: Oct -> Special -> Input -> Either String Slaw
+decPro' o _ inp = decPro (byteSwap64 o) mempty inp'
   where inp' = inp { iBo = oppositeByteOrder (iBo inp) }
 
 lenPro :: Oct -> Either String (Word64, Word)
 lenPro = undefined
 
-decPro :: Oct -> L.ByteString -> Input -> Either String Slaw
+decPro :: Oct -> Special -> Input -> Either String Slaw
 decPro = undefined
 
 lenSym :: Oct -> Either String (Word64, Word)
 lenSym = undefined
 
-decSym :: Oct -> L.ByteString -> Input -> Either String Slaw
+decSym :: Oct -> Special -> Input -> Either String Slaw
 decSym = undefined
 
 lenWstr :: Oct -> Either String (Word64, Word)
 lenWstr = undefined
 
-decWstr :: Oct -> L.ByteString -> Input -> Either String Slaw
+decWstr :: Oct -> Special -> Input -> Either String Slaw
 decWstr = undefined
 
 lenList :: Oct -> Either String (Word64, Word)
 lenList = undefined
 
-decList :: Oct -> L.ByteString -> Input -> Either String Slaw
+decList :: Oct -> Special -> Input -> Either String Slaw
 decList = undefined
 
 lenMap :: Oct -> Either String (Word64, Word)
 lenMap = undefined
 
-decMap :: Oct -> L.ByteString -> Input -> Either String Slaw
+decMap :: Oct -> Special -> Input -> Either String Slaw
 decMap = undefined
 
 lenCons :: Oct -> Either String (Word64, Word)
 lenCons = undefined
 
-decCons :: Oct -> L.ByteString -> Input -> Either String Slaw
+decCons :: Oct -> Special -> Input -> Either String Slaw
 decCons = undefined
 
 lenStr :: Oct -> Either String (Word64, Word)
 lenStr = undefined
 
-decStr :: Oct -> L.ByteString -> Input -> Either String Slaw
+decStr :: Oct -> Special -> Input -> Either String Slaw
 decStr = undefined
 
 lenNum :: Bool -> Oct -> Either String (Word64, Word)
@@ -206,7 +231,7 @@ lenNum = undefined
 
 decNum :: (Bool, NumTyp)
        -> Oct
-       -> L.ByteString
+       -> Special
        -> Input
        -> Either String Slaw
 decNum = undefined
@@ -214,7 +239,7 @@ decNum = undefined
 lenUnk :: Oct -> Either String (Word64, Word)
 lenUnk = undefined
 
-decUnk :: Oct -> L.ByteString -> Input -> Either String Slaw
+decUnk :: Oct -> Special -> Input -> Either String Slaw
 decUnk = undefined
 
 numMap :: M.Map (NumTyp, Int) NumericType
@@ -241,7 +266,7 @@ bitPositions :: ByteOrder -> [Int]
 bitPositions LittleEndian = [0,8..56]
 bitPositions BigEndian    = [56,48..0]
 
-getSpecial :: ByteOrder -> B.ByteString -> Word -> B.ByteString
+getSpecial :: ByteOrder -> B.ByteString -> Word -> Special
 getSpecial _            _   0 = B.empty
 getSpecial LittleEndian lbs n = B.take (fromIntegral n) lbs
 getSpecial BigEndian    lbs n = B.take (fromIntegral n) lbs'
@@ -253,3 +278,13 @@ showOct o = printf "%04X_%04X_%04X_%04X" (f 3) (f 2) (f 1) (f 0)
 
 get16 :: Oct -> Int -> Word16
 get16 o n = fromIntegral $ o `shiftR` (n * 16)
+
+withMore :: (String -> String) -> Either String a -> Either String a
+withMore f (Left msg)  = Left (f msg)
+withMore _ x@(Right _) = x
+
+addCtx :: Input -> [String] -> String -> String
+addCtx inp ss s = fmtErr inp (ss ++ [s])
+
+addCtx' :: [String] -> String -> String
+addCtx' ss s = concat (ss ++ [s])
