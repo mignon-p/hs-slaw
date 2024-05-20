@@ -202,7 +202,40 @@ lenPro o = do
   return (octLen, 0)
 
 decPro :: Oct -> Special -> Input -> Either String Slaw
-decPro = undefined
+decPro _ _ inp = do
+  (hdr2, inp') <- inp // 1
+  let h2bs    = L.toStrict $ iLbs hdr2
+      bo      = iBo hdr2
+      hdrOct2 = decodeOct bo h2bs
+      tb      = testBit hdrOct2
+      bigRude = tb 59
+      hasIng  = tb 61
+      hasDes  = tb 62
+  withMore (addCtxPrev inp []) $ checkBits [(63, "nonstandard")] hdrOct2
+  let (rudeBytes, rudeOcts) =
+        if bigRude
+        then let rudeLen = hdrOct2 .&. 0x07ff_ffff_ffff_ffff
+             in (rudeLen, (rudeLen + 7) `div` 8)
+        else (msb3lsb hdrOct2, 0)
+      nOcts = (L.length . iLbs) inp' `div` 8
+  (body, rude) <- inp' // fromIntegral nOcts - rudeOcts
+  let rb1      = fromIntegral rudeBytes
+      rb2      = fromIntegral rudeBytes
+      rudeData =
+        if bigRude
+        then L.take rb1   $ iLbs rude
+        else L.fromStrict $ getSpecial bo h2bs rb2
+      slawx    = decodeSequence "protein" Nothing 0 body
+      barf msg = mkErr body [msg]
+  (des, ing) <- case (hasDes, hasIng, slawx) of
+                  (True, True,  (d:i:_)) -> Right (Just d, Just i)
+                  (True, False, (d:_  )) -> Right (Just d, Nothing)
+                  (False, True, (i:_  )) -> Right (Nothing, Just i)
+                  (True, True,  [_]    ) -> barf "no ingests"
+                  (True, _,     []     ) -> barf "no descrips"
+                  (False, True, []     ) -> barf "no ingests"
+                  _                      -> Right (Nothing, Nothing)
+  return $ SlawProteinRude des ing rudeData
 
 lenSym :: Oct -> Either String (Word64, Word)
 lenSym o = do
