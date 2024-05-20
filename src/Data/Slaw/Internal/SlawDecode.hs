@@ -194,13 +194,20 @@ decPro' o _ inp = decPro (byteSwap64 o) mempty inp'
   where inp' = inp { iBo = oppositeByteOrder (iBo inp) }
 
 lenPro :: Oct -> Either String (Word64, Word)
-lenPro = undefined
+lenPro o = do
+  checkBits (map (,"") [4..7]) o
+  let hi52   = (o .&. 0x0fff_ffff_ffff_ff00) `shiftR` 4
+      lo4    = o .&. 0xf
+      octLen = (hi52 .|. lo4)
+  return (octLen, 0)
 
 decPro :: Oct -> Special -> Input -> Either String Slaw
 decPro = undefined
 
 lenSym :: Oct -> Either String (Word64, Word)
-lenSym _ = Right (1, 0)
+lenSym o = do
+  checkBits (map (,"") [56..59]) o
+  return (1, 0)
 
 decSym :: Oct -> Special -> Input -> Either String Slaw
 decSym o _ _ = (Right . symbol2slaw . lo56) o
