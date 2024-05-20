@@ -6,6 +6,9 @@ module Data.Slaw.Internal.SlawType
   , NumericData(..)
   , VectorType(..)
   , Symbol
+  , Utf8Str
+  , RudeData
+  , BinarySlaw
   , describeSlaw
   , removeDups
   , NumericType(..)
@@ -36,13 +39,16 @@ import System.IO.Unsafe (unsafePerformIO)
 import Data.Slaw.Internal.Util
 import Data.Slaw.Internal.VectorConvert
 
-type Symbol = Word64
+type Symbol     = Word64
+type Utf8Str    = L.ByteString
+type RudeData   = L.ByteString
+type BinarySlaw = L.ByteString
 
-data Slaw = SlawProteinRude (Maybe Slaw) (Maybe Slaw) L.ByteString
+data Slaw = SlawProteinRude (Maybe Slaw) (Maybe Slaw) RudeData
           | SlawBool        !Bool
           | SlawNil
           | SlawSymbol      !Symbol
-          | SlawString      L.ByteString -- UTF-8 encoded
+          | SlawString      Utf8Str
           | SlawList        [Slaw]
           | SlawMap         [(Slaw, Slaw)]
           | SlawCons        Slaw Slaw
@@ -212,7 +218,7 @@ doCat chkFunc catFunc ss =
     Left msg -> SlawError msg
     Right xs -> catFunc   xs
 
-getString :: Slaw -> Either String L.ByteString
+getString :: Slaw -> Either String Utf8Str
 getString (SlawString lbs) = Right lbs
 getString (SlawError  msg) = Left msg
 getString s                = Left $ "string" `cantCat` describeSlaw s
@@ -236,7 +242,7 @@ getNumeric _   (SlawError   msg  ) = Left msg
 getNumeric nf0  s                  =
   Left $ dnf nf0 `cantCat` describeSlaw s
 
-catStrings :: [L.ByteString] -> Slaw
+catStrings :: [Utf8Str] -> Slaw
 catStrings = SlawString . mconcat
 
 catLists :: [[Slaw]] -> Slaw

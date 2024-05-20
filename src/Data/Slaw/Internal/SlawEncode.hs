@@ -86,7 +86,7 @@ nib #> wrd = wrd .|. (nib' `shiftL` 60)
 (##>) :: Integral a => a -> Oct -> Oct
 bite ##> wrd = wrd .|. (fromIntegral bite `shiftL` 56)
 
-encodeSlaw :: ByteOrder -> Slaw -> L.ByteString
+encodeSlaw :: ByteOrder -> Slaw -> BinarySlaw
 encodeSlaw bo = R.toLazyByteString . encodeSlaw' bo
 
 encodeSlaw' :: ByteOrder -> Slaw -> R.Builder

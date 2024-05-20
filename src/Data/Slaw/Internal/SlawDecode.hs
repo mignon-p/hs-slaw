@@ -138,7 +138,7 @@ handleSlawResult :: Either String (Slaw, a) -> Slaw
 handleSlawResult (Left  msg   ) = SlawError msg
 handleSlawResult (Right (s, _)) = s
 
-decodeSlaw :: HasCallStack => ByteOrder -> L.ByteString -> Slaw
+decodeSlaw :: HasCallStack => ByteOrder -> BinarySlaw -> Slaw
 decodeSlaw bo lbs = withFrozenCallStack $
   handleSlawResult $ decodeSlaw1 $ makeInput bo "slaw" lbs
 
@@ -164,7 +164,7 @@ decodeSlaw1 inp = do
     Left msg -> Right (SlawError $ concat $ ctx ++ [msg], leftover)
     Right s  -> Right (s, leftover)
 
-decodeProtein :: L.ByteString -> Slaw
+decodeProtein :: HasCallStack => BinarySlaw -> Slaw
 decodeProtein lbs = withFrozenCallStack $
   handleSlawResult $ decodeProtein1 $ makeInput bo "protein" lbs
   where bo = nativeByteOrder
