@@ -150,7 +150,7 @@ encSym :: (?bo::ByteOrder, Enum a) => a -> Octs
 encSym = encSymbol . fromIntegral . fromEnum
 
 encSymbol :: (?bo::ByteOrder) => Symbol -> Octs
-encSymbol sym = encHeader (NibSymbol #> sym)
+encSymbol sym = encHeader (NibSymbol #> lo56 sym)
 
 encString :: (?bo::ByteOrder) => L.ByteString -> Octs
 encString lbs =

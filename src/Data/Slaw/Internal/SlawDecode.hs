@@ -59,6 +59,15 @@ fmtErr inp ss = concat $ ss ++ ss'
               , iSrc inp
               ]
 
+-- The decode functions take the header oct as a Word64, and they
+-- also get an Input which points to the word after the header oct.
+-- If they want to signal an error in the header oct itself, use
+-- this function, which indicates an error one oct before the
+-- current position of the Input.  (Yeah, this is a bit ugly.)
+fmtErrPrevOct :: Input -> [String] -> String
+fmtErrPrevOct inp ss = fmtErr inp' ss
+  where inp' = inp { iOff = iOff inp - 8 }
+
 (//) :: Input -> Word64 -> Either String (Input, Input)
 inp // nOcts =
   let nBytes       = nOcts * 8
@@ -109,7 +118,7 @@ nibInfo NibSymbol         = NibInfo "symbol"     lenSym       decSym
 nibInfo NibWeeString      = NibInfo "wee string" lenWstr      decWstr
 nibInfo NibList           = NibInfo "list"       lenContainer decList
 nibInfo NibMap            = NibInfo "map"        lenContainer decMap
-nibInfo NibCons           = NibInfo "cons"       lenCons      decCons
+nibInfo NibCons           = NibInfo "cons"       lenContainer decCons
 nibInfo NibFullString     = NibInfo "string"     lenStr       decStr
 nibInfo NibSingleSint  = NibInfo "signed numeric"
                          (lenNum False) (decNum (False, NumTypSigned))
@@ -211,39 +220,41 @@ sym2slaw SymError = SlawError msg
   where msg = "(The result of round-tripping a previously detected error)"
 
 lenWstr :: Oct -> Either String (Word64, Word)
-lenWstr o = do
-  checkBits stringReservedBit o
-  return (1, penultimateNibble o)
+lenWstr o = return (1, msb3lsb o)
 
 decWstr :: Oct -> Special -> Input -> Either String Slaw
-decWstr _ spec _ = (Right . SlawString . trimNul . L.fromStrict) spec
+decWstr o spec inp = do
+  withMore (addCtxPrev inp []) $ checkBits stringReservedBit o
+  (return . SlawString . trimNul . L.fromStrict) spec
 
 decList :: Oct -> Special -> Input -> Either String Slaw
-decList o _ inp = SlawList <$> decodeSequence0 "list" o inp
+decList o _ inp = SlawList <$> decodeSequence0 True "list" o inp
 
-decodeSequence0 :: String -> Oct -> Input -> Either String [Slaw]
-decodeSequence0 what o inp = do
+decodeSequence0 :: Bool -> String -> Oct -> Input -> Either String [Slaw]
+decodeSequence0 check what o inp = do
   let nElems0 = penultimateNibble o
   (nElems, inp') <- if nElems0 < 15
                     then return (nElems0, inp)
                     else longerLen inp
-  return $ decodeSequence what nElems 0 inp'
+  let nElems' = if check then Just nElems else Nothing
+  return $ decodeSequence what nElems' 0 inp'
 
-decodeSequence :: String -> Word64 -> Word64 -> Input -> [Slaw]
-decodeSequence what !nElems !idx inp =
+decodeSequence :: String -> Maybe Word64 -> Word64 -> Input -> [Slaw]
+decodeSequence what nElems !idx inp =
   let exhausted = (L.null . iLbs) inp
-      finished  = idx >= nElems
+      finished  = maybe exhausted (idx >=) nElems
       slawE xs  = [ (SlawError . fmtErr inp) xs ]
+      nElems'   = maybe "???" show nElems
   in case (exhausted, finished) of
        (True, True)  -> []
        (False, True) -> slawE [ "There should have been "
-                              , show nElems
+                              , nElems'
                               , " elements in "
                               , what
                               , ", but there are more than that"
                               ]
        (True, False) -> slawE [ "Expected "
-                              , show nElems
+                              , nElems'
                               , " elements in "
                               , what
                               , ", but only got "
@@ -263,7 +274,7 @@ longerLen inp = do
 
 decMap :: Oct -> Special -> Input -> Either String Slaw
 decMap o _ inp = do
-  elems <- decodeSequence0 "map" o inp
+  elems <- decodeSequence0 True "map" o inp
   return $ SlawMap $ zipWith cons2Pair elems [0..]
 
 cons2Pair :: Slaw -> Word64 -> (Slaw, Slaw)
@@ -272,32 +283,39 @@ cons2Pair s@(SlawError _)    _ = (s,   s  )
 cons2Pair s                  n = (SlawError msg, s)
   where msg = printf "Element %u of map was not a cons" n
 
-lenCons :: Oct -> Either String (Word64, Word)
-lenCons o =
-  let nElems = penultimateNibble o
-  in if nElems /= (2 :: Int)
-     then Left $ concat [ "Cons should have 2 elements, "
-                        , "but claims to have "
-                        , show nElems
-                        , " elements"
-                        ]
-     else lenContainer o
-
 decCons :: Oct -> Special -> Input -> Either String Slaw
-decCons = undefined
+decCons o _ inp = do
+  let nElems   = penultimateNibble o
+      butMsg   = "Cons should have 2 elements, but "
+      elements = " elements"
+  withMore (addCtx inp []) $ do
+    when (nElems /= (2 :: Int)) $ do
+      Left $ concat [ butMsg
+                    , "claims to have "
+                    , show nElems
+                    , elements
+                    ]
+    elems <- decodeSequence0 False "cons" o inp
+    case elems of
+      [car, cdr] -> return $ SlawCons car cdr
+      _ -> Left $ concat [ butMsg
+                         , "actually found "
+                         , show (length elems)
+                         , elements
+                         ]
 
 lenContainer :: Oct -> Either String (Word64, Word)
 lenContainer o = Right (lo56 o, 0)
 
 lenStr :: Oct -> Either String (Word64, Word)
-lenStr o = do
-  checkBits stringReservedBit o
-  return (lo56 o, 0)
+lenStr o = return (lo56 o, 0)
 
 decStr :: Oct -> Special -> Input -> Either String Slaw
-decStr o _ inp = (Right . SlawString . trimNul) lbs
-  where padding = penultimateNibble o
-        lbs     = L.dropEnd padding (iLbs inp)
+decStr o _ inp = do
+  let padding = msb3lsb o
+      lbs     = L.dropEnd padding (iLbs inp)
+  withMore (addCtxPrev inp []) $ checkBits stringReservedBit o
+  (return . SlawString . trimNul) lbs
 
 lenNum :: Bool -> Oct -> Either String (Word64, Word)
 lenNum = undefined
@@ -319,14 +337,16 @@ unkMsg :: Oct -> String
 unkMsg o = printf "Most-significant nibble is reserved value 0x%x" nib
   where nib = o `shiftR` 60
 
-lo56 :: Oct -> Word64
-lo56 = (.&. complement 0xff00_0000_0000_0000)
-
 stringReservedBit :: [(Int, String)]
 stringReservedBit = [(59, "reserved")]
 
+-- the 4 least significant bits of the most significant byte of an oct
 penultimateNibble :: Integral a => Oct -> a
-penultimateNibble o = fromIntegral $ 0xf .&. (o `shiftR` 56)
+penultimateNibble = fromIntegral . (.&. 0xf) . hi8
+
+-- the 3 least significant bits of the most significant byte of an oct
+msb3lsb :: Integral a => Oct -> a
+msb3lsb = fromIntegral . (.&. 7) . hi8
 
 -- If the string ends in a NUL byte (which it should), remove it.
 trimNul :: L.ByteString -> L.ByteString
@@ -409,3 +429,6 @@ addCtx inp ss s = fmtErr inp (ss ++ [s])
 
 addCtx' :: [String] -> String -> String
 addCtx' ss s = concat (ss ++ [s])
+
+addCtxPrev :: Input -> [String] -> String -> String
+addCtxPrev inp ss s = fmtErrPrevOct inp (ss ++ [s])
