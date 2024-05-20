@@ -325,7 +325,20 @@ decStr o _ inp = do
   (return . SlawString . trimNul) lbs
 
 lenNum :: Bool -> Oct -> Either String (Word64, Word)
-lenNum = undefined
+lenNum isArray o =
+  let bsize   = getBsize o
+      breadth = if isArray then getBreadth o else 1
+      byteLen = bsize * breadth
+      octLen  = 1 + (byteLen + 7) `div` 8
+  in if byteLen <= 4 && not isArray
+     then Right (1, fromIntegral byteLen)
+     else Right (octLen, 0)
+
+getBsize :: Oct -> Word64
+getBsize o = 1 + (0xff .&. (o `shiftR` 46))
+
+getBreadth :: Oct -> Word64
+getBreadth = (.&. 0x0000_3fff_ffff_ffff)
 
 decNum :: (Bool, NumTyp)
        -> Oct
