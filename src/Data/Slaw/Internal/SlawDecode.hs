@@ -327,7 +327,7 @@ decStr o _ inp = do
 lenNum :: Bool -> Oct -> Either String (Word64, Word)
 lenNum isArray o =
   let bsize   = getBsize o
-      breadth = if isArray then getBreadth o else 1
+      breadth = getBreadth isArray o
       byteLen = bsize * breadth
       octLen  = 1 + (byteLen + 7) `div` 8
   in if byteLen <= 4 && not isArray
@@ -337,15 +337,53 @@ lenNum isArray o =
 getBsize :: Oct -> Word64
 getBsize o = 1 + (0xff .&. (o `shiftR` 46))
 
-getBreadth :: Oct -> Word64
-getBreadth = (.&. 0x0000_3fff_ffff_ffff)
+getBreadth :: Bool -> Oct -> Word64
+getBreadth True  = (.&. 0x0000_3fff_ffff_ffff)
+getBreadth False = const 1
+
+getComplex :: Oct -> Bool
+getComplex = (`testBit` 57)
+
+getVtype :: Oct -> VectorType
+getVtype o = toEnum $ fromIntegral $ 7 .&. (o `shiftL` 54)
+
+getElemSize :: Oct -> Int
+getElemSize o = 1 `shiftL` fromIntegral (3 .&. (o `shiftL` 58))
 
 decNum :: (Bool, NumTyp)
        -> Oct
        -> Special
        -> Input
        -> Either String Slaw
-decNum = undefined
+decNum (isArray, typ) o special inp = do
+  withMore (addCtxPrev inp []) $ do
+    let bsize     = getBsize o
+        breadth   = getBreadth isArray o
+        byteLen   = bsize * breadth
+        isComplex = getComplex  o
+        vType     = getVtype    o
+        elemSize  = getElemSize o -- size in bytes (1, 2, 4, or 8)
+        nf        = NumericFormat isArray isComplex vType
+        bsize'    = computeBsize nf elemSize
+    when (bsize /= fromIntegral bsize') $
+      Left $ concat [ "Bsize is "
+                    , show bsize
+                    , ", but according to isComplex="
+                    , show isComplex
+                    , " vType="
+                    , show vType
+                    , " elemSize="
+                    , show elemSize
+                    , ", bsize should be "
+                    , show bsize'
+                    ]
+    nt <- unclassifyNumeric (typ, elemSize)
+    let bl = fromIntegral byteLen
+        bs = if | byteLen == 0                -> B.empty
+                | byteLen <= 4 && not isArray -> special
+                | otherwise -> (L.toStrict . L.take bl . iLbs) inp
+        nd = restoreNumeric (iBo inp) nt bs
+    return $ SlawNumeric nf nd
 
 lenUnk :: Oct -> Either String (Word64, Word)
 lenUnk = Left . unkMsg
@@ -407,11 +445,11 @@ numMap :: M.Map (NumTyp, Int) NumericType
 numMap = M.fromList $ map f [minBound..maxBound]
   where f nt = (classifyNumeric nt, nt)
 
-unclassifyNumeric :: (NumTyp, Int) -> Either [String] NumericType
+unclassifyNumeric :: (NumTyp, Int) -> Either String NumericType
 unclassifyNumeric pair@(t, nb) =
   case pair `M.lookup` numMap of
     Just nt -> Right nt
-    Nothing -> Left msg
+    Nothing -> Left $ concat msg
   where msg = [ show (8 * nb)
               , "-bit "
               , (map toLower . drop 6 . show) t
