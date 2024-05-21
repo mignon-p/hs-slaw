@@ -49,6 +49,7 @@ cabal-version:       >=1.10
 library
   -- Modules exported by the library.
   exposed-modules:     Data.Slaw.Internal.Util
+                     , Data.Slaw.Internal.String
                      , Data.Slaw.Internal.Exception
                      , Data.Slaw.Internal.VectorConvert
                      , Data.Slaw.Internal.NumericTypes
@@ -71,8 +72,10 @@ library
                      , TupleSections
 
   -- LANGUAGE extensions used by modules in this package.
-  other-extensions:    PatternSynonyms
+  other-extensions:    FlexibleInstances
+                     , ImplicitParams
                      , ScopedTypeVariables
+                     , TypeSynonymInstances
 
   -- Other library packages from which modules are imported.
   build-depends:       base                 >= 4.12      && < 5

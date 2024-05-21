@@ -4,7 +4,6 @@ module Data.Slaw.Internal.SlawType
   , NumericData(..)
   , VectorType(..)
   , Symbol
-  , Utf8Str
   , RudeData
   , BinarySlaw
   , describeSlaw
@@ -36,11 +35,11 @@ import GHC.Generics (Generic)
 import System.IO.Unsafe (unsafePerformIO)
 
 -- import Data.Slaw.Internal.Exception
+import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
 import Data.Slaw.Internal.VectorConvert
 
 type Symbol     = Word64
-type Utf8Str    = L.ByteString
 type RudeData   = L.ByteString
 type BinarySlaw = L.ByteString
 
