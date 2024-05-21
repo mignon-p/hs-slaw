@@ -1,5 +1,9 @@
 module Data.Slaw.Internal.Exception
-  ( PlasmaException(..)
+  ( DataSource(..)
+  , displayDataSource
+  , ErrLocation(..)
+  , displayErrLocation
+  , PlasmaException(..)
   , corruptSlaw
   , typeMismatch
   ) where
@@ -9,18 +13,54 @@ import Control.DeepSeq
 import Data.Default.Class
 import Data.Hashable
 import Data.Int
--- import Data.Word
+import Data.Word
 import GHC.Generics (Generic)
 import GHC.Stack
 
 import Data.Slaw.Internal.Util
 
+data DataSource = DsFile       { dsName  :: String }
+                | DsPool       { dsName  :: String
+                               , dsIndex :: Maybe Int64
+                               }
+                | DsOther      { dsName  :: String }
+                | DsNone
+                deriving (Eq, Ord, Show, Generic, NFData, Hashable)
+
+instance Default DataSource where
+  def = DsNone
+
+displayDataSource :: DataSource -> String
+displayDataSource DsNone                   = "unknown"
+displayDataSource (DsPool name  Nothing  ) = name
+displayDataSource (DsPool name (Just idx)) = name ++ "#" ++ show idx
+displayDataSource x                        = dsName x
+
+data ErrLocation = ErrLocation
+  { elSource :: DataSource
+  , elOffset :: Maybe Word64
+  } deriving (Eq, Ord, Show, Generic, NFData, Hashable)
+
+instance Default ErrLocation where
+  def = ErrLocation DsNone Nothing
+
+displayErrLocation :: ErrLocation -> String
+displayErrLocation (ErrLocation ds  Nothing  ) = displayDataSource ds
+displayErrLocation (ErrLocation ds (Just off)) =
+  displayDataSource ds ++ "@" ++ show off
+
+displayMaybeErrLocation :: String -> Maybe ErrLocation -> String
+displayMaybeErrLocation _    Nothing                            = ""
+displayMaybeErrLocation _   (Just (ErrLocation DsNone Nothing)) = ""
+displayMaybeErrLocation sep (Just loc)                          =
+  displayErrLocation loc ++ sep
+
 data PlasmaException = PlasmaException
   { peType      :: !PlasmaExceptionType
   , peRetort    :: Maybe Int64
   , peMessage   :: String
-  , peCallstack :: Maybe CallStack
-  , peFilename  :: Maybe String
+  , peCallstack :: Maybe CallStack   -- location of code
+  , peLocation  :: Maybe ErrLocation -- location of data
   } deriving (Show)
 
 instance Ord PlasmaException where
@@ -41,13 +81,11 @@ instance NFData PlasmaException where
     peRetort          x  `deepseq`
     peMessage         x  `deepseq`
     show (peCallstack x) `deepseq`
-    rnf  (peFilename  x)
+    rnf  (peLocation  x)
 
 instance Exception PlasmaException where
   displayException e =
-    let msg = case peFilename e of
-                Nothing -> peMessage e
-                Just fn -> fn ++ ": " ++ peMessage e
+    let msg = displayMaybeErrLocation ": " (peLocation e) ++ peMessage e
     in case peCallstack e of
          Nothing -> msg
          Just cs -> msg ++ "\n" ++ prettyCallStack cs
@@ -58,7 +96,7 @@ instance Default PlasmaException where
         , peRetort    = Nothing
         , peMessage   = ""
         , peCallstack = Nothing
-        , peFilename  = Nothing
+        , peLocation  = Nothing
         }
 
 data PlasmaExceptionType = EtCorruptSlaw
