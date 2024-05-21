@@ -48,24 +48,24 @@ makeInput bo what lbs = Input { iLbs = lbs
                     " passed to " ++ func ++ " at " ++ prettySrcLoc loc
                   _               -> ""
 
-mkErr :: Input -> [String] -> Either String a
-mkErr inp ss = Left $ fmtErr inp ss
+mkErr :: Input -> String -> Either String a
+mkErr inp = Left . fmtErr inp
 
-fmtErr :: Input -> [String] -> String
-fmtErr inp ss = concat $ ss ++ ss'
-  where ss' = [ ", at byte offset "
-              , show (iOff inp)
-              , " of "
-              , iSrc inp
-              ]
+fmtErr :: Input -> String -> String
+fmtErr inp s = concat $ s : ss
+  where ss = [ ", at byte offset "
+             , show (iOff inp)
+             , " of "
+             , iSrc inp
+             ]
 
 -- The decode functions take the header oct as a Word64, and they
 -- also get an Input which points to the word after the header oct.
 -- If they want to signal an error in the header oct itself, use
 -- this function, which indicates an error one oct before the
 -- current position of the Input.  (Yeah, this is a bit ugly.)
-fmtErrPrevOct :: Input -> [String] -> String
-fmtErrPrevOct inp ss = fmtErr inp' ss
+fmtErrPrevOct :: Input -> String -> String
+fmtErrPrevOct inp = fmtErr inp'
   where inp' = inp { iOff = iOff inp - 8 }
 
 (//) :: Input -> Word64 -> Either String (Input, Input)
@@ -79,11 +79,11 @@ inp // nOcts =
                          , iOff = iOff inp + nBytes
                          }
   in if lbs1Len /= nBytes'
-     then mkErr inp [ "expected "
-                    , show nBytes
-                    , " bytes but got "
-                    , show lbs1Len
-                    ]
+     then mkErr inp $ concat [ "expected "
+                             , show nBytes
+                             , " bytes but got "
+                             , show lbs1Len
+                             ]
      else Right (inp1, inp2)
 
 getNib :: Oct -> Nib
@@ -98,12 +98,12 @@ inp !? idx =
       idx' = fromIntegral idx
   in case lbs L.!? idx' of
        Just w8 -> Right w8
-       Nothing -> mkErr inp [ "tried to get byte "
-                            , show idx
-                            , " but only "
-                            , show (L.length lbs)
-                            , " bytes were present"
-                            ]
+       Nothing -> mkErr inp $ concat [ "tried to get byte "
+                                     , show idx
+                                     , " but only "
+                                     , show (L.length lbs)
+                                     , " bytes were present"
+                                     ]
 
 data NibInfo = NibInfo
   { niName   :: String
@@ -150,18 +150,18 @@ decodeSlaw1 inp = do
       oHdr  = decodeOct bo hdrBs
       nib   = getNib oHdr
       info  = nibInfo nib
-      ctx   = [ "in "
-              , niName info
-              , " (header oct "
-              , showOct oHdr
-              , "), "
-              ]
+      ctx   = concat [ "in "
+                     , niName info
+                     , " (header oct "
+                     , showOct oHdr
+                     , "), "
+                     ]
   (octLen, nSpecial) <- withMore (addCtx hdr ctx) $ niLen info oHdr
   let special = getSpecial bo hdrBs nSpecial
-  when (octLen == 0) $ mkErr inp $ ctx ++ ["octlen of 0 is not allowed"]
+  when (octLen == 0) $ mkErr inp $ ctx ++ "octlen of 0 is not allowed"
   (body, leftover) <- withMore (addCtx rest ctx) $ rest // (octLen - 1)
   case niDecode info oHdr special body of
-    Left msg -> Right (SlawError $ concat $ ctx ++ [msg], leftover)
+    Left msg -> Right (SlawError $ ctx ++ msg, leftover)
     Right s  -> Right (s, leftover)
 
 decodeProtein :: HasCallStack => BinarySlaw -> Slaw
@@ -184,7 +184,7 @@ proteinErr inp =
   let bites  = map (printf "%02X") $ L.unpack $ L.take 8 $ iLbs inp
       msg    = "does not appear to be a protein"
       msg'   = intercalate " " (bites ++ [msg])
-  in mkErr inp [msg']
+  in mkErr inp msg'
 
 lenPro' :: Oct -> Either String (Word64, Word)
 lenPro' = lenPro . byteSwap64
@@ -226,7 +226,7 @@ decPro _ _ inp = do
         then L.take rb1   $ iLbs rude
         else L.fromStrict $ getSpecial bo h2bs rb2
       slawx    = decodeSequence "protein" Nothing 0 body
-      barf msg = mkErr body [msg]
+      barf msg = mkErr body msg
   (des, ing) <- case (hasDes, hasIng, slawx) of
                   (True, True,  (d:i:_)) -> Right (Just d, Just i)
                   (True, False, (d:_  )) -> Right (Just d, Nothing)
@@ -283,7 +283,7 @@ decodeSequence :: String -> Maybe Word64 -> Word64 -> Input -> [Slaw]
 decodeSequence what nElems !idx inp =
   let exhausted = (L.null . iLbs) inp
       finished  = maybe exhausted (idx >=) nElems
-      slawE xs  = [ (SlawError . fmtErr inp) xs ]
+      slawE xs  = [ (SlawError . fmtErr inp . concat) xs ]
       nElems'   = maybe "???" show nElems
   in case (exhausted, finished) of
        (True, True)  -> []
@@ -422,7 +422,7 @@ lenUnk :: Oct -> Either String (Word64, Word)
 lenUnk = Left . unkMsg
 
 decUnk :: Oct -> Special -> Input -> Either String Slaw
-decUnk o _ inp = mkErr inp [unkMsg o]
+decUnk o _ inp = mkErr inp $ unkMsg o
 
 unkMsg :: Oct -> String
 unkMsg o = printf "Most-significant nibble is reserved value 0x%x" nib
@@ -515,8 +515,8 @@ withMore :: (String -> String) -> Either String a -> Either String a
 withMore f (Left msg)  = Left (f msg)
 withMore _ x@(Right _) = x
 
-addCtx :: Input -> [String] -> String -> String
-addCtx inp ss s = fmtErr inp (ss ++ [s])
+addCtx :: Input -> String -> String -> String
+addCtx inp ss s = fmtErr inp $ ss ++ s
 
 addCtxPrev :: Input -> [String] -> String -> String
-addCtxPrev inp ss s = fmtErrPrevOct inp (ss ++ [s])
+addCtxPrev inp ss s = fmtErrPrevOct inp $ concat (ss ++ [s])
