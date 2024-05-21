@@ -3,20 +3,20 @@ module Data.Slaw.Internal.SlawDecode
  , decodeProtein
  ) where
 
-import Control.DeepSeq
+-- import Control.DeepSeq
 import Control.Monad
 import Data.Bits
 import qualified Data.ByteString         as B
-import qualified Data.ByteString.Builder as R
+-- import qualified Data.ByteString.Builder as R
 import qualified Data.ByteString.Lazy    as L
 import Data.Char
-import Data.Hashable
-import Data.Int
+-- import Data.Hashable
+-- import Data.Int
 import Data.List
 import qualified Data.Map.Strict         as M
 -- import qualified Data.Vector.Storable    as S
 import Data.Word
-import GHC.Generics (Generic)
+-- import GHC.Generics (Generic)
 import GHC.Stack
 import Text.Printf
 
@@ -517,9 +517,6 @@ withMore _ x@(Right _) = x
 
 addCtx :: Input -> [String] -> String -> String
 addCtx inp ss s = fmtErr inp (ss ++ [s])
-
-addCtx' :: [String] -> String -> String
-addCtx' ss s = concat (ss ++ [s])
 
 addCtxPrev :: Input -> [String] -> String -> String
 addCtxPrev inp ss s = fmtErrPrevOct inp (ss ++ [s])
