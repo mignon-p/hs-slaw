@@ -22,11 +22,13 @@ import Control.DeepSeq
 import qualified Data.ByteString      as B
 import qualified Data.ByteString.Lazy as L
 -- import Data.Default.Class
+import Data.Containers.ListUtils (nubOrd)
 import Data.Hashable
 import qualified Data.HashMap.Strict     as HM
 import Data.Int
 import Data.List
 -- import qualified Data.Map.Strict      as M
+import Data.Maybe
 -- import qualified Data.Text            as T
 import qualified Data.Vector.Storable as S
 import Data.Word
@@ -201,6 +203,7 @@ catSlaw :: [Slaw] -> Slaw
 catSlaw []                        = SlawNil
 catSlaw [s]                       = s
 catSlaw (s@(SlawError   _)   : _) = s
+catSlaw ss@(SlawProteinRude _ _ _ : _) = doCat getProtein catProteins ss
 catSlaw ss@(SlawString  _    : _) = doCat getString       catStrings ss
 catSlaw ss@(SlawList    _    : _) = doCat getList         catLists   ss
 catSlaw ss@(SlawMap     _    : _) = doCat getMap          catMaps    ss
@@ -230,6 +233,7 @@ getList s                = Left $ "list" `cantCat` describeSlaw s
 
 getMap :: Slaw -> Either String [(Slaw, Slaw)]
 getMap (SlawMap   ss ) = Right ss
+getMap (SlawProteinRude _ (Just (SlawMap ss)) _) = Right ss
 getMap (SlawError msg) = Left msg
 getMap s               = Left $ "map" `cantCat` describeSlaw s
 
@@ -241,6 +245,28 @@ getNumeric nf0 (SlawNumeric nf nd) =
 getNumeric _   (SlawError   msg  ) = Left msg
 getNumeric nf0  s                  =
   Left $ dnf nf0 `cantCat` describeSlaw s
+
+getProtein :: Slaw -> Either String (Maybe Slaw, Maybe Slaw, RudeData)
+getProtein (SlawProteinRude des ing rude) = Right (des, ing, rude)
+getProtein s@(SlawMap   _           ) = Right (Nothing, Just s, mempty)
+getProtein (SlawError   msg         ) = Left msg
+getProtein s = Left $ "protein" `cantCat` describeSlaw s
+
+catProteins :: [(Maybe Slaw, Maybe Slaw, RudeData)] -> Slaw
+catProteins triples = SlawProteinRude des' ing' rude'
+  where
+    (dess, ings, rudes) = unzip3 triples
+    dess'  = catMaybes dess
+    ings'  = catMaybes ings
+    rudes' = filter (not . L.null) rudes
+    des'   = case mconcat dess' of
+               SlawNil     -> Nothing
+               SlawList ss -> (Just . SlawList . nubOrd) ss
+               s           -> Just s
+    ing'   = case mconcat ings' of
+               SlawNil     -> Nothing
+               s           -> Just s
+    rude'  = last (L.empty : rudes')
 
 catStrings :: [Utf8Str] -> Slaw
 catStrings = SlawString . mconcat
