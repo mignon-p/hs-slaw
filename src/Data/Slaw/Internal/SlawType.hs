@@ -1,7 +1,5 @@
-{-# LANGUAGE PatternSynonyms            #-}
-
 module Data.Slaw.Internal.SlawType
-  ( Slaw(.., SlawProtein)
+  ( Slaw(..)
   , NumericFormat(..)
   , NumericData(..)
   , VectorType(..)
@@ -46,7 +44,7 @@ type Utf8Str    = L.ByteString
 type RudeData   = L.ByteString
 type BinarySlaw = L.ByteString
 
-data Slaw = SlawProteinRude (Maybe Slaw) (Maybe Slaw) RudeData
+data Slaw = SlawProtein     (Maybe Slaw) (Maybe Slaw) RudeData
           | SlawBool        !Bool
           | SlawNil
           | SlawSymbol      !Symbol
@@ -57,12 +55,6 @@ data Slaw = SlawProteinRude (Maybe Slaw) (Maybe Slaw) RudeData
           | SlawNumeric     !NumericFormat NumericData
           | SlawError       String
           deriving (Eq, Ord, Show, Generic, NFData, Hashable)
-
-pattern SlawProtein :: Maybe Slaw -> Maybe Slaw -> Slaw
-pattern SlawProtein des ing <- SlawProteinRude des ing _ where
-  SlawProtein des ing = SlawProteinRude des ing L.empty
-
-{-# COMPLETE SlawProtein, SlawBool, SlawNil, SlawSymbol, SlawString, SlawList, SlawMap, SlawCons, SlawNumeric, SlawError #-}
 
 instance Monoid Slaw where
   mempty = SlawNil
@@ -165,7 +157,7 @@ describeVectorType Vt4mv = ["4-multivector of"]
 describeVectorType Vt5mv = ["5-multivector of"]
 
 describeSlaw :: Slaw -> String
-describeSlaw (SlawProtein _ _  ) = "protein"
+describeSlaw (SlawProtein _ _ _) = "protein"
 describeSlaw (SlawBool    b    ) = "boolean " ++ show b
 describeSlaw (SlawNil          ) = "nil"
 describeSlaw (SlawSymbol  s    ) = "symbol " ++ show s
@@ -203,7 +195,7 @@ catSlaw :: [Slaw] -> Slaw
 catSlaw []                        = SlawNil
 catSlaw [s]                       = s
 catSlaw (s@(SlawError   _)   : _) = s
-catSlaw ss@(SlawProteinRude _ _ _ : _) = doCat getProtein catProteins ss
+catSlaw ss@(SlawProtein _ _ _: _) = doCat getProtein     catProteins ss
 catSlaw ss@(SlawString  _    : _) = doCat getString       catStrings ss
 catSlaw ss@(SlawList    _    : _) = doCat getList         catLists   ss
 catSlaw ss@(SlawMap     _    : _) = doCat getMap          catMaps    ss
@@ -233,7 +225,7 @@ getList s                = Left $ "list" `cantCat` describeSlaw s
 
 getMap :: Slaw -> Either String [(Slaw, Slaw)]
 getMap (SlawMap   ss ) = Right ss
-getMap (SlawProteinRude _ (Just (SlawMap ss)) _) = Right ss
+getMap (SlawProtein _ (Just (SlawMap ss)) _) = Right ss
 getMap (SlawError msg) = Left msg
 getMap s               = Left $ "map" `cantCat` describeSlaw s
 
@@ -247,13 +239,13 @@ getNumeric nf0  s                  =
   Left $ dnf nf0 `cantCat` describeSlaw s
 
 getProtein :: Slaw -> Either String (Maybe Slaw, Maybe Slaw, RudeData)
-getProtein (SlawProteinRude des ing rude) = Right (des, ing, rude)
+getProtein (SlawProtein des ing rude) = Right (des, ing, rude)
 getProtein s@(SlawMap   _           ) = Right (Nothing, Just s, mempty)
 getProtein (SlawError   msg         ) = Left msg
 getProtein s = Left $ "protein" `cantCat` describeSlaw s
 
 catProteins :: [(Maybe Slaw, Maybe Slaw, RudeData)] -> Slaw
-catProteins triples = SlawProteinRude des' ing' rude'
+catProteins triples = SlawProtein des' ing' rude'
   where
     (dess, ings, rudes) = unzip3 triples
     dess'  = catMaybes dess

@@ -93,7 +93,7 @@ encodeSlaw' :: ByteOrder -> Slaw -> R.Builder
 encodeSlaw' bo s = let ?bo = bo in oBld $ encodeSlaw1 s
 
 encodeSlaw1 :: (?bo::ByteOrder) => Slaw -> Octs
-encodeSlaw1 (SlawProteinRude des ing rude) = encProtein des ing rude
+encodeSlaw1 (SlawProtein     des ing rude) = encProtein des ing rude
 encodeSlaw1 (SlawBool        b           ) = encSym     b
 encodeSlaw1  SlawNil                       = encSym     SymNil
 encodeSlaw1 (SlawError       _           ) = encSym     SymError

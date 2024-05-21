@@ -235,7 +235,7 @@ decPro _ _ inp = do
                   (True, _,     []     ) -> barf "no descrips"
                   (False, True, []     ) -> barf "no ingests"
                   _                      -> Right (Nothing, Nothing)
-  return $ SlawProteinRude des ing rudeData
+  return $ SlawProtein des ing rudeData
 
 lenSym :: Oct -> Either String (Word64, Word)
 lenSym o = do
