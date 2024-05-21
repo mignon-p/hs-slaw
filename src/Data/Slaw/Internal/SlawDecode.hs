@@ -211,7 +211,7 @@ decPro _ _ inp = do
       bigRude = tb 59
       hasIng  = tb 61
       hasDes  = tb 62
-  withMore (addCtxPrev inp []) $ checkBits [(63, "nonstandard")] hdrOct2
+  withMore (fmtErrPrevOct inp) $ checkBits [(63, "nonstandard")] hdrOct2
   let (rudeBytes, rudeOcts) =
         if bigRude
         then let rudeLen = hdrOct2 .&. 0x07ff_ffff_ffff_ffff
@@ -264,7 +264,7 @@ lenWstr o = return (1, msb3lsb o)
 
 decWstr :: Oct -> Special -> Input -> Either String Slaw
 decWstr o spec inp = do
-  withMore (addCtxPrev inp []) $ checkBits stringReservedBit o
+  withMore (fmtErrPrevOct inp) $ checkBits stringReservedBit o
   (return . SlawString . trimNul . L.fromStrict) spec
 
 decList :: Oct -> Special -> Input -> Either String Slaw
@@ -354,7 +354,7 @@ decStr :: Oct -> Special -> Input -> Either String Slaw
 decStr o _ inp = do
   let padding = msb3lsb o
       lbs     = L.dropEnd padding (iLbs inp)
-  withMore (addCtxPrev inp []) $ checkBits stringReservedBit o
+  withMore (fmtErrPrevOct inp) $ checkBits stringReservedBit o
   (return . SlawString . trimNul) lbs
 
 lenNum :: Bool -> Oct -> Either String (Word64, Word)
@@ -389,7 +389,7 @@ decNum :: (Bool, NumTyp)
        -> Input
        -> Either String Slaw
 decNum (isArray, typ) o special inp = do
-  withMore (addCtxPrev inp []) $ do
+  withMore (fmtErrPrevOct inp) $ do
     let bsize     = getBsize o
         breadth   = getBreadth isArray o
         byteLen   = bsize * breadth
@@ -516,7 +516,4 @@ withMore f (Left msg)  = Left (f msg)
 withMore _ x@(Right _) = x
 
 addCtx :: Input -> String -> String -> String
-addCtx inp ss s = fmtErr inp $ ss ++ s
-
-addCtxPrev :: Input -> [String] -> String -> String
-addCtxPrev inp ss s = fmtErrPrevOct inp $ concat (ss ++ [s])
+addCtx inp s1 s2 = fmtErr inp $ s1 ++ s2
