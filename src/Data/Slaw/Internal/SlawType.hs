@@ -12,6 +12,7 @@ module Data.Slaw.Internal.SlawType
   , NumericType(..)
   , extractNumeric
   , restoreNumeric
+  , typeMismatchPfx
   ) where
 
 import Control.Arrow (second)
@@ -169,7 +170,7 @@ describeSlaw (SlawCons    _ _  ) = "cons"
 describeSlaw (SlawNumeric nf nd) = intercalate " " (nfl ++ ndl)
   where nfl =  describeNumericFormat nf
         ndl = [describeNumericData   nd]
-describeSlaw (SlawError   _ _  ) = "corrupt slaw"
+describeSlaw (SlawError   _ _  ) = "error"
 
 dnf :: NumericFormat -> String
 dnf nf = case describeNumericFormat nf of

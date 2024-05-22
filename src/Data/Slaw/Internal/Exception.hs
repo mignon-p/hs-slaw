@@ -4,6 +4,7 @@ module Data.Slaw.Internal.Exception
   , ErrLocation(..)
   , displayErrLocation
   , PlasmaException(..)
+  , displayPlasmaException
   , corruptSlaw
   , typeMismatch
   ) where
@@ -84,11 +85,14 @@ instance NFData PlasmaException where
     rnf  (peLocation  x)
 
 instance Exception PlasmaException where
-  displayException e =
-    let msg = displayMaybeErrLocation ": " (peLocation e) ++ peMessage e
-    in case peCallstack e of
-         Nothing -> msg
-         Just cs -> msg ++ "\n" ++ prettyCallStack cs
+  displayException = displayPlasmaException True
+
+displayPlasmaException :: Bool -> PlasmaException -> String
+displayPlasmaException wantCallStack e =
+  let msg = displayMaybeErrLocation ": " (peLocation e) ++ peMessage e
+  in case (wantCallStack, peCallstack e) of
+       (True, Just cs) -> msg ++ "\n" ++ prettyCallStack cs
+       _               -> msg
 
 instance Default PlasmaException where
   def = PlasmaException
@@ -107,11 +111,12 @@ data PlasmaExceptionType = EtCorruptSlaw
                          deriving (Eq, Ord, Show, Read, Bounded, Enum,
                                    Generic, NFData, Hashable)
 
-corruptSlaw :: HasCallStack => String -> PlasmaException
-corruptSlaw msg = def { peType      = EtCorruptSlaw
-                      , peMessage   = msg
-                      , peCallstack = Just callStack
-                      }
+corruptSlaw :: HasCallStack => String -> ErrLocation -> PlasmaException
+corruptSlaw msg loc = def { peType      = EtCorruptSlaw
+                          , peMessage   = msg
+                          , peCallstack = Just callStack
+                          , peLocation  = Just loc
+                          }
 
 typeMismatch :: HasCallStack => String -> PlasmaException
 typeMismatch msg = def { peType      = EtTypeMismatch
