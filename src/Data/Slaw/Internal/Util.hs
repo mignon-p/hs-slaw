@@ -9,6 +9,8 @@ module Data.Slaw.Internal.Util
   , ucFirst
   , lo56
   , hi8
+  , mapLeft
+  , mapRight
   ) where
 
 import Data.Bits
@@ -50,3 +52,13 @@ lo56 = (.&. complement 0xff00_0000_0000_0000)
 {-# INLINE hi8 #-}
 hi8 :: Word64 -> Word64
 hi8 = (`shiftR` 56)
+
+{-# INLINABLE mapLeft #-}
+mapLeft :: (a -> c) -> Either a b -> Either c b
+mapLeft f (Left x)  = Left (f x)
+mapLeft _ (Right x) = Right x
+
+{-# INLINABLE mapRight #-}
+mapRight :: (b -> c) -> Either a b -> Either a c
+mapRight _ (Left x)  = Left  x
+mapRight f (Right x) = Right (f x)
