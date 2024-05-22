@@ -6,6 +6,7 @@ module Data.Slaw.Internal.SlawType
   , Symbol
   , RudeData
   , BinarySlaw
+  , ErrPair
   , describeSlaw
   , removeDups
   , NumericType(..)
@@ -34,7 +35,7 @@ import GHC.Generics (Generic)
 -- import GHC.Stack
 import System.IO.Unsafe (unsafePerformIO)
 
--- import Data.Slaw.Internal.Exception
+import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
 import Data.Slaw.Internal.VectorConvert
@@ -42,6 +43,7 @@ import Data.Slaw.Internal.VectorConvert
 type Symbol     = Word64
 type RudeData   = L.ByteString
 type BinarySlaw = L.ByteString
+type ErrPair    = (String, ErrLocation)
 
 data Slaw = SlawProtein     (Maybe Slaw) (Maybe Slaw) RudeData
           | SlawBool        !Bool
@@ -183,21 +185,21 @@ isNil :: Slaw -> Bool
 isNil SlawNil = True
 isNil _       = False
 
-typeMismatch :: String
-typeMismatch = "type mismatch: "
+typeMismatchPfx :: String
+typeMismatchPfx = "type mismatch: "
 
 cantCat :: String -> String -> String
 cantCat s1 s2 =
-  concat [typeMismatch, "Can't concatenate ", s1, " and ", s2]
+  concat [typeMismatchPfx, "Can't concatenate ", s1, " and ", s2]
 
 catSlaw :: [Slaw] -> Slaw
 catSlaw []                        = SlawNil
 catSlaw [s]                       = s
 catSlaw (s@(SlawError   _)   : _) = s
-catSlaw ss@(SlawProtein _ _ _: _) = doCat getProtein     catProteins ss
-catSlaw ss@(SlawString  _    : _) = doCat getString       catStrings ss
-catSlaw ss@(SlawList    _    : _) = doCat getList         catLists   ss
-catSlaw ss@(SlawMap     _    : _) = doCat getMap          catMaps    ss
+catSlaw ss@(SlawProtein _ _ _: _) = doCat getProtein      catProteins ss
+catSlaw ss@(SlawString  _    : _) = doCat getString       catStrings  ss
+catSlaw ss@(SlawList    _    : _) = doCat getList         catLists    ss
+catSlaw ss@(SlawMap     _    : _) = doCat getMap          catMaps     ss
 catSlaw ss@(SlawNumeric nf _ : _) = doCat (getNumeric nf) (catNumeric nf) ss
 catSlaw (_ : s@(SlawError _) : _) = s
 catSlaw (s1 : s2             : _) =

@@ -31,7 +31,6 @@ infix 5 //
 infix 5 !?
 
 type Special = B.ByteString
-type ErrPair = (String, ErrLocation)
 
 data Input = Input
   { iLbs ::                L.ByteString
