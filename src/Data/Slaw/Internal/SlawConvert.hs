@@ -7,6 +7,7 @@ module Data.Slaw.Internal.SlawConvert
   , ŝes
   , ŝee
   , (?:)
+  , handleOthers
   , Protein(..)
   ) where
 
@@ -84,21 +85,13 @@ s ?: dflt = case fromSlaw s of
 
 ---- helper functions for implementing ToSlaw/FromSlaw
 
-handleOthers :: HasCallStack
-             => String
+handleOthers :: String
              -> Slaw
              -> Either PlasmaException a
-handleOthers name slaw =
-  withFrozenCallStack $ Left $ handleOthers' name slaw
-
-handleOthers' :: HasCallStack
-              => String
-              -> Slaw
-              -> PlasmaException
-handleOthers' _ (SlawError msg loc)
-  | typeMismatchPfx `isPrefixOf` msg = typeMismatch msg
-  | otherwise                        = corruptSlaw  msg loc
-handleOthers' name slaw = typeMismatch msg
+handleOthers _ (SlawError msg loc)
+  | typeMismatchPfx `isPrefixOf` msg = Left $ typeMismatch msg
+  | otherwise                        = Left $ corruptSlaw  msg loc
+handleOthers name slaw = Left $ typeMismatch msg
   where msg = concat [ "Can't coerce "
                      , describeSlaw slaw
                      , " to "

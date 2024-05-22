@@ -111,15 +111,13 @@ data PlasmaExceptionType = EtCorruptSlaw
                          deriving (Eq, Ord, Show, Read, Bounded, Enum,
                                    Generic, NFData, Hashable)
 
-corruptSlaw :: HasCallStack => String -> ErrLocation -> PlasmaException
+corruptSlaw :: String -> ErrLocation -> PlasmaException
 corruptSlaw msg loc = def { peType      = EtCorruptSlaw
                           , peMessage   = msg
-                          , peCallstack = Just callStack
                           , peLocation  = Just loc
                           }
 
-typeMismatch :: HasCallStack => String -> PlasmaException
+typeMismatch :: String -> PlasmaException
 typeMismatch msg = def { peType      = EtTypeMismatch
                        , peMessage   = msg
-                       , peCallstack = Just callStack
                        }
