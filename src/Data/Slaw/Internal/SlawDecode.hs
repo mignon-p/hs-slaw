@@ -73,7 +73,7 @@ prev ilo = loc { elOffset = fmap f (elOffset loc) }
         f x = x - 8
 
 mkSlawErr :: (String, ErrLocation) -> Slaw
-mkSlawErr = SlawError . fst
+mkSlawErr = uncurry SlawError
 
 (//) :: Input -> Word64 -> Either ErrPair (Input, Input)
 inp // nOcts =
@@ -331,7 +331,7 @@ decMap o _ inp = do
 
 cons2Pair :: ErrLocation -> Slaw -> Word64 -> (Slaw, Slaw)
 cons2Pair _   (SlawCons car cdr) _ = (car, cdr)
-cons2Pair _   s@(SlawError _)    _ = (s,   s  )
+cons2Pair _   s@(SlawError _ _ ) _ = (s,   s  )
 cons2Pair loc s                  n = (mkSlawErr (msg, loc), s)
   where msg = printf "Element %u of map was not a cons" n
 

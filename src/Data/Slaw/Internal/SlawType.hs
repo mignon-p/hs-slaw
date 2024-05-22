@@ -54,7 +54,7 @@ data Slaw = SlawProtein     (Maybe Slaw) (Maybe Slaw) RudeData
           | SlawMap         [(Slaw, Slaw)]
           | SlawCons        Slaw Slaw
           | SlawNumeric     !NumericFormat NumericData
-          | SlawError       String
+          | SlawError       String         ErrLocation
           deriving (Eq, Ord, Show, Generic, NFData, Hashable)
 
 instance Monoid Slaw where
@@ -169,7 +169,7 @@ describeSlaw (SlawCons    _ _  ) = "cons"
 describeSlaw (SlawNumeric nf nd) = intercalate " " (nfl ++ ndl)
   where nfl =  describeNumericFormat nf
         ndl = [describeNumericData   nd]
-describeSlaw (SlawError   _    ) = "corrupt slaw"
+describeSlaw (SlawError   _ _  ) = "corrupt slaw"
 
 dnf :: NumericFormat -> String
 dnf nf = case describeNumericFormat nf of
@@ -188,61 +188,65 @@ isNil _       = False
 typeMismatchPfx :: String
 typeMismatchPfx = "type mismatch: "
 
-cantCat :: String -> String -> String
-cantCat s1 s2 =
-  concat [typeMismatchPfx, "Can't concatenate ", s1, " and ", s2]
+nowhere :: ErrLocation
+nowhere = ErrLocation DsNone Nothing
+
+cantCat :: String -> String -> ErrPair
+cantCat s1 s2 = (msg, nowhere)
+  where
+    msg = concat [typeMismatchPfx, "Can't concatenate ", s1, " and ", s2]
 
 catSlaw :: [Slaw] -> Slaw
-catSlaw []                        = SlawNil
-catSlaw [s]                       = s
-catSlaw (s@(SlawError   _)   : _) = s
-catSlaw ss@(SlawProtein _ _ _: _) = doCat getProtein      catProteins ss
-catSlaw ss@(SlawString  _    : _) = doCat getString       catStrings  ss
-catSlaw ss@(SlawList    _    : _) = doCat getList         catLists    ss
-catSlaw ss@(SlawMap     _    : _) = doCat getMap          catMaps     ss
-catSlaw ss@(SlawNumeric nf _ : _) = doCat (getNumeric nf) (catNumeric nf) ss
-catSlaw (_ : s@(SlawError _) : _) = s
-catSlaw (s1 : s2             : _) =
-  SlawError $ describeSlaw s1 `cantCat` describeSlaw s2
+catSlaw []                          = SlawNil
+catSlaw [s]                         = s
+catSlaw (s@(SlawError   _ _)   : _) = s
+catSlaw ss@(SlawProtein _ _ _  : _) = doCat getProtein      catProteins ss
+catSlaw ss@(SlawString  _      : _) = doCat getString       catStrings  ss
+catSlaw ss@(SlawList    _      : _) = doCat getList         catLists    ss
+catSlaw ss@(SlawMap     _      : _) = doCat getMap          catMaps     ss
+catSlaw ss@(SlawNumeric nf _   : _) = doCat (getNumeric nf) (catNumeric nf) ss
+catSlaw (_ : s@(SlawError _ _) : _) = s
+catSlaw (s1 : s2               : _) =
+  (uncurry SlawError) (describeSlaw s1 `cantCat` describeSlaw s2)
 
-doCat :: (Slaw -> Either String a)
+doCat :: (Slaw -> Either ErrPair a)
       -> ([a] -> Slaw)
       -> [Slaw]
       -> Slaw
 doCat chkFunc catFunc ss =
   case mapM chkFunc ss of
-    Left msg -> SlawError msg
-    Right xs -> catFunc   xs
+    Left (msg, loc) -> SlawError msg loc
+    Right xs        -> catFunc   xs
 
-getString :: Slaw -> Either String Utf8Str
-getString (SlawString lbs) = Right lbs
-getString (SlawError  msg) = Left msg
-getString s                = Left $ "string" `cantCat` describeSlaw s
+getString :: Slaw -> Either ErrPair Utf8Str
+getString (SlawString lbs    ) = Right lbs
+getString (SlawError  msg loc) = Left (msg, loc)
+getString s                    = Left $ "string" `cantCat` describeSlaw s
 
-getList :: Slaw -> Either String [Slaw]
-getList (SlawList   ss ) = Right ss
-getList (SlawError  msg) = Left msg
-getList s                = Left $ "list" `cantCat` describeSlaw s
+getList :: Slaw -> Either ErrPair [Slaw]
+getList (SlawList   ss     ) = Right ss
+getList (SlawError  msg loc) = Left (msg, loc)
+getList s                    = Left $ "list" `cantCat` describeSlaw s
 
-getMap :: Slaw -> Either String [(Slaw, Slaw)]
-getMap (SlawMap   ss ) = Right ss
+getMap :: Slaw -> Either ErrPair [(Slaw, Slaw)]
+getMap (SlawMap   ss)                        = Right ss
 getMap (SlawProtein _ (Just (SlawMap ss)) _) = Right ss
-getMap (SlawError msg) = Left msg
+getMap (SlawError msg loc)                   = Left  (msg, loc)
 getMap s               = Left $ "map" `cantCat` describeSlaw s
 
-getNumeric :: NumericFormat -> Slaw -> Either String NumericData
-getNumeric nf0 (SlawNumeric nf nd) =
+getNumeric :: NumericFormat -> Slaw -> Either ErrPair NumericData
+getNumeric nf0 (SlawNumeric nf  nd ) =
   if nfComplex nf0 == nfComplex nf && nfVector nf0 == nfVector nf
   then Right nd
   else Left $ dnf nf0 `cantCat` dnf nf
-getNumeric _   (SlawError   msg  ) = Left msg
-getNumeric nf0  s                  =
+getNumeric _   (SlawError   msg loc) = Left (msg, loc)
+getNumeric nf0  s                    =
   Left $ dnf nf0 `cantCat` describeSlaw s
 
-getProtein :: Slaw -> Either String (Maybe Slaw, Maybe Slaw, RudeData)
+getProtein :: Slaw -> Either ErrPair (Maybe Slaw, Maybe Slaw, RudeData)
 getProtein (SlawProtein des ing rude) = Right (des, ing, rude)
 getProtein s@(SlawMap   _           ) = Right (Nothing, Just s, mempty)
-getProtein (SlawError   msg         ) = Left msg
+getProtein (SlawError   msg loc     ) = Left  (msg, loc)
 getProtein s = Left $ "protein" `cantCat` describeSlaw s
 
 catProteins :: [(Maybe Slaw, Maybe Slaw, RudeData)] -> Slaw
