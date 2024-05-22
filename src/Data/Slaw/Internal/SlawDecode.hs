@@ -1,5 +1,3 @@
-{-# LANGUAGE ImplicitParams             #-}
-
 module Data.Slaw.Internal.SlawDecode
  ( decodeSlaw
  , decodeProtein
@@ -256,22 +254,21 @@ lenSym o = do
   return (1, 0)
 
 decSym :: Oct -> Special -> Input -> Either ErrPair Slaw
-decSym o _ inp =
-  let ?loc = getLocation inp
-  in (Right . symbol2slaw . lo56) o
+decSym o _ inp = (Right . symbol2slaw loc . lo56) o
+  where loc = getLocation inp
 
-symbol2slaw :: (?loc::ErrLocation) => Symbol -> Slaw
-symbol2slaw s
-  | s <= maxSymbol = sym2slaw $ toEnum $ fromIntegral s
+symbol2slaw :: ErrLocation -> Symbol -> Slaw
+symbol2slaw loc s
+  | s <= maxSymbol = sym2slaw loc $ toEnum $ fromIntegral s
   | otherwise      = SlawSymbol s
   where maxSym    = maxBound :: Sym
         maxSymbol = (fromIntegral . fromEnum) maxSym
 
-sym2slaw :: (?loc::ErrLocation) => Sym -> Slaw
-sym2slaw SymFalse = SlawBool False
-sym2slaw SymTrue  = SlawBool True
-sym2slaw SymNil   = SlawNil
-sym2slaw SymError = mkSlawErr (msg, ?loc)
+sym2slaw :: ErrLocation -> Sym -> Slaw
+sym2slaw _   SymFalse = SlawBool False
+sym2slaw _   SymTrue  = SlawBool True
+sym2slaw _   SymNil   = SlawNil
+sym2slaw loc SymError = mkSlawErr (msg, loc)
   where msg = "(The result of round-tripping a previously detected error)"
 
 lenWstr :: Oct -> Either String (Word64, Word)
