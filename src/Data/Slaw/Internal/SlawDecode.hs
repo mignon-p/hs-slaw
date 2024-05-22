@@ -48,9 +48,6 @@ makeInput bo what lbs = Input { iLbs = lbs
                     " passed to " ++ func ++ " at " ++ prettySrcLoc loc
                   _               -> ""
 
-mkErr :: Input -> String -> Either String a
-mkErr inp = Left . fmtErr inp
-
 fmtErr :: Input -> String -> String
 fmtErr inp s = concat $ s : ss
   where ss = [ ", at byte offset "
@@ -79,11 +76,11 @@ inp // nOcts =
                          , iOff = iOff inp + nBytes
                          }
   in if lbs1Len /= nBytes'
-     then mkErr inp $ concat [ "expected "
-                             , show nBytes
-                             , " bytes but got "
-                             , show lbs1Len
-                             ]
+     then Left $ fmtErr inp $ concat [ "expected "
+                                     , show nBytes
+                                     , " bytes but got "
+                                     , show lbs1Len
+                                     ]
      else Right (inp1, inp2)
 
 getNib :: Oct -> Nib
@@ -98,12 +95,12 @@ inp !? idx =
       idx' = fromIntegral idx
   in case lbs L.!? idx' of
        Just w8 -> Right w8
-       Nothing -> mkErr inp $ concat [ "tried to get byte "
-                                     , show idx
-                                     , " but only "
-                                     , show (L.length lbs)
-                                     , " bytes were present"
-                                     ]
+       Nothing -> Left $ fmtErr inp $ concat [ "tried to get byte "
+                                             , show idx
+                                             , " but only "
+                                             , show (L.length lbs)
+                                             , " bytes were present"
+                                             ]
 
 data NibInfo = NibInfo
   { niName   :: String
@@ -156,10 +153,13 @@ decodeSlaw1 inp = do
                      , showOct oHdr
                      , "), "
                      ]
-  (octLen, nSpecial) <- withMore (addCtx hdr ctx) $ niLen info oHdr
+  (octLen, nSpecial) <-
+    mapLeft ((fmtErr hdr) . (ctx ++)) $ niLen info oHdr
   let special = getSpecial bo hdrBs nSpecial
-  when (octLen == 0) $ mkErr inp $ ctx ++ "octlen of 0 is not allowed"
-  (body, leftover) <- withMore (addCtx rest ctx) $ rest // (octLen - 1)
+  when (octLen == 0) $
+    Left $ fmtErr inp $ ctx ++ "octlen of 0 is not allowed"
+  (body, leftover) <-
+    mapLeft ((fmtErr rest) . (ctx ++)) $ rest // (octLen - 1)
   case niDecode info oHdr special body of
     Left msg -> Right (SlawError $ ctx ++ msg, leftover)
     Right s  -> Right (s, leftover)
@@ -184,7 +184,7 @@ proteinErr inp =
   let bites  = map (printf "%02X") $ L.unpack $ L.take 8 $ iLbs inp
       msg    = "does not appear to be a protein"
       msg'   = intercalate " " (bites ++ [msg])
-  in mkErr inp msg'
+  in Left $ fmtErr inp msg'
 
 lenPro' :: Oct -> Either String (Word64, Word)
 lenPro' = lenPro . byteSwap64
@@ -211,7 +211,7 @@ decPro _ _ inp = do
       bigRude = tb 59
       hasIng  = tb 61
       hasDes  = tb 62
-  withMore (fmtErrPrevOct inp) $ checkBits [(63, "nonstandard")] hdrOct2
+  mapLeft (fmtErrPrevOct inp) $ checkBits [(63, "nonstandard")] hdrOct2
   let (rudeBytes, rudeOcts) =
         if bigRude
         then let rudeLen = hdrOct2 .&. 0x07ff_ffff_ffff_ffff
@@ -226,7 +226,7 @@ decPro _ _ inp = do
         then L.take rb1   $ iLbs rude
         else L.fromStrict $ getSpecial bo h2bs rb2
       slawx    = decodeSequence "protein" Nothing 0 body
-      barf msg = mkErr body msg
+      barf msg = Left $ fmtErr body msg
   (des, ing) <- case (hasDes, hasIng, slawx) of
                   (True, True,  (d:i:_)) -> Right (Just d, Just i)
                   (True, False, (d:_  )) -> Right (Just d, Nothing)
@@ -264,7 +264,7 @@ lenWstr o = return (1, msb3lsb o)
 
 decWstr :: Oct -> Special -> Input -> Either String Slaw
 decWstr o spec inp = do
-  withMore (fmtErrPrevOct inp) $ checkBits stringReservedBit o
+  mapLeft (fmtErrPrevOct inp) $ checkBits stringReservedBit o
   (return . SlawString . trimNul . L.fromStrict) spec
 
 decList :: Oct -> Special -> Input -> Either String Slaw
@@ -328,7 +328,7 @@ decCons o _ inp = do
   let nElems   = penultimateNibble o
       butMsg   = "Cons should have 2 elements, but "
       elements = " elements"
-  withMore (addCtx inp []) $ do
+  mapLeft (fmtErr inp) $ do
     when (nElems /= (2 :: Int)) $ do
       Left $ concat [ butMsg
                     , "claims to have "
@@ -354,7 +354,7 @@ decStr :: Oct -> Special -> Input -> Either String Slaw
 decStr o _ inp = do
   let padding = msb3lsb o
       lbs     = L.dropEnd padding (iLbs inp)
-  withMore (fmtErrPrevOct inp) $ checkBits stringReservedBit o
+  mapLeft (fmtErrPrevOct inp) $ checkBits stringReservedBit o
   (return . SlawString . trimNul) lbs
 
 lenNum :: Bool -> Oct -> Either String (Word64, Word)
@@ -389,7 +389,7 @@ decNum :: (Bool, NumTyp)
        -> Input
        -> Either String Slaw
 decNum (isArray, typ) o special inp = do
-  withMore (fmtErrPrevOct inp) $ do
+  mapLeft (fmtErrPrevOct inp) $ do
     let bsize     = getBsize o
         breadth   = getBreadth isArray o
         byteLen   = bsize * breadth
@@ -422,7 +422,7 @@ lenUnk :: Oct -> Either String (Word64, Word)
 lenUnk = Left . unkMsg
 
 decUnk :: Oct -> Special -> Input -> Either String Slaw
-decUnk o _ inp = mkErr inp $ unkMsg o
+decUnk o _ inp = Left $ fmtErr inp $ unkMsg o
 
 unkMsg :: Oct -> String
 unkMsg o = printf "Most-significant nibble is reserved value 0x%x" nib
@@ -510,10 +510,3 @@ showOct o = printf "%04X_%04X_%04X_%04X" (f 3) (f 2) (f 1) (f 0)
 
 get16 :: Oct -> Int -> Word16
 get16 o n = fromIntegral $ o `shiftR` (n * 16)
-
-withMore :: (String -> String) -> Either String a -> Either String a
-withMore f (Left msg)  = Left (f msg)
-withMore _ x@(Right _) = x
-
-addCtx :: Input -> String -> String -> String
-addCtx inp s1 s2 = fmtErr inp $ s1 ++ s2
