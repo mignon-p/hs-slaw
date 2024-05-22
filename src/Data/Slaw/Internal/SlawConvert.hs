@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables        #-}
+
 module Data.Slaw.Internal.SlawConvert
   ( FromSlaw(..)
   , ToSlaw(..)
@@ -37,8 +39,18 @@ import Data.Slaw.Internal.Util
 class FromSlaw a where
   fromSlaw :: Slaw -> Either PlasmaException a
 
+  listFromSlaw :: Slaw -> Either PlasmaException [a]
+  listFromSlaw = defaultListFromSlaw
+
+  -- Name of type we are converting to.
+  -- (Used in error messages.)
+  fsName :: a -> String
+
 class ToSlaw a where
   toSlaw :: a -> Slaw
+
+  listToSlaw :: [a] -> Slaw
+  listToSlaw = defaultListToSlaw
 
 ---- shorthand functions for converting to/from slaw
 
@@ -85,18 +97,27 @@ s ?: dflt = case fromSlaw s of
 
 ---- helper functions for implementing ToSlaw/FromSlaw
 
-handleOthers :: String
-             -> Slaw
+handleOthers :: forall a. (FromSlaw a)
+             => Slaw
              -> Either PlasmaException a
-handleOthers _ (SlawError msg loc)
+handleOthers (SlawError msg loc)
   | typeMismatchPfx `isPrefixOf` msg = Left $ typeMismatch msg
   | otherwise                        = Left $ corruptSlaw  msg loc
-handleOthers name slaw = Left $ typeMismatch msg
+handleOthers slaw = Left $ typeMismatch msg
   where msg = concat [ "Can't coerce "
                      , describeSlaw slaw
                      , " to "
-                     , name
+                     , fsName (undefined :: a)
                      ]
+
+defaultListToSlaw :: ToSlaw a => [a] -> Slaw
+defaultListToSlaw = SlawList . map toSlaw
+
+defaultListFromSlaw :: FromSlaw a => Slaw -> Either PlasmaException [a]
+defaultListFromSlaw SlawNil       = Right []
+defaultListFromSlaw (SlawList []) = Right []
+-- TODO: more cases
+defaultListFromSlaw s             = handleOthers s
 
 ---- types
 
@@ -108,3 +129,9 @@ data Protein = Protein
 
 instance Default Protein where
   def = Protein [] M.empty L.empty
+
+---- instances
+
+instance FromSlaw a => FromSlaw [a] where
+  fromSlaw = listFromSlaw
+  fsName _ = "[" ++ fsName (undefined :: a) ++ "]"
