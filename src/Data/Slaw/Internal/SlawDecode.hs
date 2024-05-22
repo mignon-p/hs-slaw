@@ -3,6 +3,7 @@ module Data.Slaw.Internal.SlawDecode
  , decodeProtein
  ) where
 
+import Control.Arrow (first)
 -- import Control.DeepSeq
 import Control.Monad
 import Data.Bits
@@ -30,6 +31,7 @@ infix 5 //
 infix 5 !?
 
 type Special = B.ByteString
+type ErrPair = (String, ErrLocation)
 
 data Input = Input
   { iLbs ::                 L.ByteString
@@ -58,11 +60,8 @@ makeInput bo what lbs = Input { iLbs = lbs
                     " passed to " ++ func ++ " at " ++ prettySrcLoc loc
                   _               -> ""
 
-addLoc :: IsLocation a => a -> String -> String
-addLoc ilo s = concat [locStr, ": ", s]
-  where
-    loc    = getLocation ilo
-    locStr = displayErrLocation loc
+addLoc :: IsLocation a => a -> String -> (String, ErrLocation)
+addLoc ilo s = (s, getLocation ilo)
 
 -- The decode functions take the header oct as a Word64, and they
 -- also get an Input which points to the word after the header oct.
@@ -74,7 +73,10 @@ prev ilo = loc { elOffset = fmap f (elOffset loc) }
   where loc = getLocation ilo
         f x = x - 8
 
-(//) :: Input -> Word64 -> Either String (Input, Input)
+mkSlawErr :: (String, ErrLocation) -> Slaw
+mkSlawErr = SlawError . fst
+
+(//) :: Input -> Word64 -> Either ErrPair (Input, Input)
 inp // nOcts =
   let nBytes       = nOcts * 8
       nBytes'      = fromIntegral nBytes
@@ -98,7 +100,7 @@ getNib o = toEnum $ fromIntegral $ o `shiftR` 60
 getNib8 :: Word8 -> Nib
 getNib8 o = toEnum $ fromIntegral $ o `shiftR` 4
 
-(!?) :: Input -> Word64 -> Either String Word8
+(!?) :: Input -> Word64 -> Either ErrPair Word8
 inp !? idx =
   let lbs  = iLbs inp
       idx' = fromIntegral idx
@@ -114,7 +116,7 @@ inp !? idx =
 data NibInfo = NibInfo
   { niName   :: String
   , niLen    :: Oct -> Either String (Word64, Word)
-  , niDecode :: Oct -> Special -> Input -> Either String Slaw
+  , niDecode :: Oct -> Special -> Input -> Either ErrPair Slaw
   }
 
 nibInfo :: Nib -> NibInfo
@@ -140,15 +142,15 @@ nibInfo NibArrayFloat  = NibInfo "floating-point array"
                          (lenNum True)  (decNum (True,  NumTypFloat))
 nibInfo _              = NibInfo "unknown slaw"  lenUnk  decUnk
 
-handleSlawResult :: Either String (Slaw, a) -> Slaw
-handleSlawResult (Left  msg   ) = SlawError msg
+handleSlawResult :: Either ErrPair (Slaw, a) -> Slaw
+handleSlawResult (Left  msg   ) = mkSlawErr msg
 handleSlawResult (Right (s, _)) = s
 
 decodeSlaw :: HasCallStack => ByteOrder -> BinarySlaw -> Slaw
 decodeSlaw bo lbs = withFrozenCallStack $
   handleSlawResult $ decodeSlaw1 $ makeInput bo "slaw" lbs
 
-decodeSlaw1 :: Input -> Either String (Slaw, Input)
+decodeSlaw1 :: Input -> Either ErrPair (Slaw, Input)
 decodeSlaw1 inp = do
   (hdr, rest) <- inp // 1
   let hdrBs = (L.toStrict . iLbs) hdr
@@ -168,9 +170,9 @@ decodeSlaw1 inp = do
   when (octLen == 0) $
     Left $ addLoc inp $ ctx ++ "octlen of 0 is not allowed"
   (body, leftover) <-
-    mapLeft ((addLoc rest) . (ctx ++)) $ rest // (octLen - 1)
+    mapLeft (first (ctx ++)) $ rest // (octLen - 1)
   case niDecode info oHdr special body of
-    Left msg -> Right (SlawError $ ctx ++ msg, leftover)
+    Left msg -> Right (mkSlawErr $ first (ctx ++) msg, leftover)
     Right s  -> Right (s, leftover)
 
 decodeProtein :: HasCallStack => BinarySlaw -> Slaw
@@ -178,7 +180,7 @@ decodeProtein lbs = withFrozenCallStack $
   handleSlawResult $ decodeProtein1 $ makeInput bo "protein" lbs
   where bo = nativeByteOrder
 
-decodeProtein1 :: Input -> Either String (Slaw, Input)
+decodeProtein1 :: Input -> Either ErrPair (Slaw, Input)
 decodeProtein1 inp = do
   byte0  <- inp !? 0
   byte7  <- inp !? 7
@@ -188,7 +190,7 @@ decodeProtein1 inp = do
               _                               -> proteinErr inp
   decodeSlaw1 $ inp { iBo = bo }
 
-proteinErr :: Input -> Either String a
+proteinErr :: Input -> Either ErrPair a
 proteinErr inp =
   let bites  = map (printf "%02X") $ L.unpack $ L.take 8 $ iLbs inp
       msg    = "does not appear to be a protein"
@@ -198,7 +200,7 @@ proteinErr inp =
 lenPro' :: Oct -> Either String (Word64, Word)
 lenPro' = lenPro . byteSwap64
 
-decPro' :: Oct -> Special -> Input -> Either String Slaw
+decPro' :: Oct -> Special -> Input -> Either ErrPair Slaw
 decPro' o _ inp = decPro (byteSwap64 o) mempty inp'
   where inp' = inp { iBo = oppositeByteOrder (iBo inp) }
 
@@ -210,7 +212,7 @@ lenPro o = do
       octLen = (hi52 .|. lo4)
   return (octLen, 0)
 
-decPro :: Oct -> Special -> Input -> Either String Slaw
+decPro :: Oct -> Special -> Input -> Either ErrPair Slaw
 decPro _ _ inp = do
   (hdr2, inp') <- inp // 1
   let h2bs    = L.toStrict $ iLbs hdr2
@@ -251,7 +253,7 @@ lenSym o = do
   checkBits (map (,"") [56..59]) o
   return (1, 0)
 
-decSym :: Oct -> Special -> Input -> Either String Slaw
+decSym :: Oct -> Special -> Input -> Either ErrPair Slaw
 decSym o _ _ = (Right . symbol2slaw . lo56) o
 
 symbol2slaw :: Symbol -> Slaw
@@ -265,21 +267,21 @@ sym2slaw :: Sym -> Slaw
 sym2slaw SymFalse = SlawBool False
 sym2slaw SymTrue  = SlawBool True
 sym2slaw SymNil   = SlawNil
-sym2slaw SymError = SlawError msg
+sym2slaw SymError = mkSlawErr (msg, undefined)
   where msg = "(The result of round-tripping a previously detected error)"
 
 lenWstr :: Oct -> Either String (Word64, Word)
 lenWstr o = return (1, msb3lsb o)
 
-decWstr :: Oct -> Special -> Input -> Either String Slaw
+decWstr :: Oct -> Special -> Input -> Either ErrPair Slaw
 decWstr o spec inp = do
   mapLeft ((addLoc . prev) inp) $ checkBits stringReservedBit o
   (return . SlawString . trimNul . L.fromStrict) spec
 
-decList :: Oct -> Special -> Input -> Either String Slaw
+decList :: Oct -> Special -> Input -> Either ErrPair Slaw
 decList o _ inp = SlawList <$> decodeSequence0 True "list" o inp
 
-decodeSequence0 :: Bool -> String -> Oct -> Input -> Either String [Slaw]
+decodeSequence0 :: Bool -> String -> Oct -> Input -> Either ErrPair [Slaw]
 decodeSequence0 check what o inp = do
   let nElems0 = penultimateNibble o
   (nElems, inp') <- if nElems0 < 15
@@ -292,7 +294,7 @@ decodeSequence :: String -> Maybe Word64 -> Word64 -> Input -> [Slaw]
 decodeSequence what nElems !idx inp =
   let exhausted = (L.null . iLbs) inp
       finished  = maybe exhausted (idx >=) nElems
-      slawE xs  = [ (SlawError . addLoc inp . concat) xs ]
+      slawE xs  = [ (mkSlawErr . addLoc inp . concat) xs ]
       nElems'   = maybe "???" show nElems
   in case (exhausted, finished) of
        (True, True)  -> []
@@ -311,17 +313,17 @@ decodeSequence what nElems !idx inp =
                               ]
        (False, False) ->
          case decodeSlaw1 inp of
-           Left msg        -> [SlawError msg]
+           Left msg        -> [mkSlawErr msg]
            Right (s, inp') ->
              s : decodeSequence what nElems (idx + 1) inp'
 
-longerLen :: Input -> Either String (Word64, Input)
+longerLen :: Input -> Either ErrPair (Word64, Input)
 longerLen inp = do
   (inp1, inp2) <- inp // 1
   let bs = (L.toStrict . iLbs) inp1
   return (decodeOct (iBo inp1) bs, inp2)
 
-decMap :: Oct -> Special -> Input -> Either String Slaw
+decMap :: Oct -> Special -> Input -> Either ErrPair Slaw
 decMap o _ inp = do
   elems <- decodeSequence0 True "map" o inp
   return $ SlawMap $ zipWith cons2Pair elems [0..]
@@ -329,10 +331,10 @@ decMap o _ inp = do
 cons2Pair :: Slaw -> Word64 -> (Slaw, Slaw)
 cons2Pair (SlawCons car cdr) _ = (car, cdr)
 cons2Pair s@(SlawError _)    _ = (s,   s  )
-cons2Pair s                  n = (SlawError msg, s)
+cons2Pair s                  n = (mkSlawErr (msg, undefined), s)
   where msg = printf "Element %u of map was not a cons" n
 
-decCons :: Oct -> Special -> Input -> Either String Slaw
+decCons :: Oct -> Special -> Input -> Either ErrPair Slaw
 decCons o _ inp = do
   let nElems   = penultimateNibble o
       butMsg   = "Cons should have 2 elements, but "
@@ -344,7 +346,8 @@ decCons o _ inp = do
                     , show nElems
                     , elements
                     ]
-    elems <- decodeSequence0 False "cons" o inp
+  elems <- decodeSequence0 False "cons" o inp
+  mapLeft (addLoc inp) $ do
     case elems of
       [car, cdr] -> return $ SlawCons car cdr
       _ -> Left $ concat [ butMsg
@@ -359,7 +362,7 @@ lenContainer o = Right (lo56 o, 0)
 lenStr :: Oct -> Either String (Word64, Word)
 lenStr o = return (lo56 o, 0)
 
-decStr :: Oct -> Special -> Input -> Either String Slaw
+decStr :: Oct -> Special -> Input -> Either ErrPair Slaw
 decStr o _ inp = do
   let padding = msb3lsb o
       lbs     = L.dropEnd padding (iLbs inp)
@@ -396,7 +399,7 @@ decNum :: (Bool, NumTyp)
        -> Oct
        -> Special
        -> Input
-       -> Either String Slaw
+       -> Either ErrPair Slaw
 decNum (isArray, typ) o special inp = do
   mapLeft ((addLoc . prev) inp) $ do
     let bsize     = getBsize o
@@ -430,7 +433,7 @@ decNum (isArray, typ) o special inp = do
 lenUnk :: Oct -> Either String (Word64, Word)
 lenUnk = Left . unkMsg
 
-decUnk :: Oct -> Special -> Input -> Either String Slaw
+decUnk :: Oct -> Special -> Input -> Either ErrPair Slaw
 decUnk o _ inp = Left $ addLoc inp $ unkMsg o
 
 unkMsg :: Oct -> String
