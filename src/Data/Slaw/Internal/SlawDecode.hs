@@ -20,6 +20,7 @@ import Data.Word
 import GHC.Stack
 import Text.Printf
 
+import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.Util
@@ -37,6 +38,15 @@ data Input = Input
   , iBo  ::                !ByteOrder
   }
 
+class IsLocation a where
+  getLocation :: a -> ErrLocation
+
+instance IsLocation Input where
+  getLocation inp = ErrLocation (DsFile $ iSrc inp) (Just $ iOff inp)
+
+instance IsLocation ErrLocation where
+  getLocation = id
+
 makeInput :: HasCallStack => ByteOrder -> String -> L.ByteString -> Input
 makeInput bo what lbs = Input { iLbs = lbs
                               , iOff = 0
@@ -48,22 +58,24 @@ makeInput bo what lbs = Input { iLbs = lbs
                     " passed to " ++ func ++ " at " ++ prettySrcLoc loc
                   _               -> ""
 
-fmtErr :: Input -> String -> String
-fmtErr inp s = concat $ s : ss
-  where ss = [ ", at byte offset "
-             , show (iOff inp)
-             , " of "
-             , iSrc inp
-             ]
+fmtErr :: IsLocation a => a -> String -> String
+fmtErr ilo s = concat [locStr, ": ", s]
+  where
+    loc    = getLocation ilo
+    locStr = displayErrLocation loc
 
 -- The decode functions take the header oct as a Word64, and they
 -- also get an Input which points to the word after the header oct.
 -- If they want to signal an error in the header oct itself, use
 -- this function, which indicates an error one oct before the
 -- current position of the Input.  (Yeah, this is a bit ugly.)
+prev :: IsLocation a => a -> ErrLocation
+prev ilo = loc { elOffset = fmap f (elOffset loc) }
+  where loc = getLocation ilo
+        f x = x - 8
+
 fmtErrPrevOct :: Input -> String -> String
-fmtErrPrevOct inp = fmtErr inp'
-  where inp' = inp { iOff = iOff inp - 8 }
+fmtErrPrevOct = fmtErr . prev
 
 (//) :: Input -> Word64 -> Either String (Input, Input)
 inp // nOcts =
