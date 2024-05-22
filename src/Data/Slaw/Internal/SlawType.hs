@@ -12,7 +12,6 @@ module Data.Slaw.Internal.SlawType
   , NumericType(..)
   , extractNumeric
   , restoreNumeric
-  , typeMismatchPfx
   ) where
 
 import Control.Arrow (second)
@@ -185,9 +184,6 @@ dnf nf = case describeNumericFormat nf of
 isNil :: Slaw -> Bool
 isNil SlawNil = True
 isNil _       = False
-
-typeMismatchPfx :: String
-typeMismatchPfx = "type mismatch: "
 
 nowhere :: ErrLocation
 nowhere = ErrLocation DsNone Nothing

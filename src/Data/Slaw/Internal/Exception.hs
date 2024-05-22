@@ -7,6 +7,8 @@ module Data.Slaw.Internal.Exception
   , displayPlasmaException
   , corruptSlaw
   , typeMismatch
+  , typeMismatch'
+  , typeMismatchPfx
   ) where
 
 import Control.Exception
@@ -119,5 +121,14 @@ corruptSlaw msg loc = def { peType      = EtCorruptSlaw
 
 typeMismatch :: String -> PlasmaException
 typeMismatch msg = def { peType      = EtTypeMismatch
-                       , peMessage   = msg
+                       , peMessage   = typeMismatchPfx ++ msg
                        }
+
+typeMismatch' :: String -> ErrLocation -> PlasmaException
+typeMismatch' msg loc = def { peType      = EtTypeMismatch
+                            , peMessage   = msg
+                            , peLocation  = Just loc
+                            }
+
+typeMismatchPfx :: String
+typeMismatchPfx = "type mismatch: "

@@ -101,14 +101,18 @@ handleOthers :: forall a. (FromSlaw a)
              => Slaw
              -> Either PlasmaException a
 handleOthers (SlawError msg loc)
-  | typeMismatchPfx `isPrefixOf` msg = Left $ typeMismatch msg
-  | otherwise                        = Left $ corruptSlaw  msg loc
+  | typeMismatchPfx `isPrefixOf` msg = Left $ typeMismatch' msg loc
+  | otherwise                        = Left $ corruptSlaw   msg loc
 handleOthers slaw = Left $ typeMismatch msg
-  where msg = concat [ "Can't coerce "
-                     , describeSlaw slaw
-                     , " to "
-                     , fsName (undefined :: a)
-                     ]
+  where msg = slaw `cantCoerce` fsName (undefined :: a)
+
+cantCoerce :: Slaw -> String -> String
+cantCoerce slaw other =
+  concat [ "Can't coerce "
+         , describeSlaw slaw
+         , " to "
+         , other
+         ]
 
 defaultListToSlaw :: ToSlaw a => [a] -> Slaw
 defaultListToSlaw = SlawList . map toSlaw
