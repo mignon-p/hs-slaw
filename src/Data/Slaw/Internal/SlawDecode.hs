@@ -1,3 +1,5 @@
+{-# LANGUAGE ImplicitParams             #-}
+
 module Data.Slaw.Internal.SlawDecode
  ( decodeSlaw
  , decodeProtein
@@ -254,20 +256,22 @@ lenSym o = do
   return (1, 0)
 
 decSym :: Oct -> Special -> Input -> Either ErrPair Slaw
-decSym o _ _ = (Right . symbol2slaw . lo56) o
+decSym o _ inp =
+  let ?loc = getLocation inp
+  in (Right . symbol2slaw . lo56) o
 
-symbol2slaw :: Symbol -> Slaw
+symbol2slaw :: (?loc::ErrLocation) => Symbol -> Slaw
 symbol2slaw s
   | s <= maxSymbol = sym2slaw $ toEnum $ fromIntegral s
   | otherwise      = SlawSymbol s
   where maxSym    = maxBound :: Sym
         maxSymbol = (fromIntegral . fromEnum) maxSym
 
-sym2slaw :: Sym -> Slaw
+sym2slaw :: (?loc::ErrLocation) => Sym -> Slaw
 sym2slaw SymFalse = SlawBool False
 sym2slaw SymTrue  = SlawBool True
 sym2slaw SymNil   = SlawNil
-sym2slaw SymError = mkSlawErr (msg, undefined)
+sym2slaw SymError = mkSlawErr (msg, ?loc)
   where msg = "(The result of round-tripping a previously detected error)"
 
 lenWstr :: Oct -> Either String (Word64, Word)
@@ -325,13 +329,14 @@ longerLen inp = do
 
 decMap :: Oct -> Special -> Input -> Either ErrPair Slaw
 decMap o _ inp = do
+  let loc = getLocation inp
   elems <- decodeSequence0 True "map" o inp
-  return $ SlawMap $ zipWith cons2Pair elems [0..]
+  return $ SlawMap $ zipWith (cons2Pair loc) elems [0..]
 
-cons2Pair :: Slaw -> Word64 -> (Slaw, Slaw)
-cons2Pair (SlawCons car cdr) _ = (car, cdr)
-cons2Pair s@(SlawError _)    _ = (s,   s  )
-cons2Pair s                  n = (mkSlawErr (msg, undefined), s)
+cons2Pair :: ErrLocation -> Slaw -> Word64 -> (Slaw, Slaw)
+cons2Pair _   (SlawCons car cdr) _ = (car, cdr)
+cons2Pair _   s@(SlawError _)    _ = (s,   s  )
+cons2Pair loc s                  n = (mkSlawErr (msg, loc), s)
   where msg = printf "Element %u of map was not a cons" n
 
 decCons :: Oct -> Special -> Input -> Either ErrPair Slaw
