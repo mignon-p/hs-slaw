@@ -34,9 +34,9 @@ type Special = B.ByteString
 type ErrPair = (String, ErrLocation)
 
 data Input = Input
-  { iLbs ::                 L.ByteString
+  { iLbs ::                L.ByteString
   , iOff :: {-# UNPACK #-} !Word64       -- byte offset into file/stream
-  , iSrc ::                 String       -- name of file/stream
+  , iSrc ::                DataSource    -- name of file/stream
   , iBo  ::                !ByteOrder
   }
 
@@ -44,7 +44,7 @@ class IsLocation a where
   getLocation :: a -> ErrLocation
 
 instance IsLocation Input where
-  getLocation inp = ErrLocation (DsFile $ iSrc inp) (Just $ iOff inp)
+  getLocation inp = ErrLocation (iSrc inp) (Just $ iOff inp)
 
 instance IsLocation ErrLocation where
   getLocation = id
@@ -52,7 +52,7 @@ instance IsLocation ErrLocation where
 makeInput :: HasCallStack => ByteOrder -> String -> L.ByteString -> Input
 makeInput bo what lbs = Input { iLbs = lbs
                               , iOff = 0
-                              , iSrc = what ++ extra
+                              , iSrc = DsOther (what ++ extra)
                               , iBo  = bo
                               }
   where extra = case getCallStack callStack of
