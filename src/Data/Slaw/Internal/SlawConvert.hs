@@ -18,6 +18,7 @@ import Control.Exception
 -- import qualified Data.ByteString      as B
 import qualified Data.ByteString.Lazy as L
 import Data.Default.Class
+import Data.Either
 import Data.Hashable
 -- import Data.Int
 import Data.List
@@ -117,11 +118,35 @@ cantCoerce slaw other =
 defaultListToSlaw :: ToSlaw a => [a] -> Slaw
 defaultListToSlaw = SlawList . map toSlaw
 
-defaultListFromSlaw :: FromSlaw a => Slaw -> Either PlasmaException [a]
+defaultListFromSlaw :: forall a. (FromSlaw a)
+                    => Slaw
+                    -> Either PlasmaException [a]
 defaultListFromSlaw SlawNil       = Right []
-defaultListFromSlaw (SlawList []) = Right []
--- TODO: more cases
+defaultListFromSlaw s@(SlawList ss) =
+  let msg = s `cantCoerce` fsName (undefined :: a)
+  in fromSlawList msg ss
+defaultListFromSlaw s@(SlawMap pairs) =
+  let msg    = s `cantCoerce` fsName (undefined :: a)
+      conses = map (uncurry SlawCons) pairs
+  in fromSlawList msg conses
+defaultListFromSlaw s@(SlawCons car cdr) =
+  let msg = s `cantCoerce` fsName (undefined :: a)
+  in fromSlawList msg [car, cdr]
 defaultListFromSlaw s             = handleOthers s
+
+fromSlawList :: FromSlaw a
+             => String
+             -> [Slaw]
+             -> Either PlasmaException [a]
+fromSlawList msg ss =
+  case partitionEithers (map fromSlaw ss) of
+    ([],      []) -> Right []
+    ((err:_), []) ->
+      Left $ typeMismatch $ concat [ msg
+                                   , ", because "
+                                   , peMessage err
+                                   ]
+    (_,       xs) -> Right xs
 
 ---- types
 
