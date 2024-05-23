@@ -4,6 +4,7 @@
 module Data.Slaw.Internal.String
   ( Utf8Str
   , TextClass(..)
+  , ByteStringClass(..)
   , withLazyByteStringAsCString
   , withLazyByteStringAsCStringNL
   , withLazyByteStringAsCStringLen
@@ -14,6 +15,7 @@ import Control.Monad
 -- import Control.Exception
 import qualified Data.ByteString          as B
 import qualified Data.ByteString.Lazy     as L
+import qualified Data.ByteString.Short    as SBS
 import qualified Data.ByteString.Unsafe   as B
 import Data.Char
 -- import Data.Default.Class
@@ -39,7 +41,8 @@ class ( IsString a
       , Monoid   a
       , Ord      a
       , Hashable a
-      , NFData   a) => TextClass a where
+      , NFData   a
+      ) => TextClass a where
   toString   :: a -> String
   toText     :: a -> T.Text
   toLazyText :: a -> LT.Text
@@ -79,6 +82,46 @@ instance TextClass LT.Text where
   fromText     = LT.fromStrict
   fromLazyText = id
   fromUtf8     = LT.decodeUtf8With T.lenientDecode
+
+class ( Monoid   a
+      , Ord      a
+      , Hashable a
+      , NFData   a
+      ) => ByteStringClass a where
+  toByteString      :: a -> B.ByteString
+  toLazyByteString  :: a -> L.ByteString
+  toShortByteString :: a -> SBS.ShortByteString
+
+  fromByteString      :: B.ByteString        -> a
+  fromLazyByteString  :: L.ByteString        -> a
+  fromShortByteString :: SBS.ShortByteString -> a
+
+instance ByteStringClass B.ByteString where
+  toByteString      = id
+  toLazyByteString  = L.fromStrict
+  toShortByteString = SBS.toShort
+
+  fromByteString      = id
+  fromLazyByteString  = L.toStrict
+  fromShortByteString = SBS.fromShort
+
+instance ByteStringClass L.ByteString where
+  toByteString      = L.toStrict
+  toLazyByteString  = id
+  toShortByteString = SBS.toShort . L.toStrict
+
+  fromByteString      = L.fromStrict
+  fromLazyByteString  = id
+  fromShortByteString = L.fromStrict . SBS.fromShort
+
+instance ByteStringClass SBS.ShortByteString where
+  toByteString      = SBS.fromShort
+  toLazyByteString  = L.fromStrict . SBS.fromShort
+  toShortByteString = id
+
+  fromByteString      = SBS.toShort
+  fromLazyByteString  = SBS.toShort . L.toStrict
+  fromShortByteString = id
 
 withLazyByteStringAsCString :: L.ByteString
                             -> (CString -> IO a)
