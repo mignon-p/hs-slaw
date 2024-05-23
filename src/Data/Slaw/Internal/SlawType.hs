@@ -12,6 +12,7 @@ module Data.Slaw.Internal.SlawType
   , NumericType(..)
   , extractNumeric
   , restoreNumeric
+  , integerToNum
   ) where
 
 import Control.Arrow (second)
@@ -440,3 +441,10 @@ doubleCoerce :: NumElem -> Double
 doubleCoerce (ElemInt    x) = fromInteger  x
 doubleCoerce (ElemFloat  x) = float2Double x
 doubleCoerce (ElemDouble x) = x
+
+integerToNum :: Integer -> Maybe NumericData
+integerToNum n =
+  case listToNum [ElemInt n] of
+    NumFloat  _ -> Nothing
+    NumDouble _ -> Nothing
+    nd          -> Just nd

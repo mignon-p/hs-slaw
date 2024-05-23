@@ -33,6 +33,7 @@ import Foreign.Storable
 import GHC.Generics (Generic)
 import GHC.Stack
 -- import System.IO.Unsafe (unsafePerformIO)
+import Text.Read
 
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.SlawEncode
@@ -237,6 +238,13 @@ numToInteger1 v
   | S.length v == 1 = (Just . toInteger . S.head) v
   | otherwise       = Nothing
 
+nfScalar :: NumericFormat
+nfScalar = NumericFormat
+  { nfArray   = False
+  , nfComplex = False
+  , nfVector  = VtScalar
+  }
+
 ---- types
 
 data Protein = Protein
@@ -302,11 +310,27 @@ instance FromSlaw Char where
   listFromSlaw = slawToString
 
 instance ToSlaw Char where
-  toSlaw c = SlawNumeric nf nd
-    where nf = NumericFormat { nfArray   = False
-                             , nfComplex = False
-                             , nfVector  = VtScalar
-                             }
-          nd = (NumUnt32 . S.singleton . fromIntegral . ord) c
+  toSlaw c = SlawNumeric nfScalar nd
+    where nd = (NumUnt32 . S.singleton . fromIntegral . ord) c
 
   listToSlaw = slawFromString
+
+instance FromSlaw Integer where
+  fsName _ = "Integer"
+
+  fromSlaw s@(SlawNumeric _ nd) =
+    case numToInteger nd of
+      Nothing -> handleOthers s
+      Just n  -> Right n
+  fromSlaw (SlawString utf8) =
+    let str = fromUtf8 utf8
+    in case readMaybe str of
+         Just n  -> Right n
+         Nothing -> Left $ typeMismatch $ show str `cantCoerce1` "Integer"
+  fromSlaw s = handleOthers s
+
+instance ToSlaw Integer where
+  toSlaw n =
+    case integerToNum n of
+      Just nd -> SlawNumeric nfScalar nd
+      Nothing -> SlawString $ toUtf8 $ show n
