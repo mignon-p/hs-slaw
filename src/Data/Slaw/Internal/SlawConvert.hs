@@ -17,13 +17,16 @@ import Control.DeepSeq
 import Control.Exception
 -- import qualified Data.ByteString      as B
 import qualified Data.ByteString.Lazy as L
+import Data.Char
 import Data.Default.Class
 import Data.Either
 import Data.Hashable
 -- import Data.Int
 import Data.List
 import qualified Data.Map.Strict      as M
+import Data.String
 import qualified Data.Text            as T
+import qualified Data.Text.Lazy       as LT
 import qualified Data.Vector.Storable as S
 -- import Data.Word
 import Foreign.Storable
@@ -34,6 +37,7 @@ import GHC.Stack
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
+import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
 
 ---- FromSlaw and ToSlaw classes
@@ -109,12 +113,10 @@ handleOthers slaw = Left $ typeMismatch msg
   where msg = slaw `cantCoerce` fsName (undefined :: a)
 
 cantCoerce :: Slaw -> String -> String
-cantCoerce slaw other =
-  concat [ "Can't coerce "
-         , describeSlaw slaw
-         , " to "
-         , other
-         ]
+cantCoerce slaw other = describeSlaw slaw `cantCoerce1` other
+
+cantCoerce1 :: String -> String -> String
+cantCoerce1 desc other = concat ["Can't coerce ", desc, " to ", other]
 
 defaultListToSlaw :: ToSlaw a => [a] -> Slaw
 defaultListToSlaw = SlawList . map toSlaw
@@ -183,6 +185,58 @@ chunkArray :: Storable a
 chunkArray stepSize v = v0 : chunkArray stepSize vRest
   where (v0, vRest) = S.splitAt stepSize v
 
+slawFromString :: TextClass a => a -> Slaw
+slawFromString = SlawString . toUtf8
+
+slawToString :: (FromSlaw a, TextClass a)
+             => Slaw
+             -> Either PlasmaException a
+slawToString (SlawBool b)   = (Right . fromString . map toLower . show) b
+slawToString SlawNil        = (Right . fromText) "nil"
+slawToString (SlawString u) = (Right . fromUtf8) u
+slawToString s@(SlawNumeric _ nd) = numToStr     s nd
+slawToString s                    = handleOthers s
+
+numToStr :: (FromSlaw a, TextClass a)
+         => Slaw
+         -> NumericData
+         -> Either PlasmaException a
+numToStr s (NumInt8   v) = numToStr1 s v
+numToStr s (NumInt16  v) = numToStr1 s v
+numToStr s (NumInt32  v) = numToStr1 s v
+numToStr s (NumInt64  v) = numToStr1 s v
+numToStr s (NumUnt8   v) = numToStr1 s v
+numToStr s (NumUnt16  v) = numToStr1 s v
+numToStr s (NumUnt32  v) = numToStr1 s v
+numToStr s (NumUnt64  v) = numToStr1 s v
+numToStr s (NumFloat  v) = numToStr1 s v
+numToStr s (NumDouble v) = numToStr1 s v
+
+numToStr1 :: (FromSlaw a, TextClass a, Storable b, Show b)
+          => Slaw
+          -> S.Vector b
+          -> Either PlasmaException a
+numToStr1 s v
+  | S.length v == 1 = (Right . fromString . show . S.head) v
+  | otherwise       = handleOthers s
+
+numToInteger :: NumericData -> Maybe Integer
+numToInteger (NumInt8   v) = numToInteger1 v
+numToInteger (NumInt16  v) = numToInteger1 v
+numToInteger (NumInt32  v) = numToInteger1 v
+numToInteger (NumInt64  v) = numToInteger1 v
+numToInteger (NumUnt8   v) = numToInteger1 v
+numToInteger (NumUnt16  v) = numToInteger1 v
+numToInteger (NumUnt32  v) = numToInteger1 v
+numToInteger (NumUnt64  v) = numToInteger1 v
+numToInteger (NumFloat  _) = Nothing
+numToInteger (NumDouble _) = Nothing
+
+numToInteger1 :: (Storable a, Integral a) => S.Vector a -> Maybe Integer
+numToInteger1 v
+  | S.length v == 1 = (Just . toInteger . S.head) v
+  | otherwise       = Nothing
+
 ---- types
 
 data Protein = Protein
@@ -215,3 +269,34 @@ instance FromSlaw Bool where
 
 instance ToSlaw Bool where
   toSlaw = SlawBool
+
+instance ToSlaw () where
+  toSlaw _ = SlawNil
+
+instance FromSlaw T.Text where
+  fsName _ = "Text"
+  fromSlaw = slawToString
+
+instance ToSlaw T.Text where
+  toSlaw = slawFromString
+
+instance FromSlaw LT.Text where
+  fsName _ = "lazy Text"
+  fromSlaw = slawToString
+
+instance ToSlaw LT.Text where
+  toSlaw = slawFromString
+
+instance FromSlaw Char where
+  fsName _ = "Char"
+
+  fromSlaw s@(SlawNumeric _ nd) =
+    case numToInteger nd of
+      Nothing -> handleOthers s
+      Just n
+        | n >= 0 && n <= (toInteger . ord) (maxBound :: Char) ->
+            (Right . chr . fromInteger) n
+        | otherwise -> Left $ typeMismatch $ show n `cantCoerce1` "Char"
+  fromSlaw s = handleOthers s
+
+  listFromSlaw = slawToString
