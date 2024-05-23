@@ -24,14 +24,15 @@ import Data.Hashable
 import Data.List
 import qualified Data.Map.Strict      as M
 import qualified Data.Text            as T
--- import qualified Data.Vector.Storable as S
+import qualified Data.Vector.Storable as S
 -- import Data.Word
--- import Foreign.Storable
+import Foreign.Storable
 import GHC.Generics (Generic)
 import GHC.Stack
 -- import System.IO.Unsafe (unsafePerformIO)
 
 import Data.Slaw.Internal.Exception
+import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.Util
 
@@ -132,6 +133,11 @@ defaultListFromSlaw s@(SlawMap pairs) =
 defaultListFromSlaw s@(SlawCons car cdr) =
   let msg = s `cantCoerce` fsName (undefined :: a)
   in fromSlawList msg [car, cdr]
+defaultListFromSlaw s@(SlawNumeric nf nd) =
+  let msg = s `cantCoerce` fsName (undefined :: a)
+  in case numericArrayToList nf nd of
+       Nothing         -> Left $ typeMismatch msg
+       Just (nf', nds) -> fromSlawList msg $ map (SlawNumeric nf') nds
 defaultListFromSlaw s             = handleOthers s
 
 fromSlawList :: FromSlaw a
@@ -147,6 +153,35 @@ fromSlawList msg ss =
                                    , peMessage err
                                    ]
     (_,       xs) -> Right xs
+
+numericArrayToList :: NumericFormat
+                   -> NumericData
+                   -> Maybe (NumericFormat, [NumericData])
+numericArrayToList nf nd = if isArray then Just (nf', nds) else Nothing
+  where
+    isArray  = nfArray nf
+    nf'      = nf { nfArray = False }
+    stepSize = computeBsize nf 1
+    nds      = chunkNumericData stepSize nd
+
+chunkNumericData :: Int -> NumericData -> [NumericData]
+chunkNumericData n (NumInt8   v) = map NumInt8   $ chunkArray n v
+chunkNumericData n (NumInt16  v) = map NumInt16  $ chunkArray n v
+chunkNumericData n (NumInt32  v) = map NumInt32  $ chunkArray n v
+chunkNumericData n (NumInt64  v) = map NumInt64  $ chunkArray n v
+chunkNumericData n (NumUnt8   v) = map NumUnt8   $ chunkArray n v
+chunkNumericData n (NumUnt16  v) = map NumUnt16  $ chunkArray n v
+chunkNumericData n (NumUnt32  v) = map NumUnt32  $ chunkArray n v
+chunkNumericData n (NumUnt64  v) = map NumUnt64  $ chunkArray n v
+chunkNumericData n (NumFloat  v) = map NumFloat  $ chunkArray n v
+chunkNumericData n (NumDouble v) = map NumDouble $ chunkArray n v
+
+chunkArray :: Storable a
+           => Int
+           -> S.Vector a
+           -> [S.Vector a]
+chunkArray stepSize v = v0 : chunkArray stepSize vRest
+  where (v0, vRest) = S.splitAt stepSize v
 
 ---- types
 
