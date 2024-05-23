@@ -300,3 +300,13 @@ instance FromSlaw Char where
   fromSlaw s = handleOthers s
 
   listFromSlaw = slawToString
+
+instance ToSlaw Char where
+  toSlaw c = SlawNumeric nf nd
+    where nf = NumericFormat { nfArray   = False
+                             , nfComplex = False
+                             , nfVector  = VtScalar
+                             }
+          nd = (NumUnt32 . S.singleton . fromIntegral . ord) c
+
+  listToSlaw = slawFromString
