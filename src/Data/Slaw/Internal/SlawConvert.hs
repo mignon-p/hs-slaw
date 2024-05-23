@@ -197,5 +197,21 @@ instance Default Protein where
 ---- instances
 
 instance FromSlaw a => FromSlaw [a] where
-  fromSlaw = listFromSlaw
   fsName _ = "[" ++ fsName (undefined :: a) ++ "]"
+  fromSlaw = listFromSlaw
+
+instance ToSlaw a => ToSlaw [a] where
+  toSlaw = listToSlaw
+
+instance FromSlaw Bool where
+  fsName _ = "Bool"
+
+  fromSlaw (SlawBool b)     = Right b
+  fromSlaw SlawNil          = Right False
+  fromSlaw (SlawString lbs)
+    | lbs ==~ "false"       = Right False
+    | lbs ==~ "true"        = Right True
+  fromSlaw s                = handleOthers s
+
+instance ToSlaw Bool where
+  toSlaw = SlawBool

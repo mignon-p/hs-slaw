@@ -11,9 +11,11 @@ module Data.Slaw.Internal.Util
   , hi8
   , mapLeft
   , mapRight
+  , (==~)
   ) where
 
 import Data.Bits
+import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.Char
 import Data.Hashable
 import Data.Word
@@ -22,6 +24,7 @@ import GHC.Float
 
 infixl 0 ##
 infix  7 ??
+infix  4 ==~
 
 {-# INLINE (##) #-}
 (##) :: Hashable a => Int -> a -> Int
@@ -39,6 +42,7 @@ oppositeByteOrder :: ByteOrder -> ByteOrder
 oppositeByteOrder BigEndian    = LittleEndian
 oppositeByteOrder LittleEndian = BigEndian
 
+{-# INLINABLE ucFirst #-}
 ucFirst :: String -> String
 ucFirst [] = []
 ucFirst (x:rest) = toUpper x : rest
@@ -62,3 +66,16 @@ mapLeft _ (Right x) = Right x
 mapRight :: (b -> c) -> Either a b -> Either a c
 mapRight _ (Left x)  = Left  x
 mapRight f (Right x) = Right (f x)
+
+-- case insensitive (for ASCII chars only) equality for lazy ByteStrings
+{-# INLINABLE (==~) #-}
+(==~) :: L8.ByteString -> L8.ByteString -> Bool
+x ==~ y
+  | L8.length x /= L8.length y = False
+  | otherwise = L8.map lcAscii x == L8.map lcAscii y
+
+lcAscii :: Char -> Char
+lcAscii c
+  | n >= 0x41 && n <= 0x5A = chr (n + 0x20)
+  | otherwise              = c
+  where n = ord c
