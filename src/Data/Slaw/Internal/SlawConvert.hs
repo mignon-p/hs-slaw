@@ -15,7 +15,7 @@ module Data.Slaw.Internal.SlawConvert
 
 import Control.DeepSeq
 import Control.Exception
--- import qualified Data.ByteString      as B
+import qualified Data.ByteString      as B
 import qualified Data.ByteString.Lazy as L
 import Data.Char
 import Data.Default.Class
@@ -245,6 +245,30 @@ nfScalar = NumericFormat
   , nfVector  = VtScalar
   }
 
+nfScalarArray :: NumericFormat
+nfScalarArray = nfScalar { nfArray = True }
+
+slawFromByteString :: ByteStringClass a => a -> Slaw
+slawFromByteString x = SlawNumeric nfScalarArray nd
+  where bs = toByteString x
+        nd = restoreNumeric bo TypUnt8 bs
+        -- Byte order should not matter, since we are using
+        -- a single-byte type (unt8)
+        bo = BigEndian
+
+slawToByteString :: (FromSlaw a, ByteStringClass a)
+                 => Slaw
+                 -> Either PlasmaException a
+slawToByteString (SlawProtein _ _ rude) = Right $ fromLazyByteString rude
+slawToByteString (SlawString  lbs     ) = Right $ fromLazyByteString lbs
+slawToByteString (SlawNumeric nf nd   )
+  | nf == nfScalarArray && nt `elem` [TypInt8, TypUnt8] =
+      Right $ fromByteString bs
+  where (nt, bs) = extractNumeric bo nd
+        -- Again, byte order does not matter for int8/unt8
+        bo       = BigEndian
+slawToByteString s = handleOthers s
+
 ---- types
 
 data Protein = Protein
@@ -257,6 +281,13 @@ instance Default Protein where
   def = Protein [] M.empty L.empty
 
 ---- instances
+
+instance FromSlaw Slaw where
+  fsName _ = "Slaw"
+  fromSlaw = Right
+
+instance ToSlaw Slaw where
+  toSlaw = id
 
 instance FromSlaw a => FromSlaw [a] where
   fsName _ = "[" ++ fsName (undefined :: a) ++ "]"
@@ -334,3 +365,24 @@ instance ToSlaw Integer where
     case integerToNum n of
       Just nd -> SlawNumeric nfScalar nd
       Nothing -> SlawString $ toUtf8 $ show n
+
+instance FromSlaw B.ByteString where
+  fsName _ = "ByteString"
+  fromSlaw = slawToByteString
+
+instance ToSlaw B.ByteString where
+  toSlaw = slawFromByteString
+
+instance FromSlaw L.ByteString where
+  fsName _ = "lazy ByteString"
+  fromSlaw = slawToByteString
+
+instance ToSlaw L.ByteString where
+  toSlaw = slawFromByteString
+
+instance FromSlaw SBS.ShortByteString where
+  fsName _ = "ShortByteString"
+  fromSlaw = slawToByteString
+
+instance ToSlaw SBS.ShortByteString where
+  toSlaw = slawFromByteString
