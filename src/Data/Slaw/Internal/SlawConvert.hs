@@ -307,6 +307,8 @@ slawToMap :: (FromSlaw a, FromSlaw b, FromSlaw z)
           -> Either PlasmaException [(a, b)]
 slawToMap s@(SlawMap pairs                         ) = mapFromSlaw s pairs
 slawToMap s@(SlawProtein _ (Just (SlawMap pairs)) _) = mapFromSlaw s pairs
+slawToMap s@(SlawList ss                           ) = mapFromSlaw s pairs
+  where pairs = zip (map toSlaw [(0::Integer)..]) ss
 slawToMap s = const (handleOthers s)
 
 mapFromSlaw :: (FromSlaw a, FromSlaw b, FromSlaw z)
