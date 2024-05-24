@@ -22,7 +22,9 @@ import Data.Char
 import Data.Default.Class
 import Data.Either
 import Data.Hashable
+import qualified Data.HashMap.Strict      as HM
 -- import Data.Int
+-- import qualified Data.IntMap.Strict       as IM
 import Data.List
 import qualified Data.Map.Strict          as M
 import Data.String
@@ -295,6 +297,48 @@ pairFromSlaw' (x, y) = do
   y' <- fromSlaw y
   return (x', y')
 
+slawFromMap :: (ToSlaw a, ToSlaw b) => [(a, b)] -> Slaw
+slawFromMap = SlawMap . map f
+  where f (x, y) = (toSlaw x, toSlaw y)
+
+slawToMap :: (FromSlaw a, FromSlaw b, FromSlaw z)
+          => Slaw
+          -> z
+          -> Either PlasmaException [(a, b)]
+slawToMap s@(SlawMap pairs                         ) = mapFromSlaw s pairs
+slawToMap s@(SlawProtein _ (Just (SlawMap pairs)) _) = mapFromSlaw s pairs
+slawToMap s = const (handleOthers s)
+
+mapFromSlaw :: (FromSlaw a, FromSlaw b, FromSlaw z)
+            => Slaw
+            -> [(Slaw, Slaw)]
+            -> z
+            -> Either PlasmaException [(a, b)]
+mapFromSlaw s pairs dummy =
+  let msg = s `cantCoerce` fsName dummy
+  in case partitionEithers (map mfs1 pairs) of
+       ([],      []) -> Right []
+       ((err:_), []) ->
+         Left $ typeMismatch $ concat [ msg
+                                      , ", because "
+                                      , peMessage err
+                                      ]
+       (_,       xs) -> Right xs
+
+mfs1 :: forall a b. (FromSlaw a, FromSlaw b)
+     => (Slaw, Slaw)
+     -> Either PlasmaException (a, b)
+mfs1 pair@(x, y) =
+  case pairFromSlaw' pair of
+    Left err ->
+      let msg = str `cantCoerce1` fsName (undefined :: a, undefined :: b)
+          str = mkTupleName $ map describeSlaw [x, y]
+      in Left $ typeMismatch $ concat [ msg
+                                      , ", because "
+                                      , peMessage err
+                                      ]
+    Right pair' -> Right pair'
+
 ---- types
 
 data Protein = Protein
@@ -432,3 +476,41 @@ instance (FromSlaw a, FromSlaw b) => FromSlaw (a, b) where
 
 instance (ToSlaw a, ToSlaw b) => ToSlaw (a, b) where
   toSlaw (car, cdr) = SlawCons (toSlaw car) (toSlaw cdr)
+
+instance (FromSlaw a, FromSlaw b, Ord a) => FromSlaw (M.Map a b) where
+  fsName _ = concat [ "Map "
+                    , fsName (undefined :: a)
+                    , " "
+                    , fsName (undefined :: b)
+                    ]
+  fromSlaw s = mapRight M.fromList $ slawToMap s (M.empty :: M.Map a b)
+
+instance (ToSlaw a, ToSlaw b, Ord a) => ToSlaw (M.Map a b) where
+  toSlaw = slawFromMap . M.toList
+
+instance ( FromSlaw a
+         , FromSlaw b
+         , Hashable a
+         ) => FromSlaw (HM.HashMap a b) where
+  fsName _ = concat [ "HashMap "
+                    , fsName (undefined :: a)
+                    , " "
+                    , fsName (undefined :: b)
+                    ]
+  fromSlaw s =
+    mapRight HM.fromList $ slawToMap s (HM.empty :: HM.HashMap a b)
+
+instance (ToSlaw a, ToSlaw b, Ord a) => ToSlaw (HM.HashMap a b) where
+  toSlaw = slawFromMap . HM.toList
+
+{- uncomment once we have FromSlaw/ToSlaw instances for Int
+instance (FromSlaw b) => FromSlaw (IM.IntMap b) where
+  fsName _ = concat [ "IntMap "
+                    , fsName (undefined :: b)
+                    ]
+  fromSlaw s =
+    mapRight IM.fromList $ slawToMap s (IM.empty :: IM.IntMap b)
+
+instance (ToSlaw b) => ToSlaw (IM.IntMap b) where
+  toSlaw = slawFromMap . IM.toList
+-}
