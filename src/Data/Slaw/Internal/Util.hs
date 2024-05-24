@@ -12,6 +12,7 @@ module Data.Slaw.Internal.Util
   , mapLeft
   , mapRight
   , (==~)
+  , (?>)
   ) where
 
 import Data.Bits
@@ -25,6 +26,7 @@ import GHC.Float
 infixl 0 ##
 infix  7 ??
 infix  4 ==~
+infix  4 ?>
 
 {-# INLINE (##) #-}
 (##) :: Hashable a => Int -> a -> Int
@@ -79,3 +81,8 @@ lcAscii c
   | n >= 0x41 && n <= 0x5A = chr (n + 0x20)
   | otherwise              = c
   where n = ord c
+
+{-# INLINABLE (?>) #-}
+(?>) :: Maybe a -> a -> a
+Just x  ?> _ = x
+Nothing ?> x = x

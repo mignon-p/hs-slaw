@@ -15,19 +15,20 @@ module Data.Slaw.Internal.SlawConvert
 
 import Control.DeepSeq
 import Control.Exception
-import qualified Data.ByteString      as B
-import qualified Data.ByteString.Lazy as L
+import qualified Data.ByteString          as B
+import qualified Data.ByteString.Lazy     as L
+import qualified Data.ByteString.Short    as SBS
 import Data.Char
 import Data.Default.Class
 import Data.Either
 import Data.Hashable
 -- import Data.Int
 import Data.List
-import qualified Data.Map.Strict      as M
+import qualified Data.Map.Strict          as M
 import Data.String
-import qualified Data.Text            as T
-import qualified Data.Text.Lazy       as LT
-import qualified Data.Vector.Storable as S
+import qualified Data.Text                as T
+import qualified Data.Text.Lazy           as LT
+import qualified Data.Vector.Storable     as S
 -- import Data.Word
 import Foreign.Storable
 import GHC.Generics (Generic)
@@ -269,6 +270,31 @@ slawToByteString (SlawNumeric nf nd   )
         bo       = BigEndian
 slawToByteString s = handleOthers s
 
+mkTupleName :: [String] -> String
+mkTupleName names = "(" ++ intercalate ", " names ++ ")"
+
+pairFromSlaw :: forall a b. (FromSlaw a, FromSlaw b)
+             => Slaw
+             -> (Slaw, Slaw)
+             -> Either PlasmaException (a, b)
+pairFromSlaw s pair =
+  case pairFromSlaw' pair of
+    Left err ->
+      let msg = s `cantCoerce` fsName (undefined :: a, undefined :: b)
+      in Left $ typeMismatch $ concat [ msg
+                                      , ", because "
+                                      , peMessage err
+                                      ]
+    Right pair' -> Right pair'
+
+pairFromSlaw' :: (FromSlaw a, FromSlaw b)
+              => (Slaw, Slaw)
+              -> Either PlasmaException (a, b)
+pairFromSlaw' (x, y) = do
+  x' <- fromSlaw x
+  y' <- fromSlaw y
+  return (x', y')
+
 ---- types
 
 data Protein = Protein
@@ -386,3 +412,23 @@ instance FromSlaw SBS.ShortByteString where
 
 instance ToSlaw SBS.ShortByteString where
   toSlaw = slawFromByteString
+
+instance (FromSlaw a, FromSlaw b) => FromSlaw (a, b) where
+  fsName _ = mkTupleName [ fsName (undefined :: a)
+                         , fsName (undefined :: b)
+                         ]
+  fromSlaw s@(SlawProtein des ing _) = pairFromSlaw s ( des ?> SlawList []
+                                                      , ing ?> SlawMap  []
+                                                      )
+  fromSlaw s@(SlawCons    car cdr  ) = pairFromSlaw s (car, cdr)
+  fromSlaw s@(SlawList    [x, y]   ) = pairFromSlaw s (x,   y  )
+  fromSlaw s@(SlawNumeric nf  nd   ) =
+    case numericArrayToList nf nd of
+      Just (nf', [x, y]) -> pairFromSlaw s ( SlawNumeric nf' x
+                                           , SlawNumeric nf' y
+                                           )
+      _                  -> handleOthers s
+  fromSlaw s              = handleOthers s
+
+instance (ToSlaw a, ToSlaw b) => ToSlaw (a, b) where
+  toSlaw (car, cdr) = SlawCons (toSlaw car) (toSlaw cdr)
