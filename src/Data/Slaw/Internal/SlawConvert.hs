@@ -538,3 +538,22 @@ instance ToSlaw Protein where
     let des' = if null   des then Nothing else (Just . toSlaw) des
         ing' = if M.null ing then Nothing else (Just . toSlaw) ing
     in SlawProtein des' ing' rude
+
+instance (FromSlaw a, FromSlaw b) => FromSlaw (Either a b) where
+  fsName _ = concat [ "Either "
+                    , fsName (undefined :: a)
+                    , " "
+                    , fsName (undefined :: b)
+                    ]
+
+  fromSlaw s =
+    case (fromSlaw s, fromSlaw s) of
+      (Right x, _      ) -> Right $ Left  x
+      (Left  _, Right x) -> Right $ Right x
+      (Left e1, Left e2) ->
+        let msg = s `cantCoerce` fsName (undefined :: Either a b)
+        in msg `because` [e1, e2]
+
+instance (ToSlaw a, ToSlaw b) => ToSlaw (Either a b) where
+  toSlaw (Left x ) = toSlaw x
+  toSlaw (Right x) = toSlaw x
