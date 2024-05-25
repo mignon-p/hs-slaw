@@ -385,6 +385,12 @@ instance FromSlaw Bool where
 instance ToSlaw Bool where
   toSlaw = SlawBool
 
+instance FromSlaw () where
+  fsName _ = "()"
+
+  fromSlaw SlawNil = Right ()
+  fromSlaw s       = handleOthers s
+
 instance ToSlaw () where
   toSlaw _ = SlawNil
 
@@ -557,3 +563,18 @@ instance (FromSlaw a, FromSlaw b) => FromSlaw (Either a b) where
 instance (ToSlaw a, ToSlaw b) => ToSlaw (Either a b) where
   toSlaw (Left x ) = toSlaw x
   toSlaw (Right x) = toSlaw x
+
+instance FromSlaw a => FromSlaw (Maybe a) where
+  fsName _ = "Maybe " ++ fsName (undefined :: a)
+
+  fromSlaw SlawNil = Right Nothing
+  fromSlaw s =
+    case fromSlaw s of
+      Right x  -> Right x
+      Left err ->
+        let msg = s `cantCoerce` fsName (Nothing :: Maybe a)
+        in msg `because` [err]
+
+instance ToSlaw a => ToSlaw (Maybe a) where
+  toSlaw Nothing  = SlawNil
+  toSlaw (Just x) = toSlaw x
