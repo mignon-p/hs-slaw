@@ -333,6 +333,18 @@ mfs1 pair@(x, y) =
       in msg `because` [err]
     Right pair' -> Right pair'
 
+proteinFromSlaw :: Slaw
+                -> (Maybe Slaw, Maybe Slaw, L.ByteString)
+                -> Either PlasmaException Protein
+proteinFromSlaw s (des, ing, rude) =
+  let des' = des ?> SlawList []
+      ing' = ing ?> SlawMap  []
+  in case pairFromSlaw' (des', ing') of
+       Left err ->
+         let msg = s `cantCoerce` fsName (undefined :: Protein)
+         in msg `because` [err]
+       Right (des2, ing2) -> Right $ Protein des2 ing2 rude
+
 ---- types
 
 data Protein = Protein
@@ -508,3 +520,21 @@ instance (FromSlaw b) => FromSlaw (IM.IntMap b) where
 instance (ToSlaw b) => ToSlaw (IM.IntMap b) where
   toSlaw = slawFromMap . IM.toList
 -}
+
+instance FromSlaw Protein where
+  fsName _ = "Protein"
+
+  fromSlaw SlawNil                      = Right def
+  fromSlaw s@(SlawProtein des ing rude) =
+    proteinFromSlaw s (des, ing, rude)
+  fromSlaw s@(SlawMap _)                =
+    proteinFromSlaw s (Nothing, Just s, L.empty)
+  fromSlaw s@(SlawCons car cdr)         =
+    proteinFromSlaw s (Just car, Just cdr, L.empty)
+  fromSlaw s                            = handleOthers s
+
+instance ToSlaw Protein where
+  toSlaw (Protein des ing rude) =
+    let des' = if null   des then Nothing else (Just . toSlaw) des
+        ing' = if M.null ing then Nothing else (Just . toSlaw) ing
+    in SlawProtein des' ing' rude
