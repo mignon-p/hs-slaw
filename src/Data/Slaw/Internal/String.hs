@@ -5,6 +5,7 @@ module Data.Slaw.Internal.String
   ( Utf8Str
   , TextClass(..)
   , ByteStringClass(..)
+  , indentLines
   , withLazyByteStringAsCString
   , withLazyByteStringAsCStringNL
   , withLazyByteStringAsCStringLen
@@ -34,6 +35,8 @@ import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
 -- import GHC.Generics (Generic)
+
+import Data.Slaw.Internal.Util
 
 type Utf8Str = L.ByteString
 
@@ -122,6 +125,25 @@ instance ByteStringClass SBS.ShortByteString where
   fromByteString      = SBS.toShort
   fromLazyByteString  = SBS.toShort . L.toStrict
   fromShortByteString = id
+
+--
+
+myStripSuffix :: LT.Text -> LT.Text -> LT.Text
+myStripSuffix sfx txt = (sfx `LT.stripSuffix` txt) ?> txt
+
+indentLines :: TextClass a => a -> a -> a
+indentLines indent str =
+  let txt             = toLazyText str
+      indent'         = toLazyText indent
+      trailingNewline = "\n" `LT.isSuffixOf` txt
+      lns             = LT.lines txt
+      lns'            = map (indent' <>) lns
+      txt'            = LT.unlines lns'
+  in if trailingNewline
+     then fromLazyText txt'
+     else fromLazyText ("\n" `myStripSuffix` txt')
+
+--
 
 withLazyByteStringAsCString :: L.ByteString
                             -> (CString -> IO a)

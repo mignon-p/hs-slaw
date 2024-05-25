@@ -116,6 +116,12 @@ handleOthers (SlawError msg loc)
 handleOthers slaw = Left $ typeMismatch msg
   where msg = slaw `cantCoerce` fsName (undefined :: a)
 
+because :: String -> [PlasmaException] -> Either PlasmaException a
+because msg reasons = (Left . typeMismatch) msg'
+  where msg'     = concat [ msg, ", because:\n", reasons']
+        reasons0 = map (indentLines "  " . peMessage) reasons
+        reasons' = intercalate "\nand:\n" reasons0
+
 cantCoerce :: Slaw -> String -> String
 cantCoerce slaw other = describeSlaw slaw `cantCoerce1` other
 
@@ -153,11 +159,7 @@ fromSlawList :: FromSlaw a
 fromSlawList msg ss =
   case partitionEithers (map fromSlaw ss) of
     ([],      []) -> Right []
-    ((err:_), []) ->
-      Left $ typeMismatch $ concat [ msg
-                                   , ", because "
-                                   , peMessage err
-                                   ]
+    ((err:_), []) -> msg `because` [err]
     (_,       xs) -> Right xs
 
 numericArrayToList :: NumericFormat
@@ -283,10 +285,7 @@ pairFromSlaw s pair =
   case pairFromSlaw' pair of
     Left err ->
       let msg = s `cantCoerce` fsName (undefined :: a, undefined :: b)
-      in Left $ typeMismatch $ concat [ msg
-                                      , ", because "
-                                      , peMessage err
-                                      ]
+      in msg `because` [err]
     Right pair' -> Right pair'
 
 pairFromSlaw' :: (FromSlaw a, FromSlaw b)
@@ -320,11 +319,7 @@ mapFromSlaw s pairs dummy =
   let msg = s `cantCoerce` fsName dummy
   in case partitionEithers (map mfs1 pairs) of
        ([],      []) -> Right []
-       ((err:_), []) ->
-         Left $ typeMismatch $ concat [ msg
-                                      , ", because "
-                                      , peMessage err
-                                      ]
+       ((err:_), []) -> msg `because` [err]
        (_,       xs) -> Right xs
 
 mfs1 :: forall a b. (FromSlaw a, FromSlaw b)
@@ -335,10 +330,7 @@ mfs1 pair@(x, y) =
     Left err ->
       let msg = str `cantCoerce1` fsName (undefined :: a, undefined :: b)
           str = mkTupleName $ map describeSlaw [x, y]
-      in Left $ typeMismatch $ concat [ msg
-                                      , ", because "
-                                      , peMessage err
-                                      ]
+      in msg `because` [err]
     Right pair' -> Right pair'
 
 ---- types
