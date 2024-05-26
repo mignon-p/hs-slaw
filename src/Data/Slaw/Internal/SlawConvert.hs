@@ -42,6 +42,7 @@ import GHC.Stack
 import Text.Read
 
 import Data.Slaw.Internal.Exception
+import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
@@ -49,15 +50,11 @@ import Data.Slaw.Internal.Util
 
 ---- FromSlaw and ToSlaw classes
 
-class FromSlaw a where
+class Nameable a => FromSlaw a where
   fromSlaw :: Slaw -> Either PlasmaException a
 
   listFromSlaw :: Slaw -> Either PlasmaException [a]
   listFromSlaw = defaultListFromSlaw
-
-  -- Name of type we are converting to.
-  -- (Used in error messages.)
-  fsName :: a -> String
 
 class ToSlaw a where
   toSlaw :: a -> Slaw
@@ -117,7 +114,7 @@ handleOthers (SlawError msg loc)
   | typeMismatchPfx `isPrefixOf` msg = Left $ typeMismatch' msg loc
   | otherwise                        = Left $ corruptSlaw   msg loc
 handleOthers slaw = Left $ typeMismatch msg
-  where msg = slaw `cantCoerceSlaw` fsName (undefined :: a)
+  where msg = slaw `cantCoerceSlaw` typeName (undefined :: a)
 
 cantCoerceSlaw :: Slaw -> String -> String
 cantCoerceSlaw slaw other = describeSlaw slaw `cantCoerce` other
@@ -130,17 +127,17 @@ defaultListFromSlaw :: forall a. (FromSlaw a)
                     -> Either PlasmaException [a]
 defaultListFromSlaw SlawNil       = Right []
 defaultListFromSlaw s@(SlawList ss) =
-  let msg = s `cantCoerceSlaw` fsName (undefined :: a)
+  let msg = s `cantCoerceSlaw` typeName (undefined :: a)
   in fromSlawList msg ss
 defaultListFromSlaw s@(SlawMap pairs) =
-  let msg    = s `cantCoerceSlaw` fsName (undefined :: a)
+  let msg    = s `cantCoerceSlaw` typeName (undefined :: a)
       conses = map (uncurry SlawCons) pairs
   in fromSlawList msg conses
 defaultListFromSlaw s@(SlawCons car cdr) =
-  let msg = s `cantCoerceSlaw` fsName (undefined :: a)
+  let msg = s `cantCoerceSlaw` typeName (undefined :: a)
   in fromSlawList msg [car, cdr]
 defaultListFromSlaw s@(SlawNumeric nf nd) =
-  let msg = s `cantCoerceSlaw` fsName (undefined :: a)
+  let msg = s `cantCoerceSlaw` typeName (undefined :: a)
   in case numericArrayToList nf nd of
        Nothing         -> Left $ typeMismatch msg
        Just (nf', nds) -> fromSlawList msg $ map (SlawNumeric nf') nds
@@ -278,7 +275,7 @@ pairFromSlaw :: forall a b. (FromSlaw a, FromSlaw b)
 pairFromSlaw s pair =
   case pairFromSlaw' pair of
     Left err ->
-      let msg = s `cantCoerceSlaw` fsName (undefined :: a, undefined :: b)
+      let msg = s `cantCoerceSlaw` typeName (undefined :: a, undefined :: b)
       in msg `because` [err]
     Right pair' -> Right pair'
 
@@ -310,7 +307,7 @@ mapFromSlaw :: (FromSlaw a, FromSlaw b, FromSlaw z)
             -> z
             -> Either PlasmaException [(a, b)]
 mapFromSlaw s pairs dummy =
-  let msg = s `cantCoerceSlaw` fsName dummy
+  let msg = s `cantCoerceSlaw` typeName dummy
   in case partitionEithers (map mfs1 pairs) of
        ([],      []) -> Right []
        ((err:_), []) -> msg `because` [err]
@@ -322,7 +319,7 @@ mfs1 :: forall a b. (FromSlaw a, FromSlaw b)
 mfs1 pair@(x, y) =
   case pairFromSlaw' pair of
     Left err ->
-      let msg = str `cantCoerce` fsName (undefined :: a, undefined :: b)
+      let msg = str `cantCoerce` typeName (undefined :: a, undefined :: b)
           str = mkTupleName $ map describeSlaw [x, y]
       in msg `because` [err]
     Right pair' -> Right pair'
@@ -335,7 +332,7 @@ proteinFromSlaw s (des, ing, rude) =
       ing' = ing ?> SlawMap  []
   in case pairFromSlaw' (des', ing') of
        Left err ->
-         let msg = s `cantCoerceSlaw` fsName (undefined :: Protein)
+         let msg = s `cantCoerceSlaw` typeName (undefined :: Protein)
          in msg `because` [err]
        Right (des2, ing2) -> Right $ Protein des2 ing2 rude
 
@@ -350,25 +347,24 @@ data Protein = Protein
 instance Default Protein where
   def = Protein [] M.empty L.empty
 
+instance Nameable Protein where
+  typeName _ = "Protein"
+
 ---- instances
 
 instance FromSlaw Slaw where
-  fsName _ = "Slaw"
   fromSlaw = Right
 
 instance ToSlaw Slaw where
   toSlaw = id
 
 instance FromSlaw a => FromSlaw [a] where
-  fsName _ = "[" ++ fsName (undefined :: a) ++ "]"
   fromSlaw = listFromSlaw
 
 instance ToSlaw a => ToSlaw [a] where
   toSlaw = listToSlaw
 
 instance FromSlaw Bool where
-  fsName _ = "Bool"
-
   fromSlaw (SlawBool b)     = Right b
   fromSlaw SlawNil          = Right False
   fromSlaw (SlawString lbs)
@@ -380,8 +376,6 @@ instance ToSlaw Bool where
   toSlaw = SlawBool
 
 instance FromSlaw () where
-  fsName _ = "()"
-
   fromSlaw SlawNil = Right ()
   fromSlaw s       = handleOthers s
 
@@ -389,22 +383,18 @@ instance ToSlaw () where
   toSlaw _ = SlawNil
 
 instance FromSlaw T.Text where
-  fsName _ = "Text"
   fromSlaw = slawToString
 
 instance ToSlaw T.Text where
   toSlaw = slawFromString
 
 instance FromSlaw LT.Text where
-  fsName _ = "lazy Text"
   fromSlaw = slawToString
 
 instance ToSlaw LT.Text where
   toSlaw = slawFromString
 
 instance FromSlaw Char where
-  fsName _ = "Char"
-
   fromSlaw s@(SlawNumeric _ nd) =
     case numToInteger nd of
       Nothing -> handleOthers s
@@ -423,8 +413,6 @@ instance ToSlaw Char where
   listToSlaw = slawFromString
 
 instance FromSlaw Integer where
-  fsName _ = "Integer"
-
   fromSlaw s@(SlawNumeric _ nd) =
     case numToInteger nd of
       Nothing -> handleOthers s
@@ -443,30 +431,24 @@ instance ToSlaw Integer where
       Nothing -> SlawString $ toUtf8 $ show n
 
 instance FromSlaw B.ByteString where
-  fsName _ = "ByteString"
   fromSlaw = slawToByteString
 
 instance ToSlaw B.ByteString where
   toSlaw = slawFromByteString
 
 instance FromSlaw L.ByteString where
-  fsName _ = "lazy ByteString"
   fromSlaw = slawToByteString
 
 instance ToSlaw L.ByteString where
   toSlaw = slawFromByteString
 
 instance FromSlaw SBS.ShortByteString where
-  fsName _ = "ShortByteString"
   fromSlaw = slawToByteString
 
 instance ToSlaw SBS.ShortByteString where
   toSlaw = slawFromByteString
 
 instance (FromSlaw a, FromSlaw b) => FromSlaw (a, b) where
-  fsName _ = mkTupleName [ fsName (undefined :: a)
-                         , fsName (undefined :: b)
-                         ]
   fromSlaw s@(SlawProtein des ing _) = pairFromSlaw s ( des ?> SlawList []
                                                       , ing ?> SlawMap  []
                                                       )
@@ -484,11 +466,6 @@ instance (ToSlaw a, ToSlaw b) => ToSlaw (a, b) where
   toSlaw (car, cdr) = SlawCons (toSlaw car) (toSlaw cdr)
 
 instance (FromSlaw a, FromSlaw b, Ord a) => FromSlaw (M.Map a b) where
-  fsName _ = concat [ "Map "
-                    , fsName (undefined :: a)
-                    , " "
-                    , fsName (undefined :: b)
-                    ]
   fromSlaw s = mapRight M.fromList $ slawToMap s (M.empty :: M.Map a b)
 
 instance (ToSlaw a, ToSlaw b, Ord a) => ToSlaw (M.Map a b) where
@@ -498,11 +475,6 @@ instance ( FromSlaw a
          , FromSlaw b
          , Hashable a
          ) => FromSlaw (HM.HashMap a b) where
-  fsName _ = concat [ "HashMap "
-                    , fsName (undefined :: a)
-                    , " "
-                    , fsName (undefined :: b)
-                    ]
   fromSlaw s =
     mapRight HM.fromList $ slawToMap s (HM.empty :: HM.HashMap a b)
 
@@ -511,9 +483,6 @@ instance (ToSlaw a, ToSlaw b, Ord a) => ToSlaw (HM.HashMap a b) where
 
 {- uncomment once we have FromSlaw/ToSlaw instances for Int
 instance (FromSlaw b) => FromSlaw (IM.IntMap b) where
-  fsName _ = concat [ "IntMap "
-                    , fsName (undefined :: b)
-                    ]
   fromSlaw s =
     mapRight IM.fromList $ slawToMap s (IM.empty :: IM.IntMap b)
 
@@ -522,8 +491,6 @@ instance (ToSlaw b) => ToSlaw (IM.IntMap b) where
 -}
 
 instance FromSlaw Protein where
-  fsName _ = "Protein"
-
   fromSlaw SlawNil                      = Right def
   fromSlaw s@(SlawProtein des ing rude) =
     proteinFromSlaw s (des, ing, rude)
@@ -540,18 +507,12 @@ instance ToSlaw Protein where
     in SlawProtein des' ing' rude
 
 instance (FromSlaw a, FromSlaw b) => FromSlaw (Either a b) where
-  fsName _ = concat [ "Either "
-                    , fsName (undefined :: a)
-                    , " "
-                    , fsName (undefined :: b)
-                    ]
-
   fromSlaw s =
     case (fromSlaw s, fromSlaw s) of
       (Right x, _      ) -> Right $ Left  x
       (Left  _, Right x) -> Right $ Right x
       (Left e1, Left e2) ->
-        let msg = s `cantCoerceSlaw` fsName (undefined :: Either a b)
+        let msg = s `cantCoerceSlaw` typeName (undefined :: Either a b)
         in msg `because` [e1, e2]
 
 instance (ToSlaw a, ToSlaw b) => ToSlaw (Either a b) where
@@ -559,14 +520,12 @@ instance (ToSlaw a, ToSlaw b) => ToSlaw (Either a b) where
   toSlaw (Right x) = toSlaw x
 
 instance FromSlaw a => FromSlaw (Maybe a) where
-  fsName _ = "Maybe " ++ fsName (undefined :: a)
-
   fromSlaw SlawNil = Right Nothing
   fromSlaw s =
     case fromSlaw s of
       Right x  -> Right x
       Left err ->
-        let msg = s `cantCoerceSlaw` fsName (Nothing :: Maybe a)
+        let msg = s `cantCoerceSlaw` typeName (Nothing :: Maybe a)
         in msg `because` [err]
 
 instance ToSlaw a => ToSlaw (Maybe a) where
@@ -574,8 +533,6 @@ instance ToSlaw a => ToSlaw (Maybe a) where
   toSlaw (Just x) = toSlaw x
 
 instance FromSlaw Rational where
-  fsName _ = "Rational"
-
   fromSlaw s@(SlawCons car cdr) =
     case pairFromSlaw' (car, cdr) of
       Left err ->
