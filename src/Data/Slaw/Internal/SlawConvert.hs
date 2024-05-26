@@ -1,4 +1,6 @@
+{-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE TypeSynonymInstances       #-}
 
 module Data.Slaw.Internal.SlawConvert
   ( FromSlaw(..)
@@ -26,6 +28,7 @@ import qualified Data.HashMap.Strict      as HM
 -- import Data.Int
 -- import qualified Data.IntMap.Strict       as IM
 import Data.List
+import Data.Ratio
 import qualified Data.Map.Strict          as M
 import Data.String
 import qualified Data.Text                as T
@@ -569,3 +572,17 @@ instance FromSlaw a => FromSlaw (Maybe a) where
 instance ToSlaw a => ToSlaw (Maybe a) where
   toSlaw Nothing  = SlawNil
   toSlaw (Just x) = toSlaw x
+
+instance FromSlaw Rational where
+  fsName _ = "Rational"
+
+  fromSlaw s@(SlawCons car cdr) =
+    case pairFromSlaw' (car, cdr) of
+      Left err ->
+        let msg = s `cantCoerceSlaw` "Rational"
+        in msg `because` [err]
+      Right (num, den) -> Right $ num % den
+  fromSlaw s = handleOthers s
+
+instance ToSlaw Rational where
+  toSlaw r = SlawCons (toSlaw $ numerator r) (toSlaw $ denominator r)
