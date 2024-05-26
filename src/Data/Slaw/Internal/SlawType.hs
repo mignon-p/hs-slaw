@@ -13,6 +13,13 @@ module Data.Slaw.Internal.SlawType
   , extractNumeric
   , restoreNumeric
   , integerToNum
+  , NumElem(..)
+  , describeNumericFormat
+  , describeNumericData
+  , numToList
+  , intCoerce
+  , floatCoerce
+  , doubleCoerce
   ) where
 
 import Control.Arrow (second)
