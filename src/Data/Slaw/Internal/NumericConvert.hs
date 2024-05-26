@@ -19,7 +19,7 @@ module Data.Slaw.Internal.NumericConvert
 
 import Control.Arrow (second)
 import Control.DeepSeq
-import Data.Complex
+-- import Data.Complex
 import Data.Hashable
 import Data.Int
 import Data.List
@@ -67,17 +67,12 @@ rangeErr :: Show a
          -> (Integer, Integer)
          -> Either PlasmaException b
 rangeErr (fromType, toType) i (lo, hi) =
-  Left $ typeMismatch $ concat [ fromType
-                               , " "
-                               , show i
-                               , " is not in the range of "
-                               , toType
-                               , " ["
-                               , show lo
-                               , ".."
-                               , show hi
-                               , "]"
-                               ]
+  Left $ rangeError' ( fromType
+                     , show i
+                     , toType
+                     , show lo
+                     , show hi
+                     )
 
 checkRange :: (String, String)
            -> (Integer, Integer)

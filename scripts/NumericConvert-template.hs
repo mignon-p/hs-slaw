@@ -79,17 +79,12 @@ rangeErr :: Show a
          -> (Integer, Integer)
          -> Either PlasmaException b
 rangeErr (fromType, toType) i (lo, hi) =
-  Left $ typeMismatch $ concat [ fromType
-                               , " "
-                               , show i
-                               , " is not in the range of "
-                               , toType
-                               , " ["
-                               , show lo
-                               , ".."
-                               , show hi
-                               , "]"
-                               ]
+  Left $ rangeError' ( fromType
+                     , show i
+                     , toType
+                     , show lo
+                     , show hi
+                     )
 
 checkRange :: (String, String)
            -> (Integer, Integer)
