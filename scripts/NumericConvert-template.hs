@@ -1,0 +1,171 @@
+{-# LANGUAGE ScopedTypeVariables        #-}
+
+module Data.Slaw.Internal.NumericConvert
+  ( RealClass(..)
+  , ScalarClass(..)
+  ) where
+
+import Control.Arrow (second)
+import Control.DeepSeq
+import Data.Hashable
+import Data.Int
+import Data.List
+import qualified Data.Vector.Storable as S
+import Data.Word
+import Foreign.Storable
+import GHC.Generics (Generic)
+
+import Data.Slaw.Internal.Exception
+import Data.Slaw.Internal.NativeInt
+import Data.Slaw.Internal.SlawType
+import Data.Slaw.Internal.Util
+
+{-
+  NumericConvert.hs is generated from this template.  The "--FOR"
+  and "--END" directives can be used to loop over a set of types.
+  The available sets of types are sizedInt, nativeInt, and floating.
+  More than one set can be specified in a "--FOR" directive,
+  separated by commas.
+
+  The following strings will be replaced in the body of the "--FOR":
+  TYPE   - the name of the type
+  LTYPE  - same as TYPE, but all lowercase
+  NAME   - same as TYPE, but "Word" is replaced with "Unt"
+  NAMEXX - same as NAME, but padded with spaces to be 6 characters long
+-}
+
+data CheckNF = CheckNF
+  { cnfArray   :: Maybe Bool
+  , cnfComplex :: Maybe Bool
+  , cnfVector  :: Maybe VectorType
+  } deriving (Eq, Ord, Show, Generic, NFData, Hashable)
+
+checkNF :: CheckNF
+        -> NumericFormat
+        -> (NumericFormat, NumericData, String)
+        -> Either PlasmaException ()
+checkNF cnf nf (fromTypeNF, fromTypeND, toType) =
+  let aOK      = fmap (== nfArray   nf) (cnfArray   cnf) ?> True
+      cOK      = fmap (== nfComplex nf) (cnfComplex cnf) ?> True
+      vOK      = fmap (== nfVector  nf) (cnfVector  cnf) ?> True
+      fromType = intercalate " " (nfl ++ [nds])
+      nfl      = describeNumericFormat fromTypeNF
+      nds      = describeNumericData   fromTypeND
+  in if aOK && cOK && vOK
+     then Right ()
+     else Left $ typeMismatch $ concat [ "Can't convert"
+                                       , fromType
+                                       , " to "
+                                       , toType
+                                       ]
+
+rangeErr :: Show a
+         => (String, String)
+         -> a
+         -> (Integer, Integer)
+         -> Either PlasmaException b
+rangeErr (fromType, toType) i (lo, hi) =
+  Left $ typeMismatch $ concat [ fromType
+                               , " "
+                               , show i
+                               , " is not in the range of "
+                               , toType
+                               , " ["
+                               , show lo
+                               , ".."
+                               , show hi
+                               , "]"
+                               ]
+
+checkRange :: (String, String)
+           -> (Integer, Integer)
+           -> NumElem
+           -> Either PlasmaException NumElem
+checkRange typs (lo, hi) x@(ElemInt i)
+  | lo <= i && i <= hi                         = Right x
+  | otherwise                                  = rangeErr typs i (lo, hi)
+checkRange typs (lo, hi) x@(ElemFloat f)
+  | fromInteger lo <= f && f <= fromInteger hi = Right x
+  | otherwise                                  = rangeErr typs f (lo, hi)
+checkRange typs (lo, hi) x@(ElemDouble d)
+  | fromInteger lo <= d && d <= fromInteger hi = Right x
+  | otherwise                                  = rangeErr typs d (lo, hi)
+
+checkRange' :: forall a. (Integral a, Bounded a)
+            => (String, String)
+            -> a
+            -> NumElem
+            -> Either PlasmaException NumElem
+checkRange' typs _ = checkRange typs range
+  where range = (toInteger (minBound :: a), toInteger (maxBound :: a))
+
+numTypeName :: NumericData -> String
+--FOR sizedInt, floating
+numTypeName (NumNAMEXX _) = "TYPE"
+--END
+
+cnfReal :: CheckNF
+cnfReal = CheckNF
+  { cnfArray   = Nothing
+  , cnfComplex = Just False
+  , cnfVector  = Just VtScalar
+  }
+
+class (Storable a, Num a) => RealClass a where
+  ndToReal :: Maybe String
+           -> (NumericFormat, NumericData)
+           -> Either PlasmaException (NumericFormat, S.Vector a)
+
+  realToNd :: (NumericFormat, S.Vector a)
+           -> (NumericFormat, NumericData)
+
+--FOR sizedInt
+
+instance RealClass TYPE where
+  ndToReal tname (nf, nd) = do
+    let fromType = numTypeName nd
+        toType   = tname ?> "TYPE"
+    checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
+    case nd of
+      NumNAMEXX v -> return (nf, v)
+      _           -> do
+        let typePair = (fromType, toType)
+        nes <- mapM (checkRange' typePair (0 :: TYPE)) $ numToList nd
+        return (nf, S.fromList $ map intCoerce nes)
+
+  realToNd = second NumNAME
+
+--FOR nativeInt
+
+instance RealClass TYPE where
+  ndToReal _ = mapRight (second f) . ndToReal (Just "TYPE")
+    where f :: S.Vector NativeTYPE -> S.Vector TYPE
+          f = S.unsafeCast
+
+  realToNd = realToNd . second f
+    where f :: S.Vector TYPE -> S.Vector NativeTYPE
+          f = S.unsafeCast
+
+--FOR floating
+
+instance RealClass TYPE where
+  ndToReal tname (nf, nd) = do
+    let toType   = tname ?> "TYPE"
+    checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
+    case nd of
+      NumNAMEXX v -> return (nf, v)
+      _           -> do
+        let nes = numToList nd
+        return (nf, S.fromList $ map LTYPECoerce nes)
+
+  realToNd = second NumNAME
+
+--END
+
+class Storable a => ScalarClass a where
+  ndToScalar :: Maybe String
+             -> (NumericFormat, NumericData)
+             -> Either PlasmaException (NumericFormat, S.Vector a)
+
+  scalarToNd :: (NumericFormat, S.Vector a)
+             -> (NumericFormat, NumericData)

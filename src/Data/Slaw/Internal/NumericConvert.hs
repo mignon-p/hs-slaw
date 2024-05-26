@@ -1,3 +1,15 @@
+{- GENERATED FILE - DO NOT EDIT
+
+   To modify, edit the template file, and re-run the script.
+
+   template: scripts/NumericConvert-template.hs
+     script: scripts/gen-NumericConvert.pl
+     output: src/Data/Slaw/Internal/NumericConvert.hs
+
+   Script takes no arguments.  It finds its input and output
+   files relative to its own position in the source tree.
+-}
+
 {-# LANGUAGE ScopedTypeVariables        #-}
 
 module Data.Slaw.Internal.NumericConvert
@@ -19,6 +31,20 @@ import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.NativeInt
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.Util
+
+{-
+  NumericConvert.hs is generated from this template.  The "--FOR"
+  and "--END" directives can be used to loop over a set of types.
+  The available sets of types are sizedInt, nativeInt, and floating.
+  More than one set can be specified in a "--FOR" directive,
+  separated by commas.
+
+  The following strings will be replaced in the body of the "--FOR":
+  TYPE   - the name of the type
+  LTYPE  - same as TYPE, but all lowercase
+  NAME   - same as TYPE, but "Word" is replaced with "Unt"
+  NAMEXX - same as NAME, but padded with spaces to be 6 characters long
+-}
 
 data CheckNF = CheckNF
   { cnfArray   :: Maybe Bool
