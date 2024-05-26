@@ -14,7 +14,7 @@ import qualified Data.ByteString.Short    as SBS
 -- import Data.Either
 -- import Data.Hashable
 import qualified Data.HashMap.Strict      as HM
--- import Data.Int
+import Data.Int
 import qualified Data.IntMap.Strict       as IM
 import Data.List
 import Data.Ratio
@@ -23,11 +23,12 @@ import qualified Data.Map.Strict          as M
 import qualified Data.Text                as T
 import qualified Data.Text.Lazy           as LT
 import qualified Data.Vector.Storable     as S
--- import Data.Word
--- import Foreign.Storable
+import Data.Word
+import Foreign.C.Types
+import Foreign.Ptr
 -- import GHC.Generics (Generic)
 -- import GHC.Stack
--- import Numeric.Natural
+import Numeric.Natural
 -- import System.IO.Unsafe (unsafePerformIO)
 -- import Text.Read
 
@@ -136,3 +137,108 @@ instance Nameable a => Nameable (V4 a) where
 
 instance Nameable a => Nameable (S.Vector a) where
   typeName _ = "Vector " ++ typeName' (undefined :: a)
+
+instance Nameable Int8 where
+  typeName _ = "Int8"
+
+instance Nameable Int16 where
+  typeName _ = "Int16"
+
+instance Nameable Int32 where
+  typeName _ = "Int32"
+
+instance Nameable Int64 where
+  typeName _ = "Int64"
+
+instance Nameable Word8 where
+  typeName _ = "Word8"
+
+instance Nameable Word16 where
+  typeName _ = "Word16"
+
+instance Nameable Word32 where
+  typeName _ = "Word32"
+
+instance Nameable Word64 where
+  typeName _ = "Word64"
+
+instance Nameable Int where
+  typeName _ = "Int"
+
+instance Nameable Word where
+  typeName _ = "Word"
+
+instance Nameable Float where
+  typeName _ = "Float"
+
+instance Nameable Double where
+  typeName _ = "Double"
+
+instance Nameable Natural where
+  typeName _ = "Natural"
+
+instance Nameable CBool where
+  typeName _ = "CBool"
+
+instance Nameable CChar where
+  typeName _ = "CChar"
+
+instance Nameable CInt where
+  typeName _ = "CInt"
+
+instance Nameable CIntMax where
+  typeName _ = "CIntMax"
+
+instance Nameable CIntPtr where
+  typeName _ = "CIntPtr"
+
+instance Nameable CLLong where
+  typeName _ = "CLLong"
+
+instance Nameable CLong where
+  typeName _ = "CLong"
+
+instance Nameable CPtrdiff where
+  typeName _ = "CPtrdiff"
+
+instance Nameable CSChar where
+  typeName _ = "CSChar"
+
+instance Nameable CShort where
+  typeName _ = "CShort"
+
+instance Nameable CSigAtomic where
+  typeName _ = "CSigAtomic"
+
+instance Nameable CSize where
+  typeName _ = "CSize"
+
+instance Nameable CUChar where
+  typeName _ = "CUChar"
+
+instance Nameable CUInt where
+  typeName _ = "CUInt"
+
+instance Nameable CUIntMax where
+  typeName _ = "CUIntMax"
+
+instance Nameable CUIntPtr where
+  typeName _ = "CUIntPtr"
+
+instance Nameable CULLong where
+  typeName _ = "CULLong"
+
+instance Nameable CULong where
+  typeName _ = "CULong"
+
+instance Nameable CUShort where
+  typeName _ = "CUShort"
+
+instance Nameable CWchar where
+  typeName _ = "CWchar"
+
+instance Nameable IntPtr where
+  typeName _ = "IntPtr"
+
+instance Nameable WordPtr where
+  typeName _ = "WordPtr"
