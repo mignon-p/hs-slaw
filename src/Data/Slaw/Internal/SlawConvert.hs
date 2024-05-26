@@ -117,6 +117,7 @@ handleOthers = handleOthers' (typeName (undefined :: a))
 handleOthers' :: String -> Slaw -> Either PlasmaException a
 handleOthers' _ (SlawError msg loc)
   | typeMismatchPfx `isPrefixOf` msg = Left $ typeMismatch' msg loc
+  | rangeErrorPfx   `isPrefixOf` msg = Left $ typeMismatch' msg loc
   | otherwise                        = Left $ corruptSlaw   msg loc
 handleOthers' toType slaw = Left $ typeMismatch msg
   where msg = slaw `cantCoerceSlaw` toType
@@ -359,14 +360,26 @@ integralFromSlaw :: forall a. (Nameable a, Integral a, Bits a)
                  => Slaw
                  -> Either PlasmaException a
 integralFromSlaw s = do
-  let tn = typeName (undefined :: a)
+  let tn     = typeName (undefined :: a)
+      signed = isSigned (undefined :: a)
   n <- integerFromSlaw tn s
+  let desc   = describeSlaw s
+      nParen = '(' : show n ++ ")"
   case bitSizeMaybe (undefined :: a) of
-    Nothing -> return $ fromInteger n
+    Nothing    ->
+      let rangeErr = rangeError ( desc
+                                , nParen
+                                , tn
+                                , "0"
+                                , ""
+                                )
+      in case (signed, signum n) of
+           (False, (-1)) -> Left rangeErr
+           _             -> return $ fromInteger n
     Just nbits ->
-      let (lo, hi) = getLoHi nbits $ isSigned (undefined :: a)
-          rangeErr = rangeError ( describeSlaw s
-                                , '(' : show n ++ ")"
+      let (lo, hi) = getLoHi nbits signed
+          rangeErr = rangeError ( desc
+                                , nParen
                                 , tn
                                 , show lo
                                 , show hi
