@@ -365,20 +365,15 @@ integralFromSlaw s = do
     Nothing -> return $ fromInteger n
     Just nbits ->
       let (lo, hi) = getLoHi nbits $ isSigned (undefined :: a)
-          errMsg   = concat [ describeSlaw s
-                            , " ("
-                            , show n
-                            , ") is not in the range of "
-                            , tn
-                            , " ["
-                            , show lo
-                            , ".."
-                            , show hi
-                            , "]"
-                            ]
+          rangeErr = rangeError ( describeSlaw s
+                                , '(' : show n ++ ")"
+                                , tn
+                                , show lo
+                                , show hi
+                                )
       in if lo <= n && n <= hi
          then return $ fromInteger n
-         else Left $ typeMismatch errMsg
+         else Left rangeErr
 
 getLoHi :: Int -> Bool -> (Integer, Integer)
 getLoHi nbits False = (0, (2 ^ nbits) - 1)
