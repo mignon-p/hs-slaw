@@ -13,6 +13,7 @@ module Data.Slaw.Internal.Exception
   , because
   , cantCoerce
   , rangeError
+  , rangeError'
   ) where
 
 import Control.Exception
@@ -151,9 +152,13 @@ because msg reasons = (Left . typeMismatch) msg'
 cantCoerce :: String -> String -> String
 cantCoerce desc other = concat ["Can't coerce ", desc, " to ", other]
 
-rangeError :: (String, String, String, String, String)
+rangeError :: String
+           -> String
+           -> String
+           -> String
+           -> String
            -> PlasmaException
-rangeError (fromType, fromValue, toType, lo, hi) =
+rangeError fromType fromValue toType lo hi =
   def { peType    = EtTypeMismatch
       , peMessage = msg
       }
@@ -170,3 +175,7 @@ rangeError (fromType, fromValue, toType, lo, hi) =
                  , hi
                  , "]"
                  ]
+
+rangeError' :: (String, String, String, String, String)
+            -> PlasmaException
+rangeError' = uncurry5 rangeError

@@ -13,6 +13,7 @@ module Data.Slaw.Internal.Util
   , mapRight
   , (==~)
   , (?>)
+  , uncurry5
   ) where
 
 import Data.Bits
@@ -86,3 +87,8 @@ lcAscii c
 (?>) :: Maybe a -> a -> a
 Just x  ?> _ = x
 Nothing ?> x = x
+
+uncurry5 :: (a -> b -> c -> d -> e -> f)
+         -> (a, b, c, d, e)
+         -> f
+uncurry5 func (v, w, x, y, z) = func v w x y z

@@ -365,25 +365,16 @@ integralFromSlaw s = do
   n <- integerFromSlaw tn s
   let desc   = describeSlaw s
       nParen = '(' : show n ++ ")"
+      rErr   = rangeError desc nParen tn
   case bitSizeMaybe (undefined :: a) of
     Nothing    ->
-      let rangeErr = rangeError ( desc
-                                , nParen
-                                , tn
-                                , "0"
-                                , ""
-                                )
+      let rangeErr = rErr "0" ""
       in case (signed, signum n) of
            (False, (-1)) -> Left rangeErr
            _             -> return $ fromInteger n
     Just nbits ->
       let (lo, hi) = getLoHi nbits signed
-          rangeErr = rangeError ( desc
-                                , nParen
-                                , tn
-                                , show lo
-                                , show hi
-                                )
+          rangeErr = rErr (show lo) (show hi)
       in if lo <= n && n <= hi
          then return $ fromInteger n
          else Left rangeErr
