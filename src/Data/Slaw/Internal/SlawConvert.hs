@@ -116,17 +116,8 @@ handleOthers (SlawError msg loc)
 handleOthers slaw = Left $ typeMismatch msg
   where msg = slaw `cantCoerceSlaw` fsName (undefined :: a)
 
-because :: String -> [PlasmaException] -> Either PlasmaException a
-because msg reasons = (Left . typeMismatch) msg'
-  where msg'     = concat [ msg, ", because:\n", reasons']
-        reasons0 = map (indentLines "  " . peMessage) reasons
-        reasons' = intercalate "\nand:\n" reasons0
-
 cantCoerceSlaw :: Slaw -> String -> String
 cantCoerceSlaw slaw other = describeSlaw slaw `cantCoerce` other
-
-cantCoerce :: String -> String -> String
-cantCoerce desc other = concat ["Can't coerce ", desc, " to ", other]
 
 defaultListToSlaw :: ToSlaw a => [a] -> Slaw
 defaultListToSlaw = SlawList . map toSlaw

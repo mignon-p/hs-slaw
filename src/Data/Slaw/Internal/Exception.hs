@@ -9,6 +9,8 @@ module Data.Slaw.Internal.Exception
   , typeMismatch
   , typeMismatch'
   , typeMismatchPfx
+  , because
+  , cantCoerce
   ) where
 
 import Control.Exception
@@ -16,10 +18,12 @@ import Control.DeepSeq
 import Data.Default.Class
 import Data.Hashable
 import Data.Int
+import Data.List
 import Data.Word
 import GHC.Generics (Generic)
 import GHC.Stack
 
+import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
 
 data DataSource = DsFile       { dsName  :: String }
@@ -132,3 +136,12 @@ typeMismatch' msg loc = def { peType      = EtTypeMismatch
 
 typeMismatchPfx :: String
 typeMismatchPfx = "type mismatch: "
+
+because :: String -> [PlasmaException] -> Either PlasmaException a
+because msg reasons = (Left . typeMismatch) msg'
+  where msg'     = concat [ msg, ", because:\n", reasons']
+        reasons0 = map (indentLines "  " . peMessage) reasons
+        reasons' = intercalate "\nand:\n" reasons0
+
+cantCoerce :: String -> String -> String
+cantCoerce desc other = concat ["Can't coerce ", desc, " to ", other]
