@@ -97,20 +97,6 @@ numTypeName (NumUnt64  _) = "Word64"
 numTypeName (NumFloat  _) = "Float"
 numTypeName (NumDouble _) = "Double"
 
-{-
-numType :: NumericData -> NumericType
-numType (NumInt8   _) = TypInt8
-numType (NumInt16  _) = TypInt16
-numType (NumInt32  _) = TypInt32
-numType (NumInt64  _) = TypInt64
-numType (NumUnt8   _) = TypUnt8
-numType (NumUnt16  _) = TypUnt16
-numType (NumUnt32  _) = TypUnt32
-numType (NumUnt64  _) = TypUnt64
-numType (NumFloat  _) = TypFloat
-numType (NumDouble _) = TypDouble
--}
-
 cnfReal :: CheckNF
 cnfReal = CheckNF
   { cnfArray   = Nothing
@@ -123,8 +109,7 @@ class (Storable a, Num a) => RealClass a where
            -> (NumericFormat, NumericData)
            -> Either PlasmaException (NumericFormat, S.Vector a)
 
-  realToNd :: Maybe String
-           -> (NumericFormat, S.Vector a)
+  realToNd :: (NumericFormat, S.Vector a)
            -> (NumericFormat, NumericData)
 
 instance RealClass Int8 where
@@ -139,11 +124,7 @@ instance RealClass Int8 where
         nes <- mapM (checkRange' typePair (0 :: Int8)) $ numToList nd
         return (nf, S.fromList $ map intCoerce nes)
 
-  realToNd _ (nf, v) =
-    let -- toType   = tname ?> "Int8"
-        nd       = NumInt8 v
-    -- checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
-    in (nf, nd)
+  realToNd = second NumInt8
 
 instance RealClass Int16 where
   ndToReal tname (nf, nd) = do
@@ -157,11 +138,7 @@ instance RealClass Int16 where
         nes <- mapM (checkRange' typePair (0 :: Int16)) $ numToList nd
         return (nf, S.fromList $ map intCoerce nes)
 
-  realToNd _ (nf, v) =
-    let -- toType   = tname ?> "Int16"
-        nd       = NumInt16 v
-    -- checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
-    in (nf, nd)
+  realToNd = second NumInt16
 
 instance RealClass Int32 where
   ndToReal tname (nf, nd) = do
@@ -175,11 +152,7 @@ instance RealClass Int32 where
         nes <- mapM (checkRange' typePair (0 :: Int32)) $ numToList nd
         return (nf, S.fromList $ map intCoerce nes)
 
-  realToNd _ (nf, v) =
-    let -- toType   = tname ?> "Int32"
-        nd       = NumInt32 v
-    -- checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
-    in (nf, nd)
+  realToNd = second NumInt32
 
 instance RealClass Int64 where
   ndToReal tname (nf, nd) = do
@@ -193,11 +166,7 @@ instance RealClass Int64 where
         nes <- mapM (checkRange' typePair (0 :: Int64)) $ numToList nd
         return (nf, S.fromList $ map intCoerce nes)
 
-  realToNd _ (nf, v) =
-    let -- toType   = tname ?> "Int64"
-        nd       = NumInt64 v
-    -- checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
-    in (nf, nd)
+  realToNd = second NumInt64
 
 instance RealClass Word8 where
   ndToReal tname (nf, nd) = do
@@ -211,11 +180,7 @@ instance RealClass Word8 where
         nes <- mapM (checkRange' typePair (0 :: Word8)) $ numToList nd
         return (nf, S.fromList $ map intCoerce nes)
 
-  realToNd _ (nf, v) =
-    let -- toType   = tname ?> "Word8"
-        nd       = NumUnt8 v
-    -- checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
-    in (nf, nd)
+  realToNd = second NumUnt8
 
 instance RealClass Word16 where
   ndToReal tname (nf, nd) = do
@@ -229,11 +194,7 @@ instance RealClass Word16 where
         nes <- mapM (checkRange' typePair (0 :: Word16)) $ numToList nd
         return (nf, S.fromList $ map intCoerce nes)
 
-  realToNd _ (nf, v) =
-    let -- toType   = tname ?> "Word16"
-        nd       = NumUnt16 v
-    -- checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
-    in (nf, nd)
+  realToNd = second NumUnt16
 
 instance RealClass Word32 where
   ndToReal tname (nf, nd) = do
@@ -247,11 +208,7 @@ instance RealClass Word32 where
         nes <- mapM (checkRange' typePair (0 :: Word32)) $ numToList nd
         return (nf, S.fromList $ map intCoerce nes)
 
-  realToNd _ (nf, v) =
-    let -- toType   = tname ?> "Word32"
-        nd       = NumUnt32 v
-    -- checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
-    in (nf, nd)
+  realToNd = second NumUnt32
 
 instance RealClass Word64 where
   ndToReal tname (nf, nd) = do
@@ -265,18 +222,14 @@ instance RealClass Word64 where
         nes <- mapM (checkRange' typePair (0 :: Word64)) $ numToList nd
         return (nf, S.fromList $ map intCoerce nes)
 
-  realToNd _ (nf, v) =
-    let -- toType   = tname ?> "Word64"
-        nd       = NumUnt64 v
-    -- checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
-    in (nf, nd)
+  realToNd = second NumUnt64
 
 instance RealClass Int where
   ndToReal _ = mapRight (second f) . ndToReal (Just "Int")
     where f :: S.Vector NativeInt -> S.Vector Int
           f = S.unsafeCast
 
-  realToNd _ = realToNd (Just "Int") . second f
+  realToNd = realToNd . second f
     where f :: S.Vector Int -> S.Vector NativeInt
           f = S.unsafeCast
 
@@ -285,14 +238,13 @@ instance RealClass Word where
     where f :: S.Vector NativeWord -> S.Vector Word
           f = S.unsafeCast
 
-  realToNd _ = realToNd (Just "Word") . second f
+  realToNd = realToNd . second f
     where f :: S.Vector Word -> S.Vector NativeWord
           f = S.unsafeCast
 
 instance RealClass Float where
   ndToReal tname (nf, nd) = do
-    let -- fromType = numTypeName nd
-        toType   = tname ?> "Float"
+    let toType   = tname ?> "Float"
     checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
     case nd of
       NumFloat  v -> return (nf, v)
@@ -300,16 +252,11 @@ instance RealClass Float where
         let nes = numToList nd
         return (nf, S.fromList $ map floatCoerce nes)
 
-  realToNd _ (nf, v) =
-    let -- toType   = tname ?> "Float"
-        nd       = NumFloat v
-    -- checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
-    in (nf, nd)
+  realToNd = second NumFloat
 
 instance RealClass Double where
   ndToReal tname (nf, nd) = do
-    let -- fromType = numTypeName nd
-        toType   = tname ?> "Double"
+    let toType   = tname ?> "Double"
     checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
     case nd of
       NumDouble v -> return (nf, v)
@@ -317,17 +264,12 @@ instance RealClass Double where
         let nes = numToList nd
         return (nf, S.fromList $ map doubleCoerce nes)
 
-  realToNd _ (nf, v) =
-    let -- toType   = tname ?> "Double"
-        nd       = NumDouble v
-    -- checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
-    in (nf, nd)
+  realToNd = second NumDouble
 
 class Storable a => ScalarClass a where
   ndToScalar :: Maybe String
              -> (NumericFormat, NumericData)
              -> Either PlasmaException (NumericFormat, S.Vector a)
 
-  scalarToNd :: Maybe String
-             -> (NumericFormat, S.Vector a)
+  scalarToNd :: (NumericFormat, S.Vector a)
              -> (NumericFormat, NumericData)
