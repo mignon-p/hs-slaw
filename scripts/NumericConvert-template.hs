@@ -31,6 +31,7 @@ module Data.Slaw.Internal.NumericConvert
 
 import Control.Arrow (second)
 import Control.DeepSeq
+import Data.Complex
 import Data.Hashable
 import Data.Int
 import Data.List
@@ -58,9 +59,7 @@ checkNF cnf nf (fromTypeNF, fromTypeND, toType) =
   let aOK      = fmap (== nfArray   nf) (cnfArray   cnf) ?> True
       cOK      = fmap (== nfComplex nf) (cnfComplex cnf) ?> True
       vOK      = fmap (== nfVector  nf) (cnfVector  cnf) ?> True
-      fromType = intercalate " " (nfl ++ [nds])
-      nfl      = describeNumericFormat fromTypeNF
-      nds      = describeNumericData   fromTypeND
+      fromType = describeNumeric fromTypeNF fromTypeND
   in if aOK && cOK && vOK
      then Right ()
      else Left $ typeMismatch $ concat [ "Can't convert"
@@ -68,6 +67,11 @@ checkNF cnf nf (fromTypeNF, fromTypeND, toType) =
                                        , " to "
                                        , toType
                                        ]
+
+describeNumeric :: NumericFormat -> NumericData -> String
+describeNumeric nf nd = intercalate " " (nfl ++ [nds])
+  where nfl = describeNumericFormat fromTypeNF
+        nds = describeNumericData   fromTypeND
 
 rangeErr :: Show a
          => (String, String)
@@ -129,6 +133,8 @@ class (Storable a, Num a) => RealClass a where
   realToNd :: (NumericFormat, S.Vector a)
            -> (NumericFormat, NumericData)
 
+  realName :: a -> String
+
 --FOR sizedInt
 
 instance RealClass TYPE where
@@ -145,6 +151,8 @@ instance RealClass TYPE where
 
   realToNd = second NumNAME
 
+  realName _ = "TYPE"
+
 --FOR nativeInt
 
 instance RealClass TYPE where
@@ -155,6 +163,8 @@ instance RealClass TYPE where
   realToNd = realToNd . second f
     where f :: S.Vector TYPE -> S.Vector NativeTYPE
           f = S.unsafeCast
+
+  realName _ = "TYPE"
 
 --FOR floating
 
@@ -170,7 +180,16 @@ instance RealClass TYPE where
 
   realToNd = second NumNAME
 
+  realName _ = "TYPE"
+
 --END
+
+cnfScalar :: CheckNF
+cnfScalar = CheckNF
+  { cnfArray   = Nothing
+  , cnfComplex = Nothing
+  , cnfVector  = Just VtScalar
+  }
 
 class Storable a => ScalarClass a where
   ndToScalar :: Maybe String
@@ -179,3 +198,22 @@ class Storable a => ScalarClass a where
 
   scalarToNd :: (NumericFormat, S.Vector a)
              -> (NumericFormat, NumericData)
+
+  scalarName :: a -> String
+
+instance RealClass a => ScalarClass (Complex a) where
+  ndToScalar tname (nf, nd) = do
+    let toType   = tname ?> ("Complex " ++ realName (undefined :: a))
+        realNF   = nf { nfComplex = False }
+        singleNF = nf { nfArray   = False }
+    checkNF cnfScalar nf (singleNF, nd, toType)
+    v   <- ndToReal Nothing (realNF, nd)
+    nd1 <- case v of
+             Left err ->
+               let msg = describeNumeric singleNF nd `cantCoerce1` toType
+               in msg `because` [err]
+             Right (_, nd0) -> return nd0
+    let nd2 = if nfComplex nf
+              then nd1
+              else insertZeros nd1
+    undefined
