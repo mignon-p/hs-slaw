@@ -22,15 +22,16 @@ import qualified Data.Map.Strict          as M
 -- import Data.String
 import qualified Data.Text                as T
 import qualified Data.Text.Lazy           as LT
--- import qualified Data.Vector.Storable     as S
+import qualified Data.Vector.Storable     as S
 -- import Data.Word
 -- import Foreign.Storable
 -- import GHC.Generics (Generic)
 -- import GHC.Stack
+-- import Numeric.Natural
 -- import System.IO.Unsafe (unsafePerformIO)
 -- import Text.Read
 
--- import Data.Slaw.Internal.NumericTypes
+import Data.Slaw.Internal.NumericTypes
 import Data.Slaw.Internal.SlawType
 
 class Nameable a where
@@ -123,3 +124,15 @@ instance Nameable a => Nameable (Ratio a) where
     in if tn == "(Integer)"
        then "Rational"
        else "Ratio " ++ tn
+
+instance Nameable a => Nameable (V2 a) where
+  typeName _ = "V2 " ++ typeName' (undefined :: a)
+
+instance Nameable a => Nameable (V3 a) where
+  typeName _ = "V3 " ++ typeName' (undefined :: a)
+
+instance Nameable a => Nameable (V4 a) where
+  typeName _ = "V4 " ++ typeName' (undefined :: a)
+
+instance Nameable a => Nameable (S.Vector a) where
+  typeName _ = "Vector " ++ typeName' (undefined :: a)
