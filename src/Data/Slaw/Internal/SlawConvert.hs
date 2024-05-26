@@ -17,6 +17,7 @@ module Data.Slaw.Internal.SlawConvert
 
 import Control.DeepSeq
 import Control.Exception
+import Data.Bits
 import qualified Data.ByteString          as B
 import qualified Data.ByteString.Lazy     as L
 import qualified Data.ByteString.Short    as SBS
@@ -38,6 +39,7 @@ import qualified Data.Vector.Storable     as S
 import Foreign.Storable
 import GHC.Generics (Generic)
 import GHC.Stack
+import Numeric.Natural
 -- import System.IO.Unsafe (unsafePerformIO)
 import Text.Read
 
@@ -107,14 +109,17 @@ s ?: dflt = case fromSlaw s of
 
 ---- helper functions for implementing ToSlaw/FromSlaw
 
-handleOthers :: forall a. (FromSlaw a)
+handleOthers :: forall a. (Nameable a)
              => Slaw
              -> Either PlasmaException a
-handleOthers (SlawError msg loc)
+handleOthers = handleOthers' (typeName (undefined :: a))
+
+handleOthers' :: String -> Slaw -> Either PlasmaException a
+handleOthers' _ (SlawError msg loc)
   | typeMismatchPfx `isPrefixOf` msg = Left $ typeMismatch' msg loc
   | otherwise                        = Left $ corruptSlaw   msg loc
-handleOthers slaw = Left $ typeMismatch msg
-  where msg = slaw `cantCoerceSlaw` typeName (undefined :: a)
+handleOthers' toType slaw = Left $ typeMismatch msg
+  where msg = slaw `cantCoerceSlaw` toType
 
 cantCoerceSlaw :: Slaw -> String -> String
 cantCoerceSlaw slaw other = describeSlaw slaw `cantCoerce` other
@@ -336,6 +341,50 @@ proteinFromSlaw s (des, ing, rude) =
          in msg `because` [err]
        Right (des2, ing2) -> Right $ Protein des2 ing2 rude
 
+integerFromSlaw :: String
+                -> Slaw
+                -> Either PlasmaException Integer
+integerFromSlaw toType s@(SlawNumeric _ nd) =
+  case numToInteger nd of
+    Nothing -> handleOthers' toType s
+    Just n  -> Right n
+integerFromSlaw toType (SlawString utf8) =
+  let str = fromUtf8 utf8
+  in case readMaybe str of
+       Just n  -> Right n
+       Nothing -> Left $ typeMismatch $ show str `cantCoerce` toType
+integerFromSlaw toType s = handleOthers' toType s
+
+integralFromSlaw :: forall a. (Nameable a, Integral a, Bits a)
+                 => Slaw
+                 -> Either PlasmaException a
+integralFromSlaw s = do
+  let tn = typeName (undefined :: a)
+  n <- integerFromSlaw tn s
+  case bitSizeMaybe (undefined :: a) of
+    Nothing -> return $ fromInteger n
+    Just nbits ->
+      let (lo, hi) = getLoHi nbits $ isSigned (undefined :: a)
+          errMsg   = concat [ describeSlaw s
+                            , " ("
+                            , show n
+                            , ") is not in the range of "
+                            , tn
+                            , " ["
+                            , show lo
+                            , ".."
+                            , show hi
+                            , "]"
+                            ]
+      in if lo <= n && n <= hi
+         then return $ fromInteger n
+         else Left $ typeMismatch errMsg
+
+getLoHi :: Int -> Bool -> (Integer, Integer)
+getLoHi nbits False = (0, (2 ^ nbits) - 1)
+getLoHi nbits True  = ((-x), x - 1)
+  where x = 2 ^ (nbits - 1)
+
 ---- types
 
 data Protein = Protein
@@ -413,16 +462,7 @@ instance ToSlaw Char where
   listToSlaw = slawFromString
 
 instance FromSlaw Integer where
-  fromSlaw s@(SlawNumeric _ nd) =
-    case numToInteger nd of
-      Nothing -> handleOthers s
-      Just n  -> Right n
-  fromSlaw (SlawString utf8) =
-    let str = fromUtf8 utf8
-    in case readMaybe str of
-         Just n  -> Right n
-         Nothing -> Left $ typeMismatch $ show str `cantCoerce` "Integer"
-  fromSlaw s = handleOthers s
+  fromSlaw = integerFromSlaw "Integer"
 
 instance ToSlaw Integer where
   toSlaw n =
@@ -541,5 +581,12 @@ instance FromSlaw Rational where
       Right (num, den) -> Right $ num % den
   fromSlaw s = handleOthers s
 
-instance ToSlaw Rational where
-  toSlaw r = SlawCons (toSlaw $ numerator r) (toSlaw $ denominator r)
+instance Integral a => ToSlaw (Ratio a) where
+  toSlaw rat = SlawCons (f $ numerator rat) (f $ denominator rat)
+    where f  = toSlaw . toInteger
+
+instance FromSlaw Natural where
+  fromSlaw = integralFromSlaw
+
+instance ToSlaw Natural where
+  toSlaw = toSlaw . toInteger
