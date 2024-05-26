@@ -1,5 +1,9 @@
 #!/usr/bin/perl -w
 
+# This script generates NumericConvert.hs from NumericConvert-template.hs
+# The script takes no arguments; it finds its input and output files
+# relative to itself.
+
 use strict;
 use FindBin;
 
@@ -77,9 +81,12 @@ sub doTemplate {
 
 open F, "<", $templateFull or die;
 
+my $skip = 1;
+
 while (<F>) {
     chomp;
-    push @input, $_;
+    $skip = 0 if (/^\{-# LANGUAGE/ or /^module/);
+    push @input, $_ if (not $skip);
 }
 
 close F;
