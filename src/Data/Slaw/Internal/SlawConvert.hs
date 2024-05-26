@@ -114,7 +114,7 @@ handleOthers (SlawError msg loc)
   | typeMismatchPfx `isPrefixOf` msg = Left $ typeMismatch' msg loc
   | otherwise                        = Left $ corruptSlaw   msg loc
 handleOthers slaw = Left $ typeMismatch msg
-  where msg = slaw `cantCoerce` fsName (undefined :: a)
+  where msg = slaw `cantCoerceSlaw` fsName (undefined :: a)
 
 because :: String -> [PlasmaException] -> Either PlasmaException a
 because msg reasons = (Left . typeMismatch) msg'
@@ -122,11 +122,11 @@ because msg reasons = (Left . typeMismatch) msg'
         reasons0 = map (indentLines "  " . peMessage) reasons
         reasons' = intercalate "\nand:\n" reasons0
 
-cantCoerce :: Slaw -> String -> String
-cantCoerce slaw other = describeSlaw slaw `cantCoerce1` other
+cantCoerceSlaw :: Slaw -> String -> String
+cantCoerceSlaw slaw other = describeSlaw slaw `cantCoerce` other
 
-cantCoerce1 :: String -> String -> String
-cantCoerce1 desc other = concat ["Can't coerce ", desc, " to ", other]
+cantCoerce :: String -> String -> String
+cantCoerce desc other = concat ["Can't coerce ", desc, " to ", other]
 
 defaultListToSlaw :: ToSlaw a => [a] -> Slaw
 defaultListToSlaw = SlawList . map toSlaw
@@ -136,17 +136,17 @@ defaultListFromSlaw :: forall a. (FromSlaw a)
                     -> Either PlasmaException [a]
 defaultListFromSlaw SlawNil       = Right []
 defaultListFromSlaw s@(SlawList ss) =
-  let msg = s `cantCoerce` fsName (undefined :: a)
+  let msg = s `cantCoerceSlaw` fsName (undefined :: a)
   in fromSlawList msg ss
 defaultListFromSlaw s@(SlawMap pairs) =
-  let msg    = s `cantCoerce` fsName (undefined :: a)
+  let msg    = s `cantCoerceSlaw` fsName (undefined :: a)
       conses = map (uncurry SlawCons) pairs
   in fromSlawList msg conses
 defaultListFromSlaw s@(SlawCons car cdr) =
-  let msg = s `cantCoerce` fsName (undefined :: a)
+  let msg = s `cantCoerceSlaw` fsName (undefined :: a)
   in fromSlawList msg [car, cdr]
 defaultListFromSlaw s@(SlawNumeric nf nd) =
-  let msg = s `cantCoerce` fsName (undefined :: a)
+  let msg = s `cantCoerceSlaw` fsName (undefined :: a)
   in case numericArrayToList nf nd of
        Nothing         -> Left $ typeMismatch msg
        Just (nf', nds) -> fromSlawList msg $ map (SlawNumeric nf') nds
@@ -284,7 +284,7 @@ pairFromSlaw :: forall a b. (FromSlaw a, FromSlaw b)
 pairFromSlaw s pair =
   case pairFromSlaw' pair of
     Left err ->
-      let msg = s `cantCoerce` fsName (undefined :: a, undefined :: b)
+      let msg = s `cantCoerceSlaw` fsName (undefined :: a, undefined :: b)
       in msg `because` [err]
     Right pair' -> Right pair'
 
@@ -316,7 +316,7 @@ mapFromSlaw :: (FromSlaw a, FromSlaw b, FromSlaw z)
             -> z
             -> Either PlasmaException [(a, b)]
 mapFromSlaw s pairs dummy =
-  let msg = s `cantCoerce` fsName dummy
+  let msg = s `cantCoerceSlaw` fsName dummy
   in case partitionEithers (map mfs1 pairs) of
        ([],      []) -> Right []
        ((err:_), []) -> msg `because` [err]
@@ -328,7 +328,7 @@ mfs1 :: forall a b. (FromSlaw a, FromSlaw b)
 mfs1 pair@(x, y) =
   case pairFromSlaw' pair of
     Left err ->
-      let msg = str `cantCoerce1` fsName (undefined :: a, undefined :: b)
+      let msg = str `cantCoerce` fsName (undefined :: a, undefined :: b)
           str = mkTupleName $ map describeSlaw [x, y]
       in msg `because` [err]
     Right pair' -> Right pair'
@@ -341,7 +341,7 @@ proteinFromSlaw s (des, ing, rude) =
       ing' = ing ?> SlawMap  []
   in case pairFromSlaw' (des', ing') of
        Left err ->
-         let msg = s `cantCoerce` fsName (undefined :: Protein)
+         let msg = s `cantCoerceSlaw` fsName (undefined :: Protein)
          in msg `because` [err]
        Right (des2, ing2) -> Right $ Protein des2 ing2 rude
 
@@ -417,7 +417,7 @@ instance FromSlaw Char where
       Just n
         | n >= 0 && n <= (toInteger . ord) (maxBound :: Char) ->
             (Right . chr . fromInteger) n
-        | otherwise -> Left $ typeMismatch $ show n `cantCoerce1` "Char"
+        | otherwise -> Left $ typeMismatch $ show n `cantCoerce` "Char"
   fromSlaw s = handleOthers s
 
   listFromSlaw = slawToString
@@ -439,7 +439,7 @@ instance FromSlaw Integer where
     let str = fromUtf8 utf8
     in case readMaybe str of
          Just n  -> Right n
-         Nothing -> Left $ typeMismatch $ show str `cantCoerce1` "Integer"
+         Nothing -> Left $ typeMismatch $ show str `cantCoerce` "Integer"
   fromSlaw s = handleOthers s
 
 instance ToSlaw Integer where
@@ -557,7 +557,7 @@ instance (FromSlaw a, FromSlaw b) => FromSlaw (Either a b) where
       (Right x, _      ) -> Right $ Left  x
       (Left  _, Right x) -> Right $ Right x
       (Left e1, Left e2) ->
-        let msg = s `cantCoerce` fsName (undefined :: Either a b)
+        let msg = s `cantCoerceSlaw` fsName (undefined :: Either a b)
         in msg `because` [e1, e2]
 
 instance (ToSlaw a, ToSlaw b) => ToSlaw (Either a b) where
@@ -572,7 +572,7 @@ instance FromSlaw a => FromSlaw (Maybe a) where
     case fromSlaw s of
       Right x  -> Right x
       Left err ->
-        let msg = s `cantCoerce` fsName (Nothing :: Maybe a)
+        let msg = s `cantCoerceSlaw` fsName (Nothing :: Maybe a)
         in msg `because` [err]
 
 instance ToSlaw a => ToSlaw (Maybe a) where
