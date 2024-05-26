@@ -31,7 +31,7 @@ module Data.Slaw.Internal.NumericConvert
 
 import Control.Arrow (second)
 import Control.DeepSeq
-import Data.Complex
+-- import Data.Complex
 import Data.Hashable
 import Data.Int
 import Data.List
@@ -70,8 +70,8 @@ checkNF cnf nf (fromTypeNF, fromTypeND, toType) =
 
 describeNumeric :: NumericFormat -> NumericData -> String
 describeNumeric nf nd = intercalate " " (nfl ++ [nds])
-  where nfl = describeNumericFormat fromTypeNF
-        nds = describeNumericData   fromTypeND
+  where nfl = describeNumericFormat nf
+        nds = describeNumericData   nd
 
 rangeErr :: Show a
          => (String, String)
@@ -184,12 +184,14 @@ instance RealClass TYPE where
 
 --END
 
+{-
 cnfScalar :: CheckNF
 cnfScalar = CheckNF
   { cnfArray   = Nothing
   , cnfComplex = Nothing
   , cnfVector  = Just VtScalar
   }
+-}
 
 class Storable a => ScalarClass a where
   ndToScalar :: Maybe String
@@ -201,6 +203,7 @@ class Storable a => ScalarClass a where
 
   scalarName :: a -> String
 
+{-
 instance RealClass a => ScalarClass (Complex a) where
   ndToScalar tname (nf, nd) = do
     let toType   = tname ?> ("Complex " ++ realName (undefined :: a))
@@ -210,10 +213,11 @@ instance RealClass a => ScalarClass (Complex a) where
     v   <- ndToReal Nothing (realNF, nd)
     nd1 <- case v of
              Left err ->
-               let msg = describeNumeric singleNF nd `cantCoerce1` toType
+               let msg = describeNumeric singleNF nd `cantCoerce` toType
                in msg `because` [err]
              Right (_, nd0) -> return nd0
     let nd2 = if nfComplex nf
               then nd1
               else insertZeros nd1
     undefined
+-}

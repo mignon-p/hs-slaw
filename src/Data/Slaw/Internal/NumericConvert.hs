@@ -19,6 +19,7 @@ module Data.Slaw.Internal.NumericConvert
 
 import Control.Arrow (second)
 import Control.DeepSeq
+import Data.Complex
 import Data.Hashable
 import Data.Int
 import Data.List
@@ -46,9 +47,7 @@ checkNF cnf nf (fromTypeNF, fromTypeND, toType) =
   let aOK      = fmap (== nfArray   nf) (cnfArray   cnf) ?> True
       cOK      = fmap (== nfComplex nf) (cnfComplex cnf) ?> True
       vOK      = fmap (== nfVector  nf) (cnfVector  cnf) ?> True
-      fromType = intercalate " " (nfl ++ [nds])
-      nfl      = describeNumericFormat fromTypeNF
-      nds      = describeNumericData   fromTypeND
+      fromType = describeNumeric fromTypeNF fromTypeND
   in if aOK && cOK && vOK
      then Right ()
      else Left $ typeMismatch $ concat [ "Can't convert"
@@ -56,6 +55,11 @@ checkNF cnf nf (fromTypeNF, fromTypeND, toType) =
                                        , " to "
                                        , toType
                                        ]
+
+describeNumeric :: NumericFormat -> NumericData -> String
+describeNumeric nf nd = intercalate " " (nfl ++ [nds])
+  where nfl = describeNumericFormat nf
+        nds = describeNumericData   nd
 
 rangeErr :: Show a
          => (String, String)
@@ -124,6 +128,8 @@ class (Storable a, Num a) => RealClass a where
   realToNd :: (NumericFormat, S.Vector a)
            -> (NumericFormat, NumericData)
 
+  realName :: a -> String
+
 instance RealClass Int8 where
   ndToReal tname (nf, nd) = do
     let fromType = numTypeName nd
@@ -137,6 +143,8 @@ instance RealClass Int8 where
         return (nf, S.fromList $ map intCoerce nes)
 
   realToNd = second NumInt8
+
+  realName _ = "Int8"
 
 instance RealClass Int16 where
   ndToReal tname (nf, nd) = do
@@ -152,6 +160,8 @@ instance RealClass Int16 where
 
   realToNd = second NumInt16
 
+  realName _ = "Int16"
+
 instance RealClass Int32 where
   ndToReal tname (nf, nd) = do
     let fromType = numTypeName nd
@@ -165,6 +175,8 @@ instance RealClass Int32 where
         return (nf, S.fromList $ map intCoerce nes)
 
   realToNd = second NumInt32
+
+  realName _ = "Int32"
 
 instance RealClass Int64 where
   ndToReal tname (nf, nd) = do
@@ -180,6 +192,8 @@ instance RealClass Int64 where
 
   realToNd = second NumInt64
 
+  realName _ = "Int64"
+
 instance RealClass Word8 where
   ndToReal tname (nf, nd) = do
     let fromType = numTypeName nd
@@ -193,6 +207,8 @@ instance RealClass Word8 where
         return (nf, S.fromList $ map intCoerce nes)
 
   realToNd = second NumUnt8
+
+  realName _ = "Word8"
 
 instance RealClass Word16 where
   ndToReal tname (nf, nd) = do
@@ -208,6 +224,8 @@ instance RealClass Word16 where
 
   realToNd = second NumUnt16
 
+  realName _ = "Word16"
+
 instance RealClass Word32 where
   ndToReal tname (nf, nd) = do
     let fromType = numTypeName nd
@@ -221,6 +239,8 @@ instance RealClass Word32 where
         return (nf, S.fromList $ map intCoerce nes)
 
   realToNd = second NumUnt32
+
+  realName _ = "Word32"
 
 instance RealClass Word64 where
   ndToReal tname (nf, nd) = do
@@ -236,6 +256,8 @@ instance RealClass Word64 where
 
   realToNd = second NumUnt64
 
+  realName _ = "Word64"
+
 instance RealClass Int where
   ndToReal _ = mapRight (second f) . ndToReal (Just "Int")
     where f :: S.Vector NativeInt -> S.Vector Int
@@ -245,6 +267,8 @@ instance RealClass Int where
     where f :: S.Vector Int -> S.Vector NativeInt
           f = S.unsafeCast
 
+  realName _ = "Int"
+
 instance RealClass Word where
   ndToReal _ = mapRight (second f) . ndToReal (Just "Word")
     where f :: S.Vector NativeWord -> S.Vector Word
@@ -253,6 +277,8 @@ instance RealClass Word where
   realToNd = realToNd . second f
     where f :: S.Vector Word -> S.Vector NativeWord
           f = S.unsafeCast
+
+  realName _ = "Word"
 
 instance RealClass Float where
   ndToReal tname (nf, nd) = do
@@ -266,6 +292,8 @@ instance RealClass Float where
 
   realToNd = second NumFloat
 
+  realName _ = "Float"
+
 instance RealClass Double where
   ndToReal tname (nf, nd) = do
     let toType   = tname ?> "Double"
@@ -278,6 +306,17 @@ instance RealClass Double where
 
   realToNd = second NumDouble
 
+  realName _ = "Double"
+
+{-
+cnfScalar :: CheckNF
+cnfScalar = CheckNF
+  { cnfArray   = Nothing
+  , cnfComplex = Nothing
+  , cnfVector  = Just VtScalar
+  }
+-}
+
 class Storable a => ScalarClass a where
   ndToScalar :: Maybe String
              -> (NumericFormat, NumericData)
@@ -285,3 +324,24 @@ class Storable a => ScalarClass a where
 
   scalarToNd :: (NumericFormat, S.Vector a)
              -> (NumericFormat, NumericData)
+
+  scalarName :: a -> String
+
+{-
+instance RealClass a => ScalarClass (Complex a) where
+  ndToScalar tname (nf, nd) = do
+    let toType   = tname ?> ("Complex " ++ realName (undefined :: a))
+        realNF   = nf { nfComplex = False }
+        singleNF = nf { nfArray   = False }
+    checkNF cnfScalar nf (singleNF, nd, toType)
+    v   <- ndToReal Nothing (realNF, nd)
+    nd1 <- case v of
+             Left err ->
+               let msg = describeNumeric singleNF nd `cantCoerce` toType
+               in msg `because` [err]
+             Right (_, nd0) -> return nd0
+    let nd2 = if nfComplex nf
+              then nd1
+              else insertZeros nd1
+    undefined
+-}
