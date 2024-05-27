@@ -122,7 +122,7 @@ instance Nameable a => Nameable (Maybe a) where
 instance Nameable a => Nameable (Ratio a) where
   typeName _ =
     let tn = typeName' (undefined :: a)
-    in if tn == "(Integer)"
+    in if tn == "Integer"
        then "Rational"
        else "Ratio " ++ tn
 
