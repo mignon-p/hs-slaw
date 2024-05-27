@@ -26,8 +26,8 @@ import Data.Default.Class
 import Data.Either
 import Data.Hashable
 import qualified Data.HashMap.Strict      as HM
--- import Data.Int
--- import qualified Data.IntMap.Strict       as IM
+import Data.Int
+import qualified Data.IntMap.Strict       as IM
 import Data.List
 import Data.Ratio
 import qualified Data.Map.Strict          as M
@@ -35,7 +35,7 @@ import Data.String
 import qualified Data.Text                as T
 import qualified Data.Text.Lazy           as LT
 import qualified Data.Vector.Storable     as S
--- import Data.Word
+import Data.Word
 import Foreign.Storable
 import GHC.Generics (Generic)
 import GHC.Stack
@@ -45,6 +45,7 @@ import Text.Read
 
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Nameable
+import Data.Slaw.Internal.NativeInt
 import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
@@ -520,14 +521,12 @@ instance ( FromSlaw a
 instance (ToSlaw a, ToSlaw b, Ord a) => ToSlaw (HM.HashMap a b) where
   toSlaw = slawFromMap . HM.toList
 
-{- uncomment once we have FromSlaw/ToSlaw instances for Int
 instance (FromSlaw b) => FromSlaw (IM.IntMap b) where
   fromSlaw s =
     mapRight IM.fromList $ slawToMap s (IM.empty :: IM.IntMap b)
 
 instance (ToSlaw b) => ToSlaw (IM.IntMap b) where
   toSlaw = slawFromMap . IM.toList
--}
 
 instance FromSlaw Protein where
   fromSlaw SlawNil                      = Right def
@@ -589,3 +588,69 @@ instance FromSlaw Natural where
 
 instance ToSlaw Natural where
   toSlaw = toSlaw . toInteger
+
+instance FromSlaw Int8 where
+  fromSlaw = integralFromSlaw
+
+instance FromSlaw Int16 where
+  fromSlaw = integralFromSlaw
+
+instance FromSlaw Int32 where
+  fromSlaw = integralFromSlaw
+
+instance FromSlaw Int64 where
+  fromSlaw = integralFromSlaw
+
+instance FromSlaw Word8 where
+  fromSlaw = integralFromSlaw
+
+instance FromSlaw Word16 where
+  fromSlaw = integralFromSlaw
+
+instance FromSlaw Word32 where
+  fromSlaw = integralFromSlaw
+
+instance FromSlaw Word64 where
+  fromSlaw = integralFromSlaw
+
+instance FromSlaw Int where
+  fromSlaw = integralFromSlaw
+
+instance FromSlaw Word where
+  fromSlaw = integralFromSlaw
+
+instance ToSlaw Int8 where
+  toSlaw = SlawNumeric nfScalar . NumInt8 . S.singleton
+
+instance ToSlaw Int16 where
+  toSlaw = SlawNumeric nfScalar . NumInt16 . S.singleton
+
+instance ToSlaw Int32 where
+  toSlaw = SlawNumeric nfScalar . NumInt32 . S.singleton
+
+instance ToSlaw Int64 where
+  toSlaw = SlawNumeric nfScalar . NumInt64 . S.singleton
+
+instance ToSlaw Word8 where
+  toSlaw = SlawNumeric nfScalar . NumUnt8 . S.singleton
+
+instance ToSlaw Word16 where
+  toSlaw = SlawNumeric nfScalar . NumUnt16 . S.singleton
+
+instance ToSlaw Word32 where
+  toSlaw = SlawNumeric nfScalar . NumUnt32 . S.singleton
+
+instance ToSlaw Word64 where
+  toSlaw = SlawNumeric nfScalar . NumUnt64 . S.singleton
+
+instance ToSlaw Float where
+  toSlaw = SlawNumeric nfScalar . NumFloat . S.singleton
+
+instance ToSlaw Double where
+  toSlaw = SlawNumeric nfScalar . NumDouble . S.singleton
+
+instance ToSlaw Int where
+  toSlaw = toSlaw . toNativeInt
+
+instance ToSlaw Word where
+  toSlaw = toSlaw . toNativeWord
