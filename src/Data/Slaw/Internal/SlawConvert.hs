@@ -282,7 +282,7 @@ pairFromSlaw :: forall a b. (FromSlaw a, FromSlaw b)
 pairFromSlaw s pair =
   case pairFromSlaw' pair of
     Left err ->
-      let msg = s `cantCoerceSlaw` typeName (undefined :: a, undefined :: b)
+      let msg = s `cantCoerceSlaw` typeName (undefined :: (a, b))
       in msg `because` [err]
     Right pair' -> Right pair'
 
