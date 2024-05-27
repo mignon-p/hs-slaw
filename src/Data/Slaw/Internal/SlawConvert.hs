@@ -385,6 +385,14 @@ getLoHi nbits False = (0, (2 ^ nbits) - 1)
 getLoHi nbits True  = ((-x), x - 1)
   where x = 2 ^ (nbits - 1)
 
+integralPairFromSlaw :: forall a. (Nameable a, Integral a, Bits a)
+                     => (Slaw, Slaw)
+                     -> Either PlasmaException (a, a)
+integralPairFromSlaw (x, y) = do
+  x' <- integralFromSlaw x
+  y' <- integralFromSlaw y
+  return (x', y')
+
 ---- types
 
 data Protein = Protein
@@ -570,11 +578,14 @@ instance ToSlaw a => ToSlaw (Maybe a) where
   toSlaw Nothing  = SlawNil
   toSlaw (Just x) = toSlaw x
 
-instance FromSlaw Rational where
+instance forall a. ( Nameable a
+                   , Integral a
+                   , Bits     a
+                   ) => FromSlaw (Ratio a) where
   fromSlaw s@(SlawCons car cdr) =
-    case pairFromSlaw' (car, cdr) of
+    case integralPairFromSlaw (car, cdr) of
       Left err ->
-        let msg = s `cantCoerceSlaw` "Rational"
+        let msg = s `cantCoerceSlaw` typeName (undefined :: Ratio a)
         in msg `because` [err]
       Right (num, den) -> Right $ num % den
   fromSlaw s = handleOthers s
