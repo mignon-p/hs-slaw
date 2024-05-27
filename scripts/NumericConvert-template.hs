@@ -29,9 +29,10 @@ module Data.Slaw.Internal.NumericConvert
   , ScalarClass(..)
   ) where
 
-import Control.Arrow (second)
+-- import Control.Arrow (second)
 import Control.DeepSeq
 -- import Data.Complex
+import Data.Default.Class
 import Data.Hashable
 import Data.Int
 import Data.List
@@ -123,9 +124,9 @@ cnfReal = CheckNF
 class (Storable a, Num a) => RealClass a where
   ndToReal :: Maybe String
            -> (NumericFormat, NumericData)
-           -> Either PlasmaException (NumericFormat, S.Vector a)
+           -> Either PlasmaException (S.Vector a)
 
-  realToNd :: (NumericFormat, S.Vector a)
+  realToNd :: S.Vector a
            -> (NumericFormat, NumericData)
 
   realName :: a -> String
@@ -138,24 +139,24 @@ instance RealClass TYPE where
         toType   = tname ?> "TYPE"
     checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
     case nd of
-      NumNAMEXX v -> return (nf, v)
+      NumNAMEXX v -> return v
       _           -> do
         let typePair = (fromType, toType)
         nes <- mapM (checkRange' typePair (0 :: TYPE)) $ numToList nd
-        return (nf, S.fromList $ map intCoerce nes)
+        return $ S.fromList $ map intCoerce nes
 
-  realToNd = second NumNAME
+  realToNd = (def,) . NumNAME
 
   realName _ = "TYPE"
 
 --FOR nativeInt
 
 instance RealClass TYPE where
-  ndToReal _ = mapRight (second f) . ndToReal (Just "TYPE")
+  ndToReal _ = mapRight f . ndToReal (Just "TYPE")
     where f :: S.Vector NativeTYPE -> S.Vector TYPE
           f = S.unsafeCast
 
-  realToNd = realToNd . second f
+  realToNd = realToNd . f
     where f :: S.Vector TYPE -> S.Vector NativeTYPE
           f = S.unsafeCast
 
@@ -168,12 +169,12 @@ instance RealClass TYPE where
     let toType   = tname ?> "TYPE"
     checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
     case nd of
-      NumNAMEXX v -> return (nf, v)
+      NumNAMEXX v -> return v
       _           -> do
         let nes = numToList nd
-        return (nf, S.fromList $ map LTYPECoerce nes)
+        return $ S.fromList $ map LTYPECoerce nes
 
-  realToNd = second NumNAME
+  realToNd = (def,) . NumNAME
 
   realName _ = "TYPE"
 
@@ -191,9 +192,9 @@ cnfScalar = CheckNF
 class Storable a => ScalarClass a where
   ndToScalar :: Maybe String
              -> (NumericFormat, NumericData)
-             -> Either PlasmaException (NumericFormat, S.Vector a)
+             -> Either PlasmaException (S.Vector a)
 
-  scalarToNd :: (NumericFormat, S.Vector a)
+  scalarToNd :: S.Vector a
              -> (NumericFormat, NumericData)
 
   scalarName :: a -> String

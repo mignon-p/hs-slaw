@@ -27,7 +27,7 @@ import Control.DeepSeq
 -- import Control.Exception
 import qualified Data.ByteString      as B
 import qualified Data.ByteString.Lazy as L
--- import Data.Default.Class
+import Data.Default.Class
 import Data.Containers.ListUtils (nubOrd)
 import Data.Hashable
 import qualified Data.HashMap.Strict     as HM
@@ -77,6 +77,13 @@ data NumericFormat = NumericFormat
   , nfComplex :: !Bool
   , nfVector  :: !VectorType
   } deriving (Eq, Ord, Show, Generic, NFData, Hashable)
+
+instance Default NumericFormat where
+  def = NumericFormat
+        { nfArray   = False
+        , nfComplex = False
+        , nfVector  = VtScalar
+        }
 
 data NumericData = NumInt8   (S.Vector Int8)
                  | NumInt16  (S.Vector Int16)
