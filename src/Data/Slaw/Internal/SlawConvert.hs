@@ -720,6 +720,222 @@ instance (FromSlaw a, FromSlaw b) => FromSlaw (a, b) where
 instance (ToSlaw a, ToSlaw b) => ToSlaw (a, b) where
   toSlaw (car, cdr) = SlawCons (toSlaw car) (toSlaw cdr)
 
+instance ( FromSlaw a
+         , FromSlaw b
+         , FromSlaw c
+         ) => FromSlaw (a, b, c) where
+  fromSlaw s@(SlawList [x, y, z]) =
+    tripleFromSlaw s (x, y, z)
+  fromSlaw s@(SlawNumeric nf nd) =
+    case numericArrayToList nf nd of
+      Just (nf', [x, y, z]) ->
+        tripleFromSlaw s ( SlawNumeric nf' x
+                         , SlawNumeric nf' y
+                         , SlawNumeric nf' z
+                         )
+      _                     -> handleOthers s
+  fromSlaw s = handleOthers s
+
+instance ( ToSlaw a
+         , ToSlaw b
+         , ToSlaw c
+         ) => ToSlaw (a, b, c) where
+  toSlaw (x, y, z) =
+    SlawList [ toSlaw x
+             , toSlaw y
+             , toSlaw z
+             ]
+
+instance ( FromSlaw a
+         , FromSlaw b
+         , FromSlaw c
+         , FromSlaw d
+         ) => FromSlaw (a, b, c, d) where
+  fromSlaw s@(SlawList [w, x, y, z]) =
+    quadrupleFromSlaw s (w, x, y, z)
+  fromSlaw s@(SlawNumeric nf nd) =
+    case numericArrayToList nf nd of
+      Just (nf', [w, x, y, z]) ->
+        quadrupleFromSlaw s ( SlawNumeric nf' w
+                            , SlawNumeric nf' x
+                            , SlawNumeric nf' y
+                            , SlawNumeric nf' z
+                            )
+      _                        -> handleOthers s
+  fromSlaw s = handleOthers s
+
+instance ( ToSlaw a
+         , ToSlaw b
+         , ToSlaw c
+         , ToSlaw d
+         ) => ToSlaw (a, b, c, d) where
+  toSlaw (w, x, y, z) =
+    SlawList [ toSlaw w
+             , toSlaw x
+             , toSlaw y
+             , toSlaw z
+             ]
+
+instance ( FromSlaw a
+         , FromSlaw b
+         , FromSlaw c
+         , FromSlaw d
+         , FromSlaw e
+         ) => FromSlaw (a, b, c, d, e) where
+  fromSlaw s@(SlawList [v, w, x, y, z]) =
+    quintupleFromSlaw s (v, w, x, y, z)
+  fromSlaw s@(SlawNumeric nf nd) =
+    case numericArrayToList nf nd of
+      Just (nf', [v, w, x, y, z]) ->
+        quintupleFromSlaw s ( SlawNumeric nf' v
+                            , SlawNumeric nf' w
+                            , SlawNumeric nf' x
+                            , SlawNumeric nf' y
+                            , SlawNumeric nf' z
+                            )
+      _                           -> handleOthers s
+  fromSlaw s = handleOthers s
+
+instance ( ToSlaw a
+         , ToSlaw b
+         , ToSlaw c
+         , ToSlaw d
+         , ToSlaw e
+         ) => ToSlaw (a, b, c, d, e) where
+  toSlaw (v, w, x, y, z) =
+    SlawList [ toSlaw v
+             , toSlaw w
+             , toSlaw x
+             , toSlaw y
+             , toSlaw z
+             ]
+
+instance ( FromSlaw a
+         , FromSlaw b
+         , FromSlaw c
+         , FromSlaw d
+         , FromSlaw e
+         , FromSlaw f
+         ) => FromSlaw (a, b, c, d, e, f) where
+  fromSlaw s@(SlawList [u, v, w, x, y, z]) =
+    sextupleFromSlaw s (u, v, w, x, y, z)
+  fromSlaw s@(SlawNumeric nf nd) =
+    case numericArrayToList nf nd of
+      Just (nf', [u, v, w, x, y, z]) ->
+        sextupleFromSlaw s ( SlawNumeric nf' u
+                           , SlawNumeric nf' v
+                           , SlawNumeric nf' w
+                           , SlawNumeric nf' x
+                           , SlawNumeric nf' y
+                           , SlawNumeric nf' z
+                           )
+      _                              -> handleOthers s
+  fromSlaw s = handleOthers s
+
+instance ( ToSlaw a
+         , ToSlaw b
+         , ToSlaw c
+         , ToSlaw d
+         , ToSlaw e
+         , ToSlaw f
+         ) => ToSlaw (a, b, c, d, e, f) where
+  toSlaw (u, v, w, x, y, z) =
+    SlawList [ toSlaw u
+             , toSlaw v
+             , toSlaw w
+             , toSlaw x
+             , toSlaw y
+             , toSlaw z
+             ]
+
+instance ( FromSlaw a
+         , FromSlaw b
+         , FromSlaw c
+         , FromSlaw d
+         , FromSlaw e
+         , FromSlaw f
+         , FromSlaw g
+         ) => FromSlaw (a, b, c, d, e, f, g) where
+  fromSlaw s@(SlawList [t, u, v, w, x, y, z]) =
+    septupleFromSlaw s (t, u, v, w, x, y, z)
+  fromSlaw s@(SlawNumeric nf nd) =
+    case numericArrayToList nf nd of
+      Just (nf', [t, u, v, w, x, y, z]) ->
+        septupleFromSlaw s ( SlawNumeric nf' t
+                           , SlawNumeric nf' u
+                           , SlawNumeric nf' v
+                           , SlawNumeric nf' w
+                           , SlawNumeric nf' x
+                           , SlawNumeric nf' y
+                           , SlawNumeric nf' z
+                           )
+      _                                 -> handleOthers s
+  fromSlaw s = handleOthers s
+
+instance ( ToSlaw a
+         , ToSlaw b
+         , ToSlaw c
+         , ToSlaw d
+         , ToSlaw e
+         , ToSlaw f
+         , ToSlaw g
+         ) => ToSlaw (a, b, c, d, e, f, g) where
+  toSlaw (t, u, v, w, x, y, z) =
+    SlawList [ toSlaw t
+             , toSlaw u
+             , toSlaw v
+             , toSlaw w
+             , toSlaw x
+             , toSlaw y
+             , toSlaw z
+             ]
+
+instance ( FromSlaw a
+         , FromSlaw b
+         , FromSlaw c
+         , FromSlaw d
+         , FromSlaw e
+         , FromSlaw f
+         , FromSlaw g
+         , FromSlaw h
+         ) => FromSlaw (a, b, c, d, e, f, g, h) where
+  fromSlaw s@(SlawList [r, t, u, v, w, x, y, z]) =
+    octupleFromSlaw s (r, t, u, v, w, x, y, z)
+  fromSlaw s@(SlawNumeric nf nd) =
+    case numericArrayToList nf nd of
+      Just (nf', [r, t, u, v, w, x, y, z]) ->
+        octupleFromSlaw s ( SlawNumeric nf' r
+                          , SlawNumeric nf' t
+                          , SlawNumeric nf' u
+                          , SlawNumeric nf' v
+                          , SlawNumeric nf' w
+                          , SlawNumeric nf' x
+                          , SlawNumeric nf' y
+                          , SlawNumeric nf' z
+                          )
+      _                                    -> handleOthers s
+  fromSlaw s = handleOthers s
+
+instance ( ToSlaw a
+         , ToSlaw b
+         , ToSlaw c
+         , ToSlaw d
+         , ToSlaw e
+         , ToSlaw f
+         , ToSlaw g
+         , ToSlaw h
+         ) => ToSlaw (a, b, c, d, e, f, g, h) where
+  toSlaw (r, t, u, v, w, x, y, z) =
+    SlawList [ toSlaw r
+             , toSlaw t
+             , toSlaw u
+             , toSlaw v
+             , toSlaw w
+             , toSlaw x
+             , toSlaw y
+             , toSlaw z
+             ]
+
 instance (FromSlaw a, FromSlaw b, Ord a) => FromSlaw (M.Map a b) where
   fromSlaw s = mapRight M.fromList $ slawToMap s (M.empty :: M.Map a b)
 
