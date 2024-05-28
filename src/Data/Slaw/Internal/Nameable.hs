@@ -10,6 +10,7 @@ import qualified Data.ByteString          as B
 import qualified Data.ByteString.Lazy     as L
 import qualified Data.ByteString.Short    as SBS
 -- import Data.Char
+import Data.Complex
 -- import Data.Default.Class
 -- import Data.Either
 -- import Data.Hashable
@@ -326,3 +327,6 @@ instance Nameable IntPtr where
 
 instance Nameable WordPtr where
   typeName _ = "WordPtr"
+
+instance Nameable a => Nameable (Complex a) where
+  typeName _ = "Complex " ++ typeName' (undefined :: a)
