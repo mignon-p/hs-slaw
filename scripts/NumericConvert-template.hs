@@ -129,8 +129,6 @@ class (Storable a, Num a) => RealClass a where
   realToNd :: S.Vector a
            -> (NumericFormat, NumericData)
 
-  realName :: a -> String
-
 --FOR sizedInt
 
 instance RealClass TYPE where
@@ -147,8 +145,6 @@ instance RealClass TYPE where
 
   realToNd = (def,) . NumNAME
 
-  realName _ = "TYPE"
-
 --FOR nativeInt
 
 instance RealClass TYPE where
@@ -159,8 +155,6 @@ instance RealClass TYPE where
   realToNd = realToNd . f
     where f :: S.Vector TYPE -> S.Vector NativeTYPE
           f = S.unsafeCast
-
-  realName _ = "TYPE"
 
 --FOR floating
 
@@ -175,8 +169,6 @@ instance RealClass TYPE where
         return $ S.fromList $ map LTYPECoerce nes
 
   realToNd = (def,) . NumNAME
-
-  realName _ = "TYPE"
 
 --END
 
@@ -199,8 +191,6 @@ class Storable a => ScalarClass a where
 
   scalarToNd :: S.Vector a
              -> (NumericFormat, NumericData)
-
-  scalarName :: a -> String
 
 {-
 instance RealClass a => ScalarClass (Complex a) where

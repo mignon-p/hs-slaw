@@ -124,8 +124,6 @@ class (Storable a, Num a) => RealClass a where
   realToNd :: S.Vector a
            -> (NumericFormat, NumericData)
 
-  realName :: a -> String
-
 instance RealClass Int8 where
   ndToReal tname (nf, nd) = do
     let fromType = numTypeName nd
@@ -139,8 +137,6 @@ instance RealClass Int8 where
         return $ S.fromList $ map intCoerce nes
 
   realToNd = (def,) . NumInt8
-
-  realName _ = "Int8"
 
 instance RealClass Int16 where
   ndToReal tname (nf, nd) = do
@@ -156,8 +152,6 @@ instance RealClass Int16 where
 
   realToNd = (def,) . NumInt16
 
-  realName _ = "Int16"
-
 instance RealClass Int32 where
   ndToReal tname (nf, nd) = do
     let fromType = numTypeName nd
@@ -171,8 +165,6 @@ instance RealClass Int32 where
         return $ S.fromList $ map intCoerce nes
 
   realToNd = (def,) . NumInt32
-
-  realName _ = "Int32"
 
 instance RealClass Int64 where
   ndToReal tname (nf, nd) = do
@@ -188,8 +180,6 @@ instance RealClass Int64 where
 
   realToNd = (def,) . NumInt64
 
-  realName _ = "Int64"
-
 instance RealClass Word8 where
   ndToReal tname (nf, nd) = do
     let fromType = numTypeName nd
@@ -203,8 +193,6 @@ instance RealClass Word8 where
         return $ S.fromList $ map intCoerce nes
 
   realToNd = (def,) . NumUnt8
-
-  realName _ = "Word8"
 
 instance RealClass Word16 where
   ndToReal tname (nf, nd) = do
@@ -220,8 +208,6 @@ instance RealClass Word16 where
 
   realToNd = (def,) . NumUnt16
 
-  realName _ = "Word16"
-
 instance RealClass Word32 where
   ndToReal tname (nf, nd) = do
     let fromType = numTypeName nd
@@ -235,8 +221,6 @@ instance RealClass Word32 where
         return $ S.fromList $ map intCoerce nes
 
   realToNd = (def,) . NumUnt32
-
-  realName _ = "Word32"
 
 instance RealClass Word64 where
   ndToReal tname (nf, nd) = do
@@ -252,8 +236,6 @@ instance RealClass Word64 where
 
   realToNd = (def,) . NumUnt64
 
-  realName _ = "Word64"
-
 instance RealClass Int where
   ndToReal _ = mapRight f . ndToReal (Just "Int")
     where f :: S.Vector NativeInt -> S.Vector Int
@@ -263,8 +245,6 @@ instance RealClass Int where
     where f :: S.Vector Int -> S.Vector NativeInt
           f = S.unsafeCast
 
-  realName _ = "Int"
-
 instance RealClass Word where
   ndToReal _ = mapRight f . ndToReal (Just "Word")
     where f :: S.Vector NativeWord -> S.Vector Word
@@ -273,8 +253,6 @@ instance RealClass Word where
   realToNd = realToNd . f
     where f :: S.Vector Word -> S.Vector NativeWord
           f = S.unsafeCast
-
-  realName _ = "Word"
 
 instance RealClass Float where
   ndToReal tname (nf, nd) = do
@@ -288,8 +266,6 @@ instance RealClass Float where
 
   realToNd = (def,) . NumFloat
 
-  realName _ = "Float"
-
 instance RealClass Double where
   ndToReal tname (nf, nd) = do
     let toType   = tname ?> "Double"
@@ -301,8 +277,6 @@ instance RealClass Double where
         return $ S.fromList $ map doubleCoerce nes
 
   realToNd = (def,) . NumDouble
-
-  realName _ = "Double"
 
 {-
 cnfScalar :: CheckNF
@@ -323,8 +297,6 @@ class Storable a => ScalarClass a where
 
   scalarToNd :: S.Vector a
              -> (NumericFormat, NumericData)
-
-  scalarName :: a -> String
 
 {-
 instance RealClass a => ScalarClass (Complex a) where
