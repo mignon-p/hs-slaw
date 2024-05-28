@@ -214,4 +214,10 @@ instance RealClass a => ScalarClass (Complex a) where
         f  = S.unsafeCast
     return (f v2)
 
-  scalarToNd = undefined
+  scalarToNd v = (nf', nd)
+    where
+      f :: S.Vector (Complex a) -> S.Vector a
+      f        = S.unsafeCast
+      v'       = f v
+      (nf, nd) = realToNd v'
+      nf'      = nf { nfComplex = True }
