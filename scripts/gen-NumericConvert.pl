@@ -24,6 +24,7 @@ $typeGroups{'sizedInt'} =
     [qw(Int8 Int16 Int32 Int64 Word8 Word16 Word32 Word64)];
 $typeGroups{'nativeInt'} = [qw (Int Word)];
 $typeGroups{'floating'}  = [qw (Float Double)];
+$typeGroups{'vectors'}   = [qw (V2 V3 V4)];
 
 my @input  = ();
 my @output = ();
@@ -65,12 +66,15 @@ sub doTemplate {
         my $name   = $type;
         $name      =~ s/Word/Unt/;
         my $namexx = sprintf ("%-6s", $name);
+        my $vtype  = $type;
+        $vtype     =~ s/^V(\d)$/Vt$1/;
 
         for (my $lineNo = $beginLine + 1; $lineNo < $endLine; $lineNo++) {
             my $line = $input[$lineNo];
 
             $line =~ s/NAMEXX/$namexx/g;
             $line =~ s/LTYPE/$ltype/g;
+            $line =~ s/VTYPE/$vtype/g;
             $line =~ s/NAME/$name/g;
             $line =~ s/TYPE/$type/g;
 

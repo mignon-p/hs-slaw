@@ -6,6 +6,7 @@
   sizedInt  - Int8, Int16, Int32, Int64, Word8, Word16, Word32, Word64
   nativeInt - Int, Word
   floating  - Float, Double
+  vectors   - V2 V3 V4
 
   More than one set can be specified in a "--FOR" directive,
   separated by commas.
@@ -20,6 +21,7 @@
   LTYPE  - same as TYPE, but all lowercase
   NAME   - same as TYPE, but "Word" is replaced with "Unt"
   NAMEXX - same as NAME, but padded with spaces to be 6 characters long
+  VTYPE  - Vt2/Vt3/Vt4 for V2/V3/V4, respectively (only for vectors)
 -}
 
 {-# LANGUAGE ScopedTypeVariables        #-}
@@ -27,6 +29,7 @@
 module Data.Slaw.Internal.NumericConvert
   ( RealClass(..)
   , ScalarClass(..)
+  , NumericClass(..)
   ) where
 
 -- import Control.Arrow (second)
@@ -44,6 +47,7 @@ import GHC.Generics (Generic)
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.NativeInt
+import Data.Slaw.Internal.NumericTypes
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.Util
 
@@ -180,6 +184,8 @@ cnfScalar = CheckNF
   , cnfVector  = Just VtScalar
   }
 
+-- This handles casting a real number to a Complex number,
+-- by setting the imaginary part to 0.
 insertZeros :: (Storable a, Num a) => S.Vector a -> S.Vector a
 insertZeros v = S.generate len' f
   where len' = 2 * S.length v
@@ -215,7 +221,7 @@ instance RealClass a => ScalarClass (Complex a) where
 
   scalarToNd v = (nf', nd)
     where
-      f :: S.Vector (Complex a) -> S.Vector a
+      f       :: S.Vector (Complex a) -> S.Vector a
       f        = S.unsafeCast
       v'       = f v
       (nf, nd) = realToNd v'
@@ -226,5 +232,40 @@ instance RealClass a => ScalarClass (Complex a) where
 instance ScalarClass TYPE where
   ndToScalar = ndToReal Nothing
   scalarToNd = realToNd
+
+--END
+
+class (Storable a, Nameable a) => NumericClass a where
+  ndToNumeric :: (NumericFormat, NumericData)
+              -> Either PlasmaException (S.Vector a)
+
+  numericToNd :: S.Vector a
+              -> (NumericFormat, NumericData)
+
+--FOR vectors
+
+instance ScalarClass a => NumericClass (TYPE a) where
+  ndToNumeric (nf, nd) = do
+    let toType    = typeName (undefined :: TYPE a)
+        scalarNF  = nf { nfVector = VtScalar }
+        singleNF  = nf { nfArray  = False    }
+        cnf       = cnfScalar { cnfVector = Just VTYPE }
+    checkNF cnf nf (singleNF, nd, toType)
+    v <- case ndToScalar (scalarNF, nd) of
+           Left err ->
+             let msg = describeNumeric singleNF nd `cantCoerce` toType
+             in msg `because` [err]
+           Right v0 -> return v0
+    let f :: S.Vector a -> S.Vector (TYPE a)
+        f  = S.unsafeCast
+    return (f v)
+
+  numericToNd v = (nf', nd)
+    where
+      f       :: S.Vector (TYPE a) -> S.Vector a
+      f        = S.unsafeCast
+      v'       = f v
+      (nf, nd) = scalarToNd v'
+      nf'      = nf { nfVector = VTYPE }
 
 --END

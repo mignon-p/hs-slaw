@@ -15,6 +15,7 @@
 module Data.Slaw.Internal.NumericConvert
   ( RealClass(..)
   , ScalarClass(..)
+  , NumericClass(..)
   ) where
 
 -- import Control.Arrow (second)
@@ -32,6 +33,7 @@ import GHC.Generics (Generic)
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.NativeInt
+import Data.Slaw.Internal.NumericTypes
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.Util
 
@@ -286,6 +288,8 @@ cnfScalar = CheckNF
   , cnfVector  = Just VtScalar
   }
 
+-- This handles casting a real number to a Complex number,
+-- by setting the imaginary part to 0.
 insertZeros :: (Storable a, Num a) => S.Vector a -> S.Vector a
 insertZeros v = S.generate len' f
   where len' = 2 * S.length v
@@ -321,7 +325,7 @@ instance RealClass a => ScalarClass (Complex a) where
 
   scalarToNd v = (nf', nd)
     where
-      f :: S.Vector (Complex a) -> S.Vector a
+      f       :: S.Vector (Complex a) -> S.Vector a
       f        = S.unsafeCast
       v'       = f v
       (nf, nd) = realToNd v'
@@ -374,4 +378,83 @@ instance ScalarClass Float where
 instance ScalarClass Double where
   ndToScalar = ndToReal Nothing
   scalarToNd = realToNd
+
+class (Storable a, Nameable a) => NumericClass a where
+  ndToNumeric :: (NumericFormat, NumericData)
+              -> Either PlasmaException (S.Vector a)
+
+  numericToNd :: S.Vector a
+              -> (NumericFormat, NumericData)
+
+instance ScalarClass a => NumericClass (V2 a) where
+  ndToNumeric (nf, nd) = do
+    let toType    = typeName (undefined :: V2 a)
+        scalarNF  = nf { nfVector = VtScalar }
+        singleNF  = nf { nfArray  = False    }
+        cnf       = cnfScalar { cnfVector = Just Vt2 }
+    checkNF cnf nf (singleNF, nd, toType)
+    v <- case ndToScalar (scalarNF, nd) of
+           Left err ->
+             let msg = describeNumeric singleNF nd `cantCoerce` toType
+             in msg `because` [err]
+           Right v0 -> return v0
+    let f :: S.Vector a -> S.Vector (V2 a)
+        f  = S.unsafeCast
+    return (f v)
+
+  numericToNd v = (nf', nd)
+    where
+      f       :: S.Vector (V2 a) -> S.Vector a
+      f        = S.unsafeCast
+      v'       = f v
+      (nf, nd) = scalarToNd v'
+      nf'      = nf { nfVector = Vt2 }
+
+instance ScalarClass a => NumericClass (V3 a) where
+  ndToNumeric (nf, nd) = do
+    let toType    = typeName (undefined :: V3 a)
+        scalarNF  = nf { nfVector = VtScalar }
+        singleNF  = nf { nfArray  = False    }
+        cnf       = cnfScalar { cnfVector = Just Vt3 }
+    checkNF cnf nf (singleNF, nd, toType)
+    v <- case ndToScalar (scalarNF, nd) of
+           Left err ->
+             let msg = describeNumeric singleNF nd `cantCoerce` toType
+             in msg `because` [err]
+           Right v0 -> return v0
+    let f :: S.Vector a -> S.Vector (V3 a)
+        f  = S.unsafeCast
+    return (f v)
+
+  numericToNd v = (nf', nd)
+    where
+      f       :: S.Vector (V3 a) -> S.Vector a
+      f        = S.unsafeCast
+      v'       = f v
+      (nf, nd) = scalarToNd v'
+      nf'      = nf { nfVector = Vt3 }
+
+instance ScalarClass a => NumericClass (V4 a) where
+  ndToNumeric (nf, nd) = do
+    let toType    = typeName (undefined :: V4 a)
+        scalarNF  = nf { nfVector = VtScalar }
+        singleNF  = nf { nfArray  = False    }
+        cnf       = cnfScalar { cnfVector = Just Vt4 }
+    checkNF cnf nf (singleNF, nd, toType)
+    v <- case ndToScalar (scalarNF, nd) of
+           Left err ->
+             let msg = describeNumeric singleNF nd `cantCoerce` toType
+             in msg `because` [err]
+           Right v0 -> return v0
+    let f :: S.Vector a -> S.Vector (V4 a)
+        f  = S.unsafeCast
+    return (f v)
+
+  numericToNd v = (nf', nd)
+    where
+      f       :: S.Vector (V4 a) -> S.Vector a
+      f        = S.unsafeCast
+      v'       = f v
+      (nf, nd) = scalarToNd v'
+      nf'      = nf { nfVector = Vt4 }
 
