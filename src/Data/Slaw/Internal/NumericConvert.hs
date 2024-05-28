@@ -295,16 +295,15 @@ insertZeros v = S.generate len' f
                   else 0
 
 class (Storable a, Nameable a) => ScalarClass a where
-  ndToScalar :: Maybe String
-             -> (NumericFormat, NumericData)
+  ndToScalar :: (NumericFormat, NumericData)
              -> Either PlasmaException (S.Vector a)
 
   scalarToNd :: S.Vector a
              -> (NumericFormat, NumericData)
 
 instance RealClass a => ScalarClass (Complex a) where
-  ndToScalar tname (nf, nd) = do
-    let toType   = tname ?> typeName (undefined :: Complex a)
+  ndToScalar (nf, nd) = do
+    let toType   = typeName (undefined :: Complex a)
         realNF   = nf { nfComplex = False }
         singleNF = nf { nfArray   = False }
     checkNF cnfScalar nf (singleNF, nd, toType)
@@ -329,50 +328,50 @@ instance RealClass a => ScalarClass (Complex a) where
       nf'      = nf { nfComplex = True }
 
 instance ScalarClass Int8 where
-  ndToScalar = ndToReal
+  ndToScalar = ndToReal Nothing
   scalarToNd = realToNd
 
 instance ScalarClass Int16 where
-  ndToScalar = ndToReal
+  ndToScalar = ndToReal Nothing
   scalarToNd = realToNd
 
 instance ScalarClass Int32 where
-  ndToScalar = ndToReal
+  ndToScalar = ndToReal Nothing
   scalarToNd = realToNd
 
 instance ScalarClass Int64 where
-  ndToScalar = ndToReal
+  ndToScalar = ndToReal Nothing
   scalarToNd = realToNd
 
 instance ScalarClass Word8 where
-  ndToScalar = ndToReal
+  ndToScalar = ndToReal Nothing
   scalarToNd = realToNd
 
 instance ScalarClass Word16 where
-  ndToScalar = ndToReal
+  ndToScalar = ndToReal Nothing
   scalarToNd = realToNd
 
 instance ScalarClass Word32 where
-  ndToScalar = ndToReal
+  ndToScalar = ndToReal Nothing
   scalarToNd = realToNd
 
 instance ScalarClass Word64 where
-  ndToScalar = ndToReal
+  ndToScalar = ndToReal Nothing
   scalarToNd = realToNd
 
 instance ScalarClass Int where
-  ndToScalar = ndToReal
+  ndToScalar = ndToReal Nothing
   scalarToNd = realToNd
 
 instance ScalarClass Word where
-  ndToScalar = ndToReal
+  ndToScalar = ndToReal Nothing
   scalarToNd = realToNd
 
 instance ScalarClass Float where
-  ndToScalar = ndToReal
+  ndToScalar = ndToReal Nothing
   scalarToNd = realToNd
 
 instance ScalarClass Double where
-  ndToScalar = ndToReal
+  ndToScalar = ndToReal Nothing
   scalarToNd = realToNd
 
