@@ -19,7 +19,7 @@ module Data.Slaw.Internal.NumericConvert
 
 -- import Control.Arrow (second)
 import Control.DeepSeq
--- import Data.Complex
+import Data.Complex
 import Data.Default.Class
 import Data.Hashable
 import Data.Int
@@ -30,6 +30,7 @@ import Foreign.Storable
 import GHC.Generics (Generic)
 
 import Data.Slaw.Internal.Exception
+import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.NativeInt
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.Util
@@ -116,7 +117,7 @@ cnfReal = CheckNF
   , cnfVector  = Just VtScalar
   }
 
-class (Storable a, Num a) => RealClass a where
+class (Storable a, Num a, Nameable a) => RealClass a where
   ndToReal :: Maybe String
            -> (NumericFormat, NumericData)
            -> Either PlasmaException (S.Vector a)
@@ -278,7 +279,6 @@ instance RealClass Double where
 
   realToNd = (def,) . NumDouble
 
-{-
 cnfScalar :: CheckNF
 cnfScalar = CheckNF
   { cnfArray   = Nothing
@@ -288,9 +288,8 @@ cnfScalar = CheckNF
 
 insertZeros :: Storable a => S.Vector a -> S.Vector a
 insertZeros = undefined
--}
 
-class Storable a => ScalarClass a where
+class (Storable a, Nameable a) => ScalarClass a where
   ndToScalar :: Maybe String
              -> (NumericFormat, NumericData)
              -> Either PlasmaException (S.Vector a)
@@ -298,24 +297,22 @@ class Storable a => ScalarClass a where
   scalarToNd :: S.Vector a
              -> (NumericFormat, NumericData)
 
-{-
 instance RealClass a => ScalarClass (Complex a) where
   ndToScalar tname (nf, nd) = do
-    let toType   = tname ?> ("Complex " ++ realName (undefined :: a))
+    let toType   = tname ?> typeName (undefined :: Complex a)
         realNF   = nf { nfComplex = False }
         singleNF = nf { nfArray   = False }
     checkNF cnfScalar nf (singleNF, nd, toType)
-    v   <- ndToReal Nothing (realNF, nd)
-    nd1 <- case v of
-             Left err ->
-               let msg = describeNumeric singleNF nd `cantCoerce` toType
-               in msg `because` [err]
-             Right nd0 -> return nd0
-    let nd2 = if nfComplex nf
-              then nd1
-              else insertZeros nd1
-    undefined nd2 -- TODO: cast Vector a to Vector (Complex a)
+    v1 <- case ndToReal Nothing (realNF, nd) of
+            Left err ->
+              let msg = describeNumeric singleNF nd `cantCoerce` toType
+              in msg `because` [err]
+            Right v0 -> return v0
+    let v2 = if nfComplex nf
+             then v1
+             else insertZeros v1
+        f :: S.Vector a -> S.Vector (Complex a)
+        f  = S.unsafeCast
+    return (f v2)
 
   scalarToNd = undefined
-  scalarName = undefined
--}
