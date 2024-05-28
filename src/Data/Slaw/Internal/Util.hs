@@ -11,6 +11,8 @@ module Data.Slaw.Internal.Util
   , hi8
   , mapLeft
   , mapRight
+  , forLeft
+  , forRight
   , (==~)
   , (?>)
   , uncurry5
@@ -69,6 +71,14 @@ mapLeft _ (Right x) = Right x
 mapRight :: (b -> c) -> Either a b -> Either a c
 mapRight _ (Left x)  = Left  x
 mapRight f (Right x) = Right (f x)
+
+{-# INLINE forLeft #-}
+forLeft :: Either a b -> (a -> c) -> Either c b
+forLeft = flip mapLeft
+
+{-# INLINE forRight #-}
+forRight :: Either a b -> (b -> c) -> Either a c
+forRight = flip mapRight
 
 -- case insensitive (for ASCII chars only) equality for lazy ByteStrings
 {-# INLINABLE (==~) #-}
