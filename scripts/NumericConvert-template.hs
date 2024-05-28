@@ -221,3 +221,11 @@ instance RealClass a => ScalarClass (Complex a) where
       v'       = f v
       (nf, nd) = realToNd v'
       nf'      = nf { nfComplex = True }
+
+--FOR sizedInt, nativeInt, floating
+
+instance ScalarClass TYPE where
+  ndToScalar = ndToReal
+  scalarToNd = realToNd
+
+--END

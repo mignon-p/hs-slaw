@@ -327,3 +327,52 @@ instance RealClass a => ScalarClass (Complex a) where
       v'       = f v
       (nf, nd) = realToNd v'
       nf'      = nf { nfComplex = True }
+
+instance ScalarClass Int8 where
+  ndToScalar = ndToReal
+  scalarToNd = realToNd
+
+instance ScalarClass Int16 where
+  ndToScalar = ndToReal
+  scalarToNd = realToNd
+
+instance ScalarClass Int32 where
+  ndToScalar = ndToReal
+  scalarToNd = realToNd
+
+instance ScalarClass Int64 where
+  ndToScalar = ndToReal
+  scalarToNd = realToNd
+
+instance ScalarClass Word8 where
+  ndToScalar = ndToReal
+  scalarToNd = realToNd
+
+instance ScalarClass Word16 where
+  ndToScalar = ndToReal
+  scalarToNd = realToNd
+
+instance ScalarClass Word32 where
+  ndToScalar = ndToReal
+  scalarToNd = realToNd
+
+instance ScalarClass Word64 where
+  ndToScalar = ndToReal
+  scalarToNd = realToNd
+
+instance ScalarClass Int where
+  ndToScalar = ndToReal
+  scalarToNd = realToNd
+
+instance ScalarClass Word where
+  ndToScalar = ndToReal
+  scalarToNd = realToNd
+
+instance ScalarClass Float where
+  ndToScalar = ndToReal
+  scalarToNd = realToNd
+
+instance ScalarClass Double where
+  ndToScalar = ndToReal
+  scalarToNd = realToNd
+
