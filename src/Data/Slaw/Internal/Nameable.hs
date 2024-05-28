@@ -90,6 +90,90 @@ instance (Nameable a, Nameable b) => Nameable (a, b) where
                            , typeName (undefined :: b)
                            ]
 
+instance ( Nameable a
+         , Nameable b
+         , Nameable c
+         ) => Nameable (a, b, c) where
+  typeName _ = mkTupleName [ typeName (undefined :: a)
+                           , typeName (undefined :: b)
+                           , typeName (undefined :: c)
+                           ]
+
+instance ( Nameable a
+         , Nameable b
+         , Nameable c
+         , Nameable d
+         ) => Nameable (a, b, c, d) where
+  typeName _ = mkTupleName [ typeName (undefined :: a)
+                           , typeName (undefined :: b)
+                           , typeName (undefined :: c)
+                           , typeName (undefined :: d)
+                           ]
+
+instance ( Nameable a
+         , Nameable b
+         , Nameable c
+         , Nameable d
+         , Nameable e
+         ) => Nameable (a, b, c, d, e) where
+  typeName _ = mkTupleName [ typeName (undefined :: a)
+                           , typeName (undefined :: b)
+                           , typeName (undefined :: c)
+                           , typeName (undefined :: d)
+                           , typeName (undefined :: e)
+                           ]
+
+instance ( Nameable a
+         , Nameable b
+         , Nameable c
+         , Nameable d
+         , Nameable e
+         , Nameable f
+         ) => Nameable (a, b, c, d, e, f) where
+  typeName _ = mkTupleName [ typeName (undefined :: a)
+                           , typeName (undefined :: b)
+                           , typeName (undefined :: c)
+                           , typeName (undefined :: d)
+                           , typeName (undefined :: e)
+                           , typeName (undefined :: f)
+                           ]
+
+instance ( Nameable a
+         , Nameable b
+         , Nameable c
+         , Nameable d
+         , Nameable e
+         , Nameable f
+         , Nameable g
+         ) => Nameable (a, b, c, d, e, f, g) where
+  typeName _ = mkTupleName [ typeName (undefined :: a)
+                           , typeName (undefined :: b)
+                           , typeName (undefined :: c)
+                           , typeName (undefined :: d)
+                           , typeName (undefined :: e)
+                           , typeName (undefined :: f)
+                           , typeName (undefined :: g)
+                           ]
+
+instance ( Nameable a
+         , Nameable b
+         , Nameable c
+         , Nameable d
+         , Nameable e
+         , Nameable f
+         , Nameable g
+         , Nameable h
+         ) => Nameable (a, b, c, d, e, f, g, h) where
+  typeName _ = mkTupleName [ typeName (undefined :: a)
+                           , typeName (undefined :: b)
+                           , typeName (undefined :: c)
+                           , typeName (undefined :: d)
+                           , typeName (undefined :: e)
+                           , typeName (undefined :: f)
+                           , typeName (undefined :: g)
+                           , typeName (undefined :: h)
+                           ]
+
 instance (Nameable a, Nameable b) => Nameable (M.Map a b) where
   typeName _ = concat [ "Map "
                       , typeName' (undefined :: a)
