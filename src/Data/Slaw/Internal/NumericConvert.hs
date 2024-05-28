@@ -458,3 +458,55 @@ instance ScalarClass a => NumericClass (V4 a) where
       (nf, nd) = scalarToNd v'
       nf'      = nf { nfVector = Vt4 }
 
+instance RealClass a => NumericClass (Complex a) where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+
+instance NumericClass Int8 where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+
+instance NumericClass Int16 where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+
+instance NumericClass Int32 where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+
+instance NumericClass Int64 where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+
+instance NumericClass Word8 where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+
+instance NumericClass Word16 where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+
+instance NumericClass Word32 where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+
+instance NumericClass Word64 where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+
+instance NumericClass Int where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+
+instance NumericClass Word where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+
+instance NumericClass Float where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+
+instance NumericClass Double where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+

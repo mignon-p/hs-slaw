@@ -269,3 +269,15 @@ instance ScalarClass a => NumericClass (TYPE a) where
       nf'      = nf { nfVector = VTYPE }
 
 --END
+
+instance RealClass a => NumericClass (Complex a) where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+
+--FOR sizedInt, nativeInt, floating
+
+instance NumericClass TYPE where
+  ndToNumeric = ndToScalar
+  numericToNd = scalarToNd
+
+--END
