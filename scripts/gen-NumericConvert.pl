@@ -126,6 +126,8 @@ for (my $lineNo = 0; $lineNo <= $#input; $lineNo++) {
     }
 }
 
+pop @output if ($output[$#output] eq "");
+
 open F, ">", $outputFull or die;
 
 foreach my $line (@output) {

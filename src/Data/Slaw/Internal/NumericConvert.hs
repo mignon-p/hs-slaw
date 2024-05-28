@@ -509,4 +509,3 @@ instance NumericClass Float where
 instance NumericClass Double where
   ndToNumeric = ndToScalar
   numericToNd = scalarToNd
-
