@@ -286,8 +286,13 @@ cnfScalar = CheckNF
   , cnfVector  = Just VtScalar
   }
 
-insertZeros :: Storable a => S.Vector a -> S.Vector a
-insertZeros = undefined
+insertZeros :: (Storable a, Num a) => S.Vector a -> S.Vector a
+insertZeros v = S.generate len' f
+  where len' = 2 * S.length v
+        f i  = let (q, r) = i `divMod` 2
+               in if r == 0
+                  then v S.! q
+                  else 0
 
 class (Storable a, Nameable a) => ScalarClass a where
   ndToScalar :: Maybe String
