@@ -294,6 +294,213 @@ pairFromSlaw' (x, y) = do
   y' <- fromSlaw y
   return (x', y')
 
+tripleFromSlaw :: forall a b c. ( FromSlaw a
+                                , FromSlaw b
+                                , FromSlaw c
+                                )
+               => Slaw
+               -> (Slaw, Slaw, Slaw)
+               -> Either PlasmaException (a, b, c)
+tripleFromSlaw s triple =
+  case tripleFromSlaw' triple of
+    Left err ->
+      let msg = s `cantCoerceSlaw` typeName q
+          q   = undefined :: (a, b, c)
+      in msg `because` [err]
+    Right triple' -> Right triple'
+
+tripleFromSlaw' :: ( FromSlaw a
+                   , FromSlaw b
+                   , FromSlaw c
+                   )
+                => (Slaw, Slaw, Slaw)
+                -> Either PlasmaException (a, b, c)
+tripleFromSlaw' (x, y, z) = do
+  x' <- fromSlaw x
+  y' <- fromSlaw y
+  z' <- fromSlaw z
+  return (x', y', z')
+
+quadrupleFromSlaw :: forall a b c d. ( FromSlaw a
+                                     , FromSlaw b
+                                     , FromSlaw c
+                                     , FromSlaw d
+                                     )
+                  => Slaw
+                  -> (Slaw, Slaw, Slaw, Slaw)
+                  -> Either PlasmaException (a, b, c, d)
+quadrupleFromSlaw s quadruple =
+  case quadrupleFromSlaw' quadruple of
+    Left err ->
+      let msg = s `cantCoerceSlaw` typeName q
+          q   = undefined :: (a, b, c, d)
+      in msg `because` [err]
+    Right quadruple' -> Right quadruple'
+
+quadrupleFromSlaw' :: ( FromSlaw a
+                      , FromSlaw b
+                      , FromSlaw c
+                      , FromSlaw d
+                      )
+                   => (Slaw, Slaw, Slaw, Slaw)
+                   -> Either PlasmaException (a, b, c, d)
+quadrupleFromSlaw' (w, x, y, z) = do
+  w' <- fromSlaw w
+  x' <- fromSlaw x
+  y' <- fromSlaw y
+  z' <- fromSlaw z
+  return (w', x', y', z')
+
+quintupleFromSlaw :: forall a b c d e. ( FromSlaw a
+                                       , FromSlaw b
+                                       , FromSlaw c
+                                       , FromSlaw d
+                                       , FromSlaw e
+                                       )
+                  => Slaw
+                  -> (Slaw, Slaw, Slaw, Slaw, Slaw)
+                  -> Either PlasmaException (a, b, c, d, e)
+quintupleFromSlaw s quintuple =
+  case quintupleFromSlaw' quintuple of
+    Left err ->
+      let msg = s `cantCoerceSlaw` typeName q
+          q   = undefined :: (a, b, c, d, e)
+      in msg `because` [err]
+    Right quintuple' -> Right quintuple'
+
+quintupleFromSlaw' :: ( FromSlaw a
+                      , FromSlaw b
+                      , FromSlaw c
+                      , FromSlaw d
+                      , FromSlaw e
+                      )
+                   => (Slaw, Slaw, Slaw, Slaw, Slaw)
+                   -> Either PlasmaException (a, b, c, d, e)
+quintupleFromSlaw' (v, w, x, y, z) = do
+  v' <- fromSlaw v
+  w' <- fromSlaw w
+  x' <- fromSlaw x
+  y' <- fromSlaw y
+  z' <- fromSlaw z
+  return (v', w', x', y', z')
+
+sextupleFromSlaw :: forall a b c d e f. ( FromSlaw a
+                                        , FromSlaw b
+                                        , FromSlaw c
+                                        , FromSlaw d
+                                        , FromSlaw e
+                                        , FromSlaw f
+                                        )
+                 => Slaw
+                 -> (Slaw, Slaw, Slaw, Slaw, Slaw, Slaw)
+                 -> Either PlasmaException (a, b, c, d, e, f)
+sextupleFromSlaw s sextuple =
+  case sextupleFromSlaw' sextuple of
+    Left err ->
+      let msg = s `cantCoerceSlaw` typeName q
+          q   = undefined :: (a, b, c, d, e, f)
+      in msg `because` [err]
+    Right sextuple' -> Right sextuple'
+
+sextupleFromSlaw' :: ( FromSlaw a
+                     , FromSlaw b
+                     , FromSlaw c
+                     , FromSlaw d
+                     , FromSlaw e
+                     , FromSlaw f
+                     )
+                  => (Slaw, Slaw, Slaw, Slaw, Slaw, Slaw)
+                  -> Either PlasmaException (a, b, c, d, e, f)
+sextupleFromSlaw' (u, v, w, x, y, z) = do
+  u' <- fromSlaw u
+  v' <- fromSlaw v
+  w' <- fromSlaw w
+  x' <- fromSlaw x
+  y' <- fromSlaw y
+  z' <- fromSlaw z
+  return (u', v', w', x', y', z')
+
+septupleFromSlaw :: forall a b c d e f g. ( FromSlaw a
+                                          , FromSlaw b
+                                          , FromSlaw c
+                                          , FromSlaw d
+                                          , FromSlaw e
+                                          , FromSlaw f
+                                          , FromSlaw g
+                                          )
+                 => Slaw
+                 -> (Slaw, Slaw, Slaw, Slaw, Slaw, Slaw, Slaw)
+                 -> Either PlasmaException (a, b, c, d, e, f, g)
+septupleFromSlaw s septuple =
+  case septupleFromSlaw' septuple of
+    Left err ->
+      let msg = s `cantCoerceSlaw` typeName q
+          q   = undefined :: (a, b, c, d, e, f, g)
+      in msg `because` [err]
+    Right septuple' -> Right septuple'
+
+septupleFromSlaw' :: ( FromSlaw a
+                     , FromSlaw b
+                     , FromSlaw c
+                     , FromSlaw d
+                     , FromSlaw e
+                     , FromSlaw f
+                     , FromSlaw g
+                     )
+                  => (Slaw, Slaw, Slaw, Slaw, Slaw, Slaw, Slaw)
+                  -> Either PlasmaException (a, b, c, d, e, f, g)
+septupleFromSlaw' (t, u, v, w, x, y, z) = do
+  t' <- fromSlaw t
+  u' <- fromSlaw u
+  v' <- fromSlaw v
+  w' <- fromSlaw w
+  x' <- fromSlaw x
+  y' <- fromSlaw y
+  z' <- fromSlaw z
+  return (t', u', v', w', x', y', z')
+
+octupleFromSlaw :: forall a b c d e f g h. ( FromSlaw a
+                                           , FromSlaw b
+                                           , FromSlaw c
+                                           , FromSlaw d
+                                           , FromSlaw e
+                                           , FromSlaw f
+                                           , FromSlaw g
+                                           , FromSlaw h
+                                           )
+                => Slaw
+                -> (Slaw, Slaw, Slaw, Slaw, Slaw, Slaw, Slaw, Slaw)
+                -> Either PlasmaException (a, b, c, d, e, f, g, h)
+octupleFromSlaw s octuple =
+  case octupleFromSlaw' octuple of
+    Left err ->
+      let msg = s `cantCoerceSlaw` typeName q
+          q   = undefined :: (a, b, c, d, e, f, g, h)
+      in msg `because` [err]
+    Right octuple' -> Right octuple'
+
+octupleFromSlaw' :: ( FromSlaw a
+                    , FromSlaw b
+                    , FromSlaw c
+                    , FromSlaw d
+                    , FromSlaw e
+                    , FromSlaw f
+                    , FromSlaw g
+                    , FromSlaw h
+                    )
+                 => (Slaw, Slaw, Slaw, Slaw, Slaw, Slaw, Slaw, Slaw)
+                 -> Either PlasmaException (a, b, c, d, e, f, g, h)
+octupleFromSlaw' (r, t, u, v, w, x, y, z) = do
+  r' <- fromSlaw r
+  t' <- fromSlaw t
+  u' <- fromSlaw u
+  v' <- fromSlaw v
+  w' <- fromSlaw w
+  x' <- fromSlaw x
+  y' <- fromSlaw y
+  z' <- fromSlaw z
+  return (r', t', u', v', w', x', y', z')
+
 slawFromMap :: (ToSlaw a, ToSlaw b) => [(a, b)] -> Slaw
 slawFromMap = SlawMap . map f
   where f (x, y) = (toSlaw x, toSlaw y)
