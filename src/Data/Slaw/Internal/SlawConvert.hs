@@ -46,6 +46,7 @@ import Text.Read
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.NativeInt
+import Data.Slaw.Internal.NumericConvert
 import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
@@ -600,6 +601,25 @@ integralPairFromSlaw (x, y) = do
   y' <- integralFromSlaw y
   return (x', y')
 
+numericVectorFromSlaw :: NumericClass a
+                      => String
+                      -> Slaw
+                      -> Either PlasmaException (S.Vector a)
+numericVectorFromSlaw toType s@(SlawNumeric nf nd) =
+  case ndToNumeric (nf, nd) of
+    Left err ->
+      let msg = s `cantCoerceSlaw` toType
+      in msg `because` [err]
+    Right x  -> Right x
+numericVectorFromSlaw toType s = handleOthers' toType s
+
+numericVectorToSlaw :: NumericClass a
+                    => S.Vector a
+                    -> Slaw
+numericVectorToSlaw v = SlawNumeric nf' nd
+  where (nf, nd) = numericToNd v
+        nf'      = nf { nfArray = True }
+
 ---- types
 
 data Protein = Protein
@@ -1088,3 +1108,9 @@ instance ToSlaw Int where
 
 instance ToSlaw Word where
   toSlaw = toSlaw . toNativeWord
+
+instance NumericClass a => FromSlaw (S.Vector a) where
+  fromSlaw = numericVectorFromSlaw (typeName (undefined :: S.Vector a))
+
+instance NumericClass a => ToSlaw (S.Vector a) where
+  toSlaw   = numericVectorToSlaw
