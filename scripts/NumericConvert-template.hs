@@ -187,6 +187,9 @@ cnfScalar = CheckNF
   , cnfComplex = Nothing
   , cnfVector  = Just VtScalar
   }
+
+insertZeros :: Storable a => S.Vector a -> S.Vector a
+insertZeros = undefined
 -}
 
 class Storable a => ScalarClass a where
@@ -211,9 +214,12 @@ instance RealClass a => ScalarClass (Complex a) where
              Left err ->
                let msg = describeNumeric singleNF nd `cantCoerce` toType
                in msg `because` [err]
-             Right (_, nd0) -> return nd0
+             Right nd0 -> return nd0
     let nd2 = if nfComplex nf
               then nd1
               else insertZeros nd1
-    undefined
+    undefined nd2 -- TODO: cast Vector a to Vector (Complex a)
+
+  scalarToNd = undefined
+  scalarName = undefined
 -}
