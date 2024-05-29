@@ -4,14 +4,19 @@
 # First argument is input file; second argument is output file.
 
 use strict;
+use Cwd;
 
 die "Usage: $0 infile.hs-template outfile.hs\n" if (scalar (@ARGV) != 2);
 
 my ($templateFull, $outputFull) = @ARGV;
 
+my $cwd = getcwd();
+
 my $scriptRel    = $0;
 my $templateRel  = $templateFull;
 my $outputRel    = $outputFull;
+
+$outputRel =~ s%^\Q$cwd\E/?%%;
 
 my %typeGroups = ();
 $typeGroups{'sizedInt'} =
