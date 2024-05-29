@@ -1,23 +1,17 @@
 #!/usr/bin/perl -w
 
-# This script generates NumericConvert.hs from NumericConvert-template.hs
-# The script takes no arguments; it finds its input and output files
-# relative to itself.
+# This script generates foo.hs from foo.hs-template
+# First argument is input file; second argument is output file.
 
 use strict;
-use FindBin;
 
-my $topLevel     = $FindBin::Bin . "/..";
+die "Usage: $0 infile.hs-template outfile.hs\n" if (scalar (@ARGV) != 2);
 
-my $scriptsDir   = "scripts";
-my $srcDir       = "src";
+my ($templateFull, $outputFull) = @ARGV;
 
-my $scriptRel    = "$scriptsDir/" . $FindBin::Script;
-my $templateRel  = "$scriptsDir/NumericConvert-template.hs";
-my $outputRel    = "$srcDir/Data/Slaw/Internal/NumericConvert.hs";
-
-my $templateFull = "$topLevel/$templateRel";
-my $outputFull   = "$topLevel/$outputRel";
+my $scriptRel    = $0;
+my $templateRel  = $templateFull;
+my $outputRel    = $outputFull;
 
 my %typeGroups = ();
 $typeGroups{'sizedInt'} =
@@ -139,12 +133,10 @@ close F;
 __DATA__
 {- GENERATED FILE - DO NOT EDIT
 
-   To modify, edit the template file, and re-run the script.
+   To modify, edit the template file.  Cabal should automatically
+   regenerate this file.
 
    template: TEMPLATE
      script: SCRIPT
      output: OUTPUT
-
-   Script takes no arguments.  It finds its input and output
-   files relative to its own position in the source tree.
 -}
