@@ -20,6 +20,8 @@ module Data.Slaw.Internal.SlawType
   , intCoerce
   , floatCoerce
   , doubleCoerce
+  , NumTyp(..)
+  , classifyNumeric
   ) where
 
 import Control.Arrow (second)
@@ -462,3 +464,21 @@ integerToNum n =
     NumFloat  _ -> Nothing
     NumDouble _ -> Nothing
     nd          -> Just nd
+
+data NumTyp =
+    NumTypSigned   -- 0
+  | NumTypUnsigned -- 1
+  | NumTypFloat    -- 2
+  deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
+
+classifyNumeric :: NumericType -> (NumTyp, Int)
+classifyNumeric TypInt8   = (NumTypSigned  , 1)
+classifyNumeric TypInt16  = (NumTypSigned  , 2)
+classifyNumeric TypInt32  = (NumTypSigned  , 4)
+classifyNumeric TypInt64  = (NumTypSigned  , 8)
+classifyNumeric TypUnt8   = (NumTypUnsigned, 1)
+classifyNumeric TypUnt16  = (NumTypUnsigned, 2)
+classifyNumeric TypUnt32  = (NumTypUnsigned, 4)
+classifyNumeric TypUnt64  = (NumTypUnsigned, 8)
+classifyNumeric TypFloat  = (NumTypFloat   , 4)
+classifyNumeric TypDouble = (NumTypFloat   , 8)

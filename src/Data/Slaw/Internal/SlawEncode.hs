@@ -7,10 +7,8 @@ module Data.Slaw.Internal.SlawEncode
   , encodeSlaw
   , Nib(..)
   , Sym(..)
-  , NumTyp(..)
   , Oct
   , computeBsize
-  , classifyNumeric
   ) where
 
 import Control.DeepSeq
@@ -57,12 +55,6 @@ data Sym =
   | SymTrue  -- 1
   | SymNil   -- 2
   | SymError -- 3
-  deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
-
-data NumTyp =
-    NumTypSigned   -- 0
-  | NumTypUnsigned -- 1
-  | NumTypFloat    -- 2
   deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
 
 type Oct = Word64
@@ -266,18 +258,6 @@ computeBsize :: NumericFormat -> Int -> Int
 computeBsize nf size = size * cplxSize * vectSize
   where cplxSize = if nfComplex nf then 2 else 1
         vectSize = "123448@P" #! fromEnum (nfVector nf)
-
-classifyNumeric :: NumericType -> (NumTyp, Int)
-classifyNumeric TypInt8   = (NumTypSigned  , 1)
-classifyNumeric TypInt16  = (NumTypSigned  , 2)
-classifyNumeric TypInt32  = (NumTypSigned  , 4)
-classifyNumeric TypInt64  = (NumTypSigned  , 8)
-classifyNumeric TypUnt8   = (NumTypUnsigned, 1)
-classifyNumeric TypUnt16  = (NumTypUnsigned, 2)
-classifyNumeric TypUnt32  = (NumTypUnsigned, 4)
-classifyNumeric TypUnt64  = (NumTypUnsigned, 8)
-classifyNumeric TypFloat  = (NumTypFloat   , 4)
-classifyNumeric TypDouble = (NumTypFloat   , 8)
 
 (#!) :: (Integral a, Integral b) => B.ByteString -> a -> b
 bs #! idx = fromIntegral $ (bs `B.index` fromIntegral idx) - 48
