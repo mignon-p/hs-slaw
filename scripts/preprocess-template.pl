@@ -31,8 +31,16 @@ my @output = ();
 sub pushLine {
     my $line = $_[0];
 
-    my $prevBlank = ($#output < 0 or $output[$#output] eq "");
-    push @output, $line unless ($line eq "" and $prevBlank);
+    # my $prevBlank = ($#output < 0 or $output[$#output] eq "");
+    push @output, $line; # unless ($line eq "" and $prevBlank);
+}
+
+sub lineDirective {
+    my $lineNo = $_[0];
+
+    my $n = $lineNo + 1;
+    my $ln = qq[{-# LINE $n "$templateRel" #-}];
+    pushLine ($ln);
 }
 
 sub doTemplate {
@@ -68,7 +76,10 @@ sub doTemplate {
         my $vtype  = $type;
         $vtype     =~ s/^V(\d)$/Vt$1/;
 
-        for (my $lineNo = $beginLine + 1; $lineNo < $endLine; $lineNo++) {
+        my $begLine = $beginLine + 1;
+        lineDirective ($begLine);
+
+        for (my $lineNo = $begLine; $lineNo < $endLine; $lineNo++) {
             my $line = $input[$lineNo];
 
             $line =~ s/NAMEXX/$namexx/g;
@@ -84,12 +95,12 @@ sub doTemplate {
 
 open F, "<", $templateFull or die;
 
-my $skip = 1;
+# my $skip = 1;
 
 while (<F>) {
     chomp;
-    $skip = 0 if (/^\{-# LANGUAGE/ or /^module/);
-    push @input, $_ if (not $skip);
+    # $skip = 0 if (/^\{-# LANGUAGE/ or /^module/);
+    push @input, $_; # if (not $skip);
 }
 
 close F;
@@ -108,6 +119,8 @@ pushLine ("");
 
 my $beginLine = undef;
 
+lineDirective (0);
+
 for (my $lineNo = 0; $lineNo <= $#input; $lineNo++) {
     my $line = $input[$lineNo];
 
@@ -115,6 +128,7 @@ for (my $lineNo = 0; $lineNo <= $#input; $lineNo++) {
         if (defined $beginLine) {
             doTemplate ($beginLine, $lineNo);
             $beginLine = undef;
+            lineDirective ($lineNo + 1);
         }
     }
 
