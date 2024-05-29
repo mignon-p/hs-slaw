@@ -1,3 +1,5 @@
+-- See doc/template.txt for more information about template files.
+
 module Data.Slaw.Internal.SlawType
   ( Slaw(..)
   , NumericFormat(..)
