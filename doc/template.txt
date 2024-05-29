@@ -30,3 +30,5 @@ The following strings will be replaced in the body of the "--FOR":
            of a FOR loop, but it will be different than other
            iterations of that FOR loop, and different than iterations
            of any other FOR loop)
+  BAR    - replaced with "   " on the first iteration of the loop, and
+           replaced with " | " on subsequent iterations of the loop

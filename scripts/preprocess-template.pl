@@ -70,6 +70,8 @@ sub doTemplate {
         die "line $errLine: can't parse FOR directive\n";
     }
 
+    my $bar = "   ";
+
     foreach my $type (@types) {
         my $ltype  = lc ($type);
         my $name   = $type;
@@ -91,9 +93,12 @@ sub doTemplate {
             $line =~ s/NAME/$name/g;
             $line =~ s/TYPE/$type/g;
             $line =~ s/UNIQ/$uniq/g;
+            $line =~ s/BAR/$bar/g;
 
             pushLine ($line);
         }
+
+        $bar = " | ";
     }
 }
 

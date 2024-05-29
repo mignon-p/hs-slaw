@@ -89,17 +89,11 @@ instance Default NumericFormat where
         , nfVector  = VtScalar
         }
 
-data NumericData = NumInt8   (S.Vector Int8)
-                 | NumInt16  (S.Vector Int16)
-                 | NumInt32  (S.Vector Int32)
-                 | NumInt64  (S.Vector Int64)
-                 | NumUnt8   (S.Vector Word8)
-                 | NumUnt16  (S.Vector Word16)
-                 | NumUnt32  (S.Vector Word32)
-                 | NumUnt64  (S.Vector Word64)
-                 | NumFloat  (S.Vector Float)
-                 | NumDouble (S.Vector Double)
-                 deriving (Eq, Ord, Show, Generic, NFData)
+data NumericData =
+--FOR sizedInt, floating
+  BAR NumNAMEXX (S.Vector TYPE)
+--END
+  deriving (Eq, Ord, Show, Generic, NFData)
 
 instance Hashable NumericData where
 --FOR sizedInt
@@ -120,16 +114,9 @@ hashRawVector salt v
   where len = S.length v
 
 data NumericType =
-    TypInt8
-  | TypInt16
-  | TypInt32
-  | TypInt64
-  | TypUnt8
-  | TypUnt16
-  | TypUnt32
-  | TypUnt64
-  | TypFloat
-  | TypDouble
+--FOR sizedInt, floating
+  BAR TypNAME
+--END
   deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
 
 data VectorType = VtScalar
