@@ -314,12 +314,7 @@ tripleFromSlaw :: forall a b c. ( FromSlaw a
                -> (Slaw, Slaw, Slaw)
                -> Either PlasmaException (a, b, c)
 tripleFromSlaw s triple =
-  case tripleFromSlaw' triple of
-    Left err ->
-      let msg = s `cantCoerceSlaw` typeName q
-          q   = undefined :: (a, b, c)
-      in msg `because` [err]
-    Right triple' -> Right triple'
+  addErrCtx s $ tripleFromSlaw' triple
 
 tripleFromSlaw' :: ( FromSlaw a
                    , FromSlaw b
@@ -342,12 +337,7 @@ quadrupleFromSlaw :: forall a b c d. ( FromSlaw a
                   -> (Slaw, Slaw, Slaw, Slaw)
                   -> Either PlasmaException (a, b, c, d)
 quadrupleFromSlaw s quadruple =
-  case quadrupleFromSlaw' quadruple of
-    Left err ->
-      let msg = s `cantCoerceSlaw` typeName q
-          q   = undefined :: (a, b, c, d)
-      in msg `because` [err]
-    Right quadruple' -> Right quadruple'
+  addErrCtx s $ quadrupleFromSlaw' quadruple
 
 quadrupleFromSlaw' :: ( FromSlaw a
                       , FromSlaw b
@@ -373,12 +363,7 @@ quintupleFromSlaw :: forall a b c d e. ( FromSlaw a
                   -> (Slaw, Slaw, Slaw, Slaw, Slaw)
                   -> Either PlasmaException (a, b, c, d, e)
 quintupleFromSlaw s quintuple =
-  case quintupleFromSlaw' quintuple of
-    Left err ->
-      let msg = s `cantCoerceSlaw` typeName q
-          q   = undefined :: (a, b, c, d, e)
-      in msg `because` [err]
-    Right quintuple' -> Right quintuple'
+  addErrCtx s $ quintupleFromSlaw' quintuple
 
 quintupleFromSlaw' :: ( FromSlaw a
                       , FromSlaw b
@@ -407,12 +392,7 @@ sextupleFromSlaw :: forall a b c d e f. ( FromSlaw a
                  -> (Slaw, Slaw, Slaw, Slaw, Slaw, Slaw)
                  -> Either PlasmaException (a, b, c, d, e, f)
 sextupleFromSlaw s sextuple =
-  case sextupleFromSlaw' sextuple of
-    Left err ->
-      let msg = s `cantCoerceSlaw` typeName q
-          q   = undefined :: (a, b, c, d, e, f)
-      in msg `because` [err]
-    Right sextuple' -> Right sextuple'
+  addErrCtx s $ sextupleFromSlaw' sextuple
 
 sextupleFromSlaw' :: ( FromSlaw a
                      , FromSlaw b
@@ -444,12 +424,7 @@ septupleFromSlaw :: forall a b c d e f g. ( FromSlaw a
                  -> (Slaw, Slaw, Slaw, Slaw, Slaw, Slaw, Slaw)
                  -> Either PlasmaException (a, b, c, d, e, f, g)
 septupleFromSlaw s septuple =
-  case septupleFromSlaw' septuple of
-    Left err ->
-      let msg = s `cantCoerceSlaw` typeName q
-          q   = undefined :: (a, b, c, d, e, f, g)
-      in msg `because` [err]
-    Right septuple' -> Right septuple'
+  addErrCtx s $ septupleFromSlaw' septuple
 
 septupleFromSlaw' :: ( FromSlaw a
                      , FromSlaw b
@@ -484,12 +459,7 @@ octupleFromSlaw :: forall a b c d e f g h. ( FromSlaw a
                 -> (Slaw, Slaw, Slaw, Slaw, Slaw, Slaw, Slaw, Slaw)
                 -> Either PlasmaException (a, b, c, d, e, f, g, h)
 octupleFromSlaw s octuple =
-  case octupleFromSlaw' octuple of
-    Left err ->
-      let msg = s `cantCoerceSlaw` typeName q
-          q   = undefined :: (a, b, c, d, e, f, g, h)
-      in msg `because` [err]
-    Right octuple' -> Right octuple'
+  addErrCtx s $ octupleFromSlaw' octuple
 
 octupleFromSlaw' :: ( FromSlaw a
                     , FromSlaw b
