@@ -43,6 +43,8 @@ sub lineDirective {
     pushLine ($ln);
 }
 
+my $uniqueCounter = 0;
+
 sub doTemplate {
     my ($beginLine, $endLine) = @_;
     my @types                 = ();
@@ -75,6 +77,7 @@ sub doTemplate {
         my $namexx = sprintf ("%-6s", $name);
         my $vtype  = $type;
         $vtype     =~ s/^V(\d)$/Vt$1/;
+        my $uniq   = sprintf ("%04d", $uniqueCounter++);
 
         my $begLine = $beginLine + 1;
         lineDirective ($begLine);
@@ -87,6 +90,7 @@ sub doTemplate {
             $line =~ s/VTYPE/$vtype/g;
             $line =~ s/NAME/$name/g;
             $line =~ s/TYPE/$type/g;
+            $line =~ s/UNIQ/$uniq/g;
 
             pushLine ($line);
         }
