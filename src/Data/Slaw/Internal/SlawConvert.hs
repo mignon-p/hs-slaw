@@ -127,6 +127,22 @@ handleOthers' toType slaw = Left $ typeMismatch msg
 cantCoerceSlaw :: Slaw -> String -> String
 cantCoerceSlaw slaw other = describeSlaw slaw `cantCoerce` other
 
+addErrCtx :: forall a. (Nameable a)
+          => Slaw
+          -> Either PlasmaException a
+          -> Either PlasmaException a
+addErrCtx s = mapLeft f
+  where f err = msg `because1` [err]
+        msg = s `cantCoerceSlaw` typeName (undefined :: a)
+
+addErrCtxStr :: String
+             -> String
+             -> Either PlasmaException a
+             -> Either PlasmaException a
+addErrCtxStr fromType toType = mapLeft f
+  where f err = msg `because1` [err]
+        msg = fromType `cantCoerce` toType
+
 defaultListToSlaw :: ToSlaw a => [a] -> Slaw
 defaultListToSlaw = SlawList . map toSlaw
 
@@ -280,12 +296,7 @@ pairFromSlaw :: forall a b. (FromSlaw a, FromSlaw b)
              => Slaw
              -> (Slaw, Slaw)
              -> Either PlasmaException (a, b)
-pairFromSlaw s pair =
-  case pairFromSlaw' pair of
-    Left err ->
-      let msg = s `cantCoerceSlaw` typeName (undefined :: (a, b))
-      in msg `because` [err]
-    Right pair' -> Right pair'
+pairFromSlaw s pair = addErrCtx s (pairFromSlaw' pair)
 
 pairFromSlaw' :: (FromSlaw a, FromSlaw b)
               => (Slaw, Slaw)
@@ -531,13 +542,9 @@ mapFromSlaw s pairs dummy =
 mfs1 :: forall a b. (FromSlaw a, FromSlaw b)
      => (Slaw, Slaw)
      -> Either PlasmaException (a, b)
-mfs1 pair@(x, y) =
-  case pairFromSlaw' pair of
-    Left err ->
-      let msg = str `cantCoerce` typeName (undefined :: a, undefined :: b)
-          str = mkTupleName $ map describeSlaw [x, y]
-      in msg `because` [err]
-    Right pair' -> Right pair'
+mfs1 pair@(x, y) = addErrCtxStr fromType toType (pairFromSlaw' pair)
+  where fromType = mkTupleName $ map describeSlaw [x, y]
+        toType   = typeName (undefined :: (a, b))
 
 proteinFromSlaw :: Slaw
                 -> (Maybe Slaw, Maybe Slaw, L.ByteString)
@@ -606,11 +613,7 @@ numericVectorFromSlaw :: NumericClass a
                       -> Slaw
                       -> Either PlasmaException (S.Vector a)
 numericVectorFromSlaw toType s@(SlawNumeric nf nd) =
-  case ndToNumeric (nf, nd) of
-    Left err ->
-      let msg = s `cantCoerceSlaw` toType
-      in msg `because` [err]
-    Right x  -> Right x
+  addErrCtxStr (describeSlaw s) toType $ ndToNumeric (nf, nd)
 numericVectorFromSlaw toType s = handleOthers' toType s
 
 numericVectorToSlaw :: NumericClass a
@@ -1010,12 +1013,7 @@ instance (ToSlaw a, ToSlaw b) => ToSlaw (Either a b) where
 
 instance FromSlaw a => FromSlaw (Maybe a) where
   fromSlaw SlawNil = Right Nothing
-  fromSlaw s =
-    case fromSlaw s of
-      Right x  -> Right x
-      Left err ->
-        let msg = s `cantCoerceSlaw` typeName (Nothing :: Maybe a)
-        in msg `because` [err]
+  fromSlaw s = addErrCtx s (fromSlaw s)
 
 instance ToSlaw a => ToSlaw (Maybe a) where
   toSlaw Nothing  = SlawNil

@@ -11,6 +11,7 @@ module Data.Slaw.Internal.Exception
   , typeMismatchPfx
   , rangeErrorPfx
   , because
+  , because1
   , cantCoerce
   , rangeError
   , rangeError'
@@ -144,7 +145,10 @@ rangeErrorPfx :: String
 rangeErrorPfx = "range error: "
 
 because :: String -> [PlasmaException] -> Either PlasmaException a
-because msg reasons = (Left . typeMismatch) msg'
+because msg = Left . because1 msg
+
+because1 :: String -> [PlasmaException] -> PlasmaException
+because1 msg reasons = typeMismatch msg'
   where msg'     = concat [ msg, ", because:\n", reasons']
         reasons0 = map (indentLines "  " . peMessage) reasons
         reasons' = intercalate "\nand:\n" reasons0
