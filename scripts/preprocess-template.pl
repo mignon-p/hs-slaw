@@ -24,10 +24,11 @@ my %typeGroups = ();
 $typeGroups{'sizedInt'} =
     [qw(Int8 Int16 Int32 Int64 Word8 Word16 Word32 Word64)];
 $typeGroups{'nativeInt'} = [qw (Int Word)];
-$typeGroups{'floating'}  = [qw (Float Double)];
+$typeGroups{'floating'}  = [qw (Half Float Double)];
 $typeGroups{'vectors'}   = [qw (V2 V3 V4)];
 
 my %floatingSize = (
+    "Half"   => 16,
     "Float"  => 32,
     "Double" => 64
     );

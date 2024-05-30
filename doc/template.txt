@@ -8,7 +8,7 @@ loop over a set of types.  The available sets of types are:
 
   sizedInt  - Int8, Int16, Int32, Int64, Word8, Word16, Word32, Word64
   nativeInt - Int, Word
-  floating  - Float, Double
+  floating  - Half, Float, Double
   vectors   - V2 V3 V4
 
 More than one set can be specified in a "--FOR" directive, separated
