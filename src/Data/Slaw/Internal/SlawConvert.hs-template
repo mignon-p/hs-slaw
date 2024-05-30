@@ -563,12 +563,11 @@ integralPairFromSlaw (x, y) = do
   return (x', y')
 
 numericVectorFromSlaw :: NumericClass a
-                      => String
-                      -> Slaw
+                      => Slaw
                       -> Either PlasmaException (S.Vector a)
-numericVectorFromSlaw toType s@(SlawNumeric nf nd) =
-  addErrCtxStr (describeSlaw s) toType $ ndToNumeric (nf, nd)
-numericVectorFromSlaw toType s = handleOthers' toType s
+numericVectorFromSlaw s@(SlawNumeric nf nd) =
+  addErrCtx s $ ndToNumeric (nf, nd)
+numericVectorFromSlaw s = handleOthers s
 
 numericVectorToSlaw :: NumericClass a
                     => S.Vector a
@@ -1083,7 +1082,7 @@ instance (RealClass a) => ToSlaw (Complex a) where
           -- instances for Storable Vectors of numeric types --
 
 instance NumericClass a => FromSlaw (S.Vector a) where
-  fromSlaw = numericVectorFromSlaw (typeName (undefined :: S.Vector a))
+  fromSlaw = numericVectorFromSlaw
 
 instance NumericClass a => ToSlaw (S.Vector a) where
   toSlaw   = numericVectorToSlaw
