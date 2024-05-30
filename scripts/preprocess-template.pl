@@ -6,6 +6,8 @@
 use strict;
 use Cwd;
 
+my $useLineDirectives = 1;
+
 die "Usage: $0 infile.hs-template outfile.hs\n" if (scalar (@ARGV) != 2);
 
 my ($templateFull, $outputFull) = @ARGV;
@@ -36,8 +38,25 @@ my @output = ();
 sub pushLine {
     my $line = $_[0];
 
-    # my $prevBlank = ($#output < 0 or $output[$#output] eq "");
-    push @output, $line; # unless ($line eq "" and $prevBlank);
+    # If printing {-# LINE #-} directives, suppress two consecutive
+    # directives with the same line number.
+    #
+    # If not printing {-# LINE #-} directives, suppress two
+    # consecutive blank lines.
+
+    my $suppress = 0;
+    my $prevLine = undef;
+    $prevLine    = $output[$#output] unless ($#output < 0);
+
+    if (defined $prevLine and $prevLine eq $line) {
+        if ($useLineDirectives) {
+            $suppress = 1 if ($line =~ /^\{-# LINE/);
+        } else {
+            $suppress = 1 if ($line eq "");
+        }
+    }
+
+    push @output, $line unless ($suppress);
 }
 
 sub lineDirective {
@@ -45,7 +64,7 @@ sub lineDirective {
 
     my $n = $lineNo + 1;
     my $ln = qq[{-# LINE $n "$templateRel" #-}];
-    pushLine ($ln);
+    pushLine ($ln) if ($useLineDirectives);
 }
 
 my $uniqueCounter = 0;
