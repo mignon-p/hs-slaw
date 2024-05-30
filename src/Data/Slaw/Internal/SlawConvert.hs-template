@@ -50,6 +50,7 @@ import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.NativeInt
 import Data.Slaw.Internal.NumericConvert
+import Data.Slaw.Internal.NumericTypes
 import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
@@ -1043,7 +1044,7 @@ instance Integral a => ToSlaw (Ratio a) where
   toSlaw rat = SlawCons (f $ numerator rat) (f $ denominator rat)
     where f  = toSlaw . toInteger
 
-              -- FromSlaw instances for singleton numbers --
+          -- FromSlaw instances for singleton (real) numbers --
 
 --FOR sizedInt, nativeInt
 
@@ -1057,7 +1058,7 @@ instance FromSlaw TYPEXX where
 
 --END
 
-               -- ToSlaw instances for singleton numbers --
+           -- ToSlaw instances for singleton (real) numbers --
 
 --FOR sizedInt, floating
 
@@ -1078,6 +1079,18 @@ instance (RealClass a) => FromSlaw (Complex a) where
 
 instance (RealClass a) => ToSlaw (Complex a) where
   toSlaw = numericSingletonToSlaw
+
+            -- instances for (geometric) vectors (V2/V3/V4) --
+
+--FOR vectors
+
+instance (ScalarClass a) => FromSlaw (TYPEXX a) where
+  fromSlaw = numericSingletonFromSlaw
+
+instance (ScalarClass a) => ToSlaw (TYPEXX a) where
+  toSlaw = numericSingletonToSlaw
+
+--END
 
           -- instances for Storable Vectors of numeric types --
 
