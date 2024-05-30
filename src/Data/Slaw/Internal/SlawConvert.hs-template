@@ -1055,7 +1055,13 @@ instance FromSlaw TYPEXX where
 --FOR floating
 
 instance FromSlaw TYPEXX where
-  fromSlaw = numericSingletonFromSlaw
+  fromSlaw s@(SlawCons _ _) =
+    case fromSlaw s of
+      Left err ->
+        let msg = s `cantCoerceSlaw` "TYPE"
+        in msg `because` [err]
+      Right rat -> Right $ fromRational rat
+  fromSlaw s = numericSingletonFromSlaw s
 
 --END
 
