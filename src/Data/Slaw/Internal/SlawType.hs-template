@@ -303,13 +303,15 @@ restoreNumeric bo TypNAMEXX bs = NumNAMEXX (bsToV bo bs)
 --END
 
 data NumElem = ElemInt    !Integer
-             | ElemFloat  !Float
-             | ElemDouble !Double
-             deriving (Eq, Ord, Show, Generic, NFData, Hashable)
+--FOR floating
+             | ElemTYPEXX !TYPE
+--END
+             deriving (Eq, Ord, Show, Generic, NFData)
 
 data NumRange = RangeInt  { rangeLo :: !Integer, rangeHi :: !Integer }
-              | RangeFloat
-              | RangeDouble
+--FOR floating
+              | RangeTYPE
+--END
               deriving (Eq, Ord, Show, Generic, NFData, Hashable)
 
 numToList :: NumericData -> [NumElem]
@@ -322,11 +324,10 @@ numToList (NumNAMEXX v) = LTYPEToList v
 intToList :: (Integral a, Storable a) => S.Vector a -> [NumElem]
 intToList = map (ElemInt . toInteger) . S.toList
 
-floatToList :: S.Vector Float -> [NumElem]
-floatToList = map ElemFloat . S.toList
-
-doubleToList :: S.Vector Double -> [NumElem]
-doubleToList = map ElemDouble . S.toList
+--FOR floating
+LTYPEToList :: S.Vector TYPE -> [NumElem]
+LTYPEToList = map ElemTYPE . S.toList
+--END
 
 listToNum :: [NumElem] -> NumericData
 listToNum nes =
@@ -337,8 +338,9 @@ listToNum nes =
 baseRange :: [NumElem] -> NumRange
 baseRange []                 = RangeInt 0 0 -- shouldn't happen
 baseRange (ElemInt    x : _) = RangeInt x x
-baseRange (ElemFloat  _ : _) = RangeFloat
-baseRange (ElemDouble _ : _) = RangeDouble
+--FOR floating
+baseRange (ElemTYPEXX _ : _) = RangeTYPE
+--END
 
 addToRange :: NumRange -> NumElem -> NumRange
 addToRange RangeDouble      _              = RangeDouble
