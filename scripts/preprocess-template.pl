@@ -32,6 +32,15 @@ my %floatingSize = (
     "Double" => 64
     );
 
+my %knownTypes = ();
+foreach my $group (sort keys %typeGroups) {
+    my $types = $typeGroups{$group};
+
+    foreach my $type (@$types) {
+        $knownTypes{$type} = 1;
+    }
+}
+
 my @input  = ();
 my @output = ();
 
@@ -67,7 +76,7 @@ sub lineDirective {
     pushLine ($ln) if ($useLineDirectives);
 }
 
-my $uniqueCounter = 0;
+my $uniqueCounter = 1000;
 
 sub doTemplate {
     my ($beginLine, $endLine) = @_;
@@ -78,14 +87,23 @@ sub doTemplate {
         my $groups = $1;
 
         foreach my $group (split (/,\s*/, $groups)) {
-            my $addGroups = $typeGroups{$group};
+            my $addTypes = undef;
+            my $what     = undef;
 
-            if (not defined $addGroups) {
-                my $errLine = $beginLine + 1; # report 1-based line number
-                die "line $errLine: unrecognized group $group\n";
+            if ($group =~ /^[A-Z]/) {
+                $what     = "type";
+                $addTypes = [$group] if (exists $knownTypes{$group});
+            } else {
+                $what     = "group";
+                $addTypes = $typeGroups{$group};
             }
 
-            foreach my $type (@$addGroups) {
+            if (not defined $addTypes) {
+                my $errLine = $beginLine + 1; # report 1-based line number
+                die "line $errLine: unrecognized $what $group\n";
+            }
+
+            foreach my $type (@$addTypes) {
                 push @types, $type;
             }
         }

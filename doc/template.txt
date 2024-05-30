@@ -11,8 +11,9 @@ loop over a set of types.  The available sets of types are:
   floating  - Float, Double
   vectors   - V2 V3 V4
 
-More than one set can be specified in a "--FOR" directive,
-separated by commas.
+More than one set can be specified in a "--FOR" directive, separated
+by commas.  It is also possible to specify individual type names in
+the comma separated list, in addition to type sets.
 
 "--FOR" directives do not nest, so one "--FOR" loop can be ended
 by starting another "--FOR" loop.  Or, a "--FOR" loop can be
