@@ -20,15 +20,19 @@ ended without starting another loop, with the "--END" directive.
 
 The following strings will be replaced in the body of the "--FOR":
 
-  TYPE   - the name of the type
-  LTYPE  - same as TYPE, but all lowercase
-  NAME   - same as TYPE, but "Word" is replaced with "Unt"
-  NAMEXX - same as NAME, but padded with spaces to be 6 characters long
-  VTYPE  - Vt2/Vt3/Vt4 for V2/V3/V4, respectively (only for vectors)
-  UNIQ   - a unique four-digit number (it will be the same number no
-           matter how many times UNIQ is used in a single iteration
-           of a FOR loop, but it will be different than other
-           iterations of that FOR loop, and different than iterations
-           of any other FOR loop)
-  BAR    - replaced with "   " on the first iteration of the loop, and
-           replaced with " | " on subsequent iterations of the loop
+  TYPE     - the name of the type
+  LTYPE    - same as TYPE, but all lowercase
+  NAME     - same as TYPE, but "Word" is replaced with "Unt"
+  NAMEXX   - same as NAME, but padded with spaces to be 6 characters long
+  VTYPE    - Vt2/Vt3/Vt4 for V2/V3/V4, respectively (only for vectors)
+  UNIQ     - a unique four-digit number (it will be the same number no
+             matter how many times UNIQ is used in a single iteration
+             of a FOR loop, but it will be different than other
+             iterations of that FOR loop, and different than iterations
+             of any other FOR loop)
+  BAR      - replaced with "   " on the first iteration of the loop, and
+             replaced with " | " on subsequent iterations of the loop
+  BITS     - size of the type in bits, or "undefined"
+  SIGNED   - "Signed", "Unsigned", or "Float"
+  LSIGNED  - same as SIGNED, but all lowercase
+  SIGNEDXX - same as SIGNED, but padded with spaces to 8 characters

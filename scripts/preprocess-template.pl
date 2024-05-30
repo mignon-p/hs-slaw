@@ -25,6 +25,11 @@ $typeGroups{'nativeInt'} = [qw (Int Word)];
 $typeGroups{'floating'}  = [qw (Float Double)];
 $typeGroups{'vectors'}   = [qw (V2 V3 V4)];
 
+my %floatingSize = (
+    "Float"  => 32,
+    "Double" => 64
+    );
+
 my @input  = ();
 my @output = ();
 
@@ -81,6 +86,18 @@ sub doTemplate {
         $vtype     =~ s/^V(\d)$/Vt$1/;
         my $uniq   = sprintf ("%04d", $uniqueCounter++);
 
+        my ($signed, $bits) = ("Unknown", "undefined");
+        $signed = "Signed"   if ($type =~ /^Int/);
+        $signed = "Unsigned" if ($type =~ /^Word/);
+        $signed = "Vector"   if ($type =~ /^V\d$/);
+        $bits   = $1         if ($type =~ /(\d+)/);
+        if (exists $floatingSize{$type}) {
+            $signed = "Float";
+            $bits   = $floatingSize{$type};
+        }
+        my $lsigned  = lc ($signed);
+        my $signedxx = sprintf ("%-8s", $signed);
+
         my $begLine = $beginLine + 1;
         lineDirective ($begLine);
 
@@ -94,6 +111,11 @@ sub doTemplate {
             $line =~ s/TYPE/$type/g;
             $line =~ s/UNIQ/$uniq/g;
             $line =~ s/BAR/$bar/g;
+
+            $line =~ s/SIGNEDXX/$signedxx/g;
+            $line =~ s/LSIGNED/$lsigned/g;
+            $line =~ s/SIGNED/$signed/g;
+            $line =~ s/BITS/$bits/g;
 
             pushLine ($line);
         }

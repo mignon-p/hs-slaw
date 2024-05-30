@@ -131,16 +131,11 @@ data VectorType = VtScalar
                           Generic, NFData, Hashable)
 
 describeNumericData :: NumericData -> String
-describeNumericData (NumInt8   _) =  "8-bit signed integer"
-describeNumericData (NumInt16  _) = "16-bit signed integer"
-describeNumericData (NumInt32  _) = "32-bit signed integer"
-describeNumericData (NumInt64  _) = "64-bit signed integer"
-describeNumericData (NumUnt8   _) =  "8-bit unsigned integer"
-describeNumericData (NumUnt16  _) = "16-bit unsigned integer"
-describeNumericData (NumUnt32  _) = "32-bit unsigned integer"
-describeNumericData (NumUnt64  _) = "64-bit unsigned integer"
-describeNumericData (NumFloat  _) = "32-bit floating point"
-describeNumericData (NumDouble _) = "64-bit floating point"
+--FOR sizedInt
+describeNumericData (NumNAMEXX _) = "BITS-bit SIGNED integer"
+--FOR floating
+describeNumericData (NumNAMEXX _) = "BITS-bit floating point"
+--END
 
 describeNumericFormat :: NumericFormat -> [String]
 describeNumericFormat nf = concat [d1, d2, d3]
@@ -456,13 +451,6 @@ data NumTyp =
   deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
 
 classifyNumeric :: NumericType -> (NumTyp, Int)
-classifyNumeric TypInt8   = (NumTypSigned  , 1)
-classifyNumeric TypInt16  = (NumTypSigned  , 2)
-classifyNumeric TypInt32  = (NumTypSigned  , 4)
-classifyNumeric TypInt64  = (NumTypSigned  , 8)
-classifyNumeric TypUnt8   = (NumTypUnsigned, 1)
-classifyNumeric TypUnt16  = (NumTypUnsigned, 2)
-classifyNumeric TypUnt32  = (NumTypUnsigned, 4)
-classifyNumeric TypUnt64  = (NumTypUnsigned, 8)
-classifyNumeric TypFloat  = (NumTypFloat   , 4)
-classifyNumeric TypDouble = (NumTypFloat   , 8)
+--FOR sizedInt, floating
+classifyNumeric TypNAMEXX = (NumTypSIGNEDXX, BITS `div` 8)
+--END
