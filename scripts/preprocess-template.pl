@@ -191,6 +191,8 @@ for (my $lineNo = 0; $lineNo <= $#input; $lineNo++) {
     }
 }
 
+die "$0: unterminated FOR loop in $templateRel\n" if (defined $beginLine);
+
 pop @output if ($output[$#output] eq "");
 
 open F, ">", $outputFull or die;
