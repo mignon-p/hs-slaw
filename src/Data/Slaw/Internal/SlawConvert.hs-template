@@ -190,16 +190,9 @@ numericArrayToList nf nd = if isArray then Just (nf', nds) else Nothing
     nds      = chunkNumericData stepSize nd
 
 chunkNumericData :: Int -> NumericData -> [NumericData]
-chunkNumericData n (NumInt8   v) = map NumInt8   $ chunkArray n v
-chunkNumericData n (NumInt16  v) = map NumInt16  $ chunkArray n v
-chunkNumericData n (NumInt32  v) = map NumInt32  $ chunkArray n v
-chunkNumericData n (NumInt64  v) = map NumInt64  $ chunkArray n v
-chunkNumericData n (NumUnt8   v) = map NumUnt8   $ chunkArray n v
-chunkNumericData n (NumUnt16  v) = map NumUnt16  $ chunkArray n v
-chunkNumericData n (NumUnt32  v) = map NumUnt32  $ chunkArray n v
-chunkNumericData n (NumUnt64  v) = map NumUnt64  $ chunkArray n v
-chunkNumericData n (NumFloat  v) = map NumFloat  $ chunkArray n v
-chunkNumericData n (NumDouble v) = map NumDouble $ chunkArray n v
+--FOR sizedInt, floating
+chunkNumericData n (NumNAMEXX v) = map NumNAMEXX $ chunkArray n v
+--END
 
 chunkArray :: Storable a
            => Int
@@ -224,16 +217,9 @@ numToStr :: (FromSlaw a, TextClass a)
          => Slaw
          -> NumericData
          -> Either PlasmaException a
-numToStr s (NumInt8   v) = numToStr1 s v
-numToStr s (NumInt16  v) = numToStr1 s v
-numToStr s (NumInt32  v) = numToStr1 s v
-numToStr s (NumInt64  v) = numToStr1 s v
-numToStr s (NumUnt8   v) = numToStr1 s v
-numToStr s (NumUnt16  v) = numToStr1 s v
-numToStr s (NumUnt32  v) = numToStr1 s v
-numToStr s (NumUnt64  v) = numToStr1 s v
-numToStr s (NumFloat  v) = numToStr1 s v
-numToStr s (NumDouble v) = numToStr1 s v
+--FOR sizedInt, floating
+numToStr s (NumNAMEXX v) = numToStr1 s v
+--END
 
 numToStr1 :: (FromSlaw a, TextClass a, Storable b, Show b)
           => Slaw
@@ -244,16 +230,11 @@ numToStr1 s v
   | otherwise       = handleOthers s
 
 numToInteger :: NumericData -> Maybe Integer
-numToInteger (NumInt8   v) = numToInteger1 v
-numToInteger (NumInt16  v) = numToInteger1 v
-numToInteger (NumInt32  v) = numToInteger1 v
-numToInteger (NumInt64  v) = numToInteger1 v
-numToInteger (NumUnt8   v) = numToInteger1 v
-numToInteger (NumUnt16  v) = numToInteger1 v
-numToInteger (NumUnt32  v) = numToInteger1 v
-numToInteger (NumUnt64  v) = numToInteger1 v
-numToInteger (NumFloat  _) = Nothing
-numToInteger (NumDouble _) = Nothing
+--FOR sizedInt
+numToInteger (NumNAMEXX v) = numToInteger1 v
+--FOR floating
+numToInteger (NumNAMEXX _) = Nothing
+--END
 
 numToInteger1 :: (Storable a, Integral a) => S.Vector a -> Maybe Integer
 numToInteger1 v
@@ -1013,71 +994,24 @@ instance FromSlaw Natural where
 instance ToSlaw Natural where
   toSlaw = toSlaw . toInteger
 
-instance FromSlaw Int8 where
+--FOR sizedInt, nativeInt
+
+instance FromSlaw TYPEXX where
   fromSlaw = integralFromSlaw
 
-instance FromSlaw Int16 where
-  fromSlaw = integralFromSlaw
+--END
 
-instance FromSlaw Int32 where
-  fromSlaw = integralFromSlaw
+--FOR sizedInt, floating
 
-instance FromSlaw Int64 where
-  fromSlaw = integralFromSlaw
+instance ToSlaw TYPEXX where
+  toSlaw = SlawNumeric nfScalar . NumNAMEXX . S.singleton
 
-instance FromSlaw Word8 where
-  fromSlaw = integralFromSlaw
+--FOR nativeInt
 
-instance FromSlaw Word16 where
-  fromSlaw = integralFromSlaw
+instance ToSlaw TYPEXX where
+  toSlaw = toSlaw . toNativeTYPE
 
-instance FromSlaw Word32 where
-  fromSlaw = integralFromSlaw
-
-instance FromSlaw Word64 where
-  fromSlaw = integralFromSlaw
-
-instance FromSlaw Int where
-  fromSlaw = integralFromSlaw
-
-instance FromSlaw Word where
-  fromSlaw = integralFromSlaw
-
-instance ToSlaw Int8 where
-  toSlaw = SlawNumeric nfScalar . NumInt8 . S.singleton
-
-instance ToSlaw Int16 where
-  toSlaw = SlawNumeric nfScalar . NumInt16 . S.singleton
-
-instance ToSlaw Int32 where
-  toSlaw = SlawNumeric nfScalar . NumInt32 . S.singleton
-
-instance ToSlaw Int64 where
-  toSlaw = SlawNumeric nfScalar . NumInt64 . S.singleton
-
-instance ToSlaw Word8 where
-  toSlaw = SlawNumeric nfScalar . NumUnt8 . S.singleton
-
-instance ToSlaw Word16 where
-  toSlaw = SlawNumeric nfScalar . NumUnt16 . S.singleton
-
-instance ToSlaw Word32 where
-  toSlaw = SlawNumeric nfScalar . NumUnt32 . S.singleton
-
-instance ToSlaw Word64 where
-  toSlaw = SlawNumeric nfScalar . NumUnt64 . S.singleton
-
-instance ToSlaw Float where
-  toSlaw = SlawNumeric nfScalar . NumFloat . S.singleton
-
-instance ToSlaw Double where
-  toSlaw = SlawNumeric nfScalar . NumDouble . S.singleton
-
-instance ToSlaw Int where
-  toSlaw = toSlaw . toNativeInt
-
-instance ToSlaw Word where
-  toSlaw = toSlaw . toNativeWord
+--END
 
 instance NumericClass a => FromSlaw (S.Vector a) where
   fromSlaw = numericVectorFromSlaw (typeName (undefined :: S.Vector a))
