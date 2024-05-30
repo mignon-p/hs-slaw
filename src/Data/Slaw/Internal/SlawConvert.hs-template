@@ -24,6 +24,7 @@ import qualified Data.ByteString          as B
 import qualified Data.ByteString.Lazy     as L
 import qualified Data.ByteString.Short    as SBS
 import Data.Char
+import Data.Complex
 import Data.Default.Class
 import Data.Either
 import Data.Hashable
@@ -576,6 +577,27 @@ numericVectorToSlaw v = SlawNumeric nf' nd
   where (nf, nd) = numericToNd v
         nf'      = nf { nfArray = True }
 
+numericSingletonFromSlaw :: NumericClass a
+                         => Slaw
+                         -> Either PlasmaException a
+numericSingletonFromSlaw s@(SlawNumeric nf nd) = addErrCtx s $ do
+  v <- ndToNumeric (nf, nd)
+  case S.length v of
+    1 -> return $ S.head v
+    n -> Left $ typeMismatch $ concat [ "Got array of length "
+                                      , show n
+                                      , " but expected singleton"
+                                      ]
+numericSingletonFromSlaw s = handleOthers s
+
+numericSingletonToSlaw :: NumericClass a
+                       => a
+                       -> Slaw
+numericSingletonToSlaw x = SlawNumeric nf' nd
+  where (nf, nd) = numericToNd v
+        nf'      = nf { nfArray = True }
+        v        = S.singleton x
+
 ---- types
 
 data Protein = Protein
@@ -1029,6 +1051,11 @@ instance Integral a => ToSlaw (Ratio a) where
 instance FromSlaw TYPEXX where
   fromSlaw = integralFromSlaw
 
+--FOR floating
+
+instance FromSlaw TYPEXX where
+  fromSlaw = numericSingletonFromSlaw
+
 --END
 
                -- ToSlaw instances for singleton numbers --
@@ -1044,6 +1071,14 @@ instance ToSlaw TYPEXX where
   toSlaw = toSlaw . toNativeTYPE
 
 --END
+
+                  -- instances for Complex singletons --
+
+instance (RealClass a) => FromSlaw (Complex a) where
+  fromSlaw = numericSingletonFromSlaw
+
+instance (RealClass a) => ToSlaw (Complex a) where
+  toSlaw = numericSingletonToSlaw
 
           -- instances for Storable Vectors of numeric types --
 
