@@ -19,6 +19,7 @@ import qualified Data.Vector.Storable as S
 import Data.Word
 import Foreign.Storable
 import GHC.Generics (Generic)
+import Numeric.Half
 
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Nameable
@@ -75,6 +76,9 @@ checkRange :: (String, String)
 checkRange typs (lo, hi) x@(ElemInt i)
   | lo <= i && i <= hi                         = Right x
   | otherwise                                  = rangeErr typs i (lo, hi)
+checkRange typs (lo, hi) x@(ElemHalf h)
+  | fromInteger lo <= h && h <= fromInteger hi = Right x
+  | otherwise                                  = rangeErr typs h (lo, hi)
 checkRange typs (lo, hi) x@(ElemFloat f)
   | fromInteger lo <= f && f <= fromInteger hi = Right x
   | otherwise                                  = rangeErr typs f (lo, hi)

@@ -20,6 +20,7 @@ module Data.Slaw.Internal.SlawType
   , describeNumericData
   , numToList
   , intCoerce
+  , halfCoerce
   , floatCoerce
   , doubleCoerce
   , NumTyp(..)
@@ -45,6 +46,7 @@ import Data.Word
 import Foreign.Storable
 import GHC.Generics (Generic)
 -- import GHC.Stack
+import Numeric.Half
 import System.IO.Unsafe (unsafePerformIO)
 
 import Data.Slaw.Internal.Exception
@@ -97,13 +99,15 @@ data NumericData =
 
 instance Hashable NumericData where
 --FOR sizedInt
-  salt `hashWithSalt` NumNAMEXX v = hh salt UNIQ `hashRawVector` v
---FOR floating
-  salt `hashWithSalt` NumNAMEXX v = hh salt UNIQ ## S.toList v
+  salt `hashWithSalt` NumNAMEXX v = hh v salt UNIQ `hashRawVector` v
+--END
+  salt `hashWithSalt` NumHalf   v = hh v salt  666 ## halfList v
+--FOR Float, Double
+  salt `hashWithSalt` NumNAMEXX v = hh v salt UNIQ ## S.toList v
 --END
 
-hh :: Int -> Int -> Int
-hh salt slug = salt ## (37619* slug)
+hh :: Storable a => S.Vector a -> Int -> Int -> Int
+hh v salt slug = salt ## (37619* slug) ## S.length v
 
 hashRawVector :: Storable a => Int -> S.Vector a -> Int
 hashRawVector salt v
@@ -112,6 +116,12 @@ hashRawVector salt v
       let byteLen = len * sizeOf (S.head v)
       hashPtrWithSalt ptr byteLen salt
   where len = S.length v
+
+halfList :: S.Vector Half -> [Word16]
+halfList = map f . S.toList
+  where f half
+          | isZero half = 0
+          | otherwise   = (fromIntegral . getHalf) half
 
 data NumericType =
 --FOR sizedInt, floating
@@ -349,19 +359,34 @@ addToRange (RangeInt lo hi) (ElemInt x)    = RangeInt lo' hi'
   where lo' = lo `min` x
         hi' = hi `max` x
 addToRange RangeFloat       (ElemFloat _)  = RangeFloat
+addToRange RangeHalf        (ElemHalf  _)  = RangeHalf
+addToRange RangeFloat       (ElemHalf _)   = RangeFloat
+addToRange RangeHalf        (ElemFloat _)  = RangeFloat
 addToRange RangeFloat       (ElemInt x)
-  | fitsInFloat x = RangeFloat
-  | otherwise     = RangeDouble
+  | fitsInFloat x                          = RangeFloat
+  | otherwise                              = RangeDouble
 addToRange (RangeInt lo hi) (ElemFloat _)
-  | fitsInFloat lo && fitsInFloat hi = RangeFloat
-  | otherwise                        = RangeDouble
+  | fitsInFloat lo && fitsInFloat hi       = RangeFloat
+  | otherwise                              = RangeDouble
+addToRange RangeHalf        (ElemInt x)
+  | fitsInHalf  x                          = RangeHalf
+  | fitsInFloat x                          = RangeFloat
+  | otherwise                              = RangeDouble
+addToRange (RangeInt lo hi) (ElemHalf _)
+  | fitsInHalf  lo && fitsInHalf  hi       = RangeHalf
+  | fitsInFloat lo && fitsInFloat hi       = RangeFloat
+  | otherwise                              = RangeDouble
+
+fitsInHalf :: Integer -> Bool
+fitsInHalf x = abs x <= 2048
 
 fitsInFloat :: Integer -> Bool
 fitsInFloat x = abs x <= 0x1_00_00_00
 
 typeFromRange :: NumRange -> NumericType
-typeFromRange RangeFloat  = TypFloat
-typeFromRange RangeDouble = TypDouble
+--FOR floating
+typeFromRange RangeTYPEXX = TypTYPE
+--END
 typeFromRange (RangeInt lo hi) =
   case find (checkRange lo hi) ranges of
     Nothing       -> TypDouble
@@ -398,24 +423,34 @@ typeToNum TypNAMEXX = NumNAMEXX . S.fromList . map LTYPECoerce
 
 intCoerce :: (Integral a, Storable a) => NumElem -> a
 intCoerce (ElemInt    x) = fromInteger x
-intCoerce (ElemFloat  x) = round x -- shouldn't happen
-intCoerce (ElemDouble x) = round x -- shouldn't happen
+intCoerce (ElemHalf   x) = round       x
+intCoerce (ElemFloat  x) = round       x
+intCoerce (ElemDouble x) = round       x
+
+halfCoerce :: NumElem -> Half
+halfCoerce (ElemInt    x) = fromInteger             x
+halfCoerce (ElemHalf   x) =                         x
+halfCoerce (ElemFloat  x) = toHalf                  x
+halfCoerce (ElemDouble x) = (toHalf . double2Float) x
 
 floatCoerce :: NumElem -> Float
 floatCoerce (ElemInt    x) = fromInteger  x
-floatCoerce (ElemFloat  x) = x
-floatCoerce (ElemDouble x) = double2Float x -- shouldn't happen
+floatCoerce (ElemHalf   x) = fromHalf     x
+floatCoerce (ElemFloat  x) =              x
+floatCoerce (ElemDouble x) = double2Float x
 
 doubleCoerce :: NumElem -> Double
-doubleCoerce (ElemInt    x) = fromInteger  x
-doubleCoerce (ElemFloat  x) = float2Double x
-doubleCoerce (ElemDouble x) = x
+doubleCoerce (ElemInt    x) = fromInteger               x
+doubleCoerce (ElemHalf   x) = (float2Double . fromHalf) x
+doubleCoerce (ElemFloat  x) = float2Double              x
+doubleCoerce (ElemDouble x) =                           x
 
 integerToNum :: Integer -> Maybe NumericData
 integerToNum n =
   case listToNum [ElemInt n] of
-    NumFloat  _ -> Nothing
-    NumDouble _ -> Nothing
+--FOR floating
+    NumTYPEXX _ -> Nothing
+--END
     nd          -> Just nd
 
 data NumTyp =

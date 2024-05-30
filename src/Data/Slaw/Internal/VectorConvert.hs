@@ -15,6 +15,7 @@ import Foreign.ForeignPtr
 import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
+import Numeric.Half
 import System.IO.Unsafe
 
 import Data.Slaw.Internal.Util
@@ -45,6 +46,9 @@ instance Swappable Int32 where
 
 instance Swappable Int64 where
   getSwapFunc _ = Just swapArray64
+
+instance Swappable Half where
+  getSwapFunc _ = Just swapArray16
 
 instance Swappable Float where
   getSwapFunc _ = Just swapArray32

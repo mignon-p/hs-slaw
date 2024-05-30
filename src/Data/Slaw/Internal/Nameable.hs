@@ -29,6 +29,7 @@ import Foreign.C.Types
 import Foreign.Ptr
 -- import GHC.Generics (Generic)
 -- import GHC.Stack
+import Numeric.Half
 import Numeric.Natural
 -- import System.IO.Unsafe (unsafePerformIO)
 -- import Text.Read
@@ -254,6 +255,9 @@ instance Nameable Word where
   typeName _ = "Word"
 
 instance Nameable Float where
+  typeName _ = "Float"
+
+instance Nameable Half where
   typeName _ = "Float"
 
 instance Nameable Double where
