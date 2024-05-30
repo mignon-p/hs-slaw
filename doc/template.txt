@@ -22,6 +22,7 @@ The following strings will be replaced in the body of the "--FOR":
 
   TYPE     - the name of the type
   LTYPE    - same as TYPE, but all lowercase
+  TYPEXX   - same as TYPE, but padded with spaces to be 6 characters long
   NAME     - same as TYPE, but "Word" is replaced with "Unt"
   NAMEXX   - same as NAME, but padded with spaces to be 6 characters long
   VTYPE    - Vt2/Vt3/Vt4 for V2/V3/V4, respectively (only for vectors)
@@ -32,7 +33,19 @@ The following strings will be replaced in the body of the "--FOR":
              of any other FOR loop)
   BAR      - replaced with "   " on the first iteration of the loop, and
              replaced with " | " on subsequent iterations of the loop
+  COMMA    - replaced with "     " on the first iteration of the loop, and
+             replaced with ",    " on subsequent iterations of the loop
   BITS     - size of the type in bits, or "undefined"
   SIGNED   - "Signed", "Unsigned", or "Float"
   LSIGNED  - same as SIGNED, but all lowercase
   SIGNEDXX - same as SIGNED, but padded with spaces to 8 characters
+
+The script emits {-# LINE #-} directives so that compile errors are
+reported on the correct line of the original .hs-template file,
+however the script does not emit {-# COLUMN #-} directives, so the
+compiler may highlight an incorrect portion of the original source
+line.
+
+The variables TYPEXX, NAMEXX, SIGNEDXX, UNIQ, BAR, and COMMA all
+expand to a string which is the same length as the variable name, so
+these will help keep the column numbers in sync.

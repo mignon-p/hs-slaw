@@ -75,10 +75,11 @@ sub doTemplate {
         die "line $errLine: can't parse FOR directive\n";
     }
 
-    my $bar = "   ";
+    my ($bar, $comma) = ("   ", "     ");
 
     foreach my $type (@types) {
         my $ltype  = lc ($type);
+        my $typexx = sprintf ("%-6s", $type);
         my $name   = $type;
         $name      =~ s/Word/Unt/;
         my $namexx = sprintf ("%-6s", $name);
@@ -104,13 +105,16 @@ sub doTemplate {
         for (my $lineNo = $begLine; $lineNo < $endLine; $lineNo++) {
             my $line = $input[$lineNo];
 
+            $line =~ s/TYPEXX/$typexx/g;
             $line =~ s/NAMEXX/$namexx/g;
             $line =~ s/LTYPE/$ltype/g;
             $line =~ s/VTYPE/$vtype/g;
             $line =~ s/NAME/$name/g;
             $line =~ s/TYPE/$type/g;
+
             $line =~ s/UNIQ/$uniq/g;
             $line =~ s/BAR/$bar/g;
+            $line =~ s/COMMA/$comma/g;
 
             $line =~ s/SIGNEDXX/$signedxx/g;
             $line =~ s/LSIGNED/$lsigned/g;
@@ -120,7 +124,8 @@ sub doTemplate {
             pushLine ($line);
         }
 
-        $bar = " | ";
+        $bar   = " | ";
+        $comma = ",    ";
     }
 }
 
