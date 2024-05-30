@@ -592,17 +592,23 @@ instance Nameable Protein where
 
 ---- instances
 
+                   -- instances for Slaw (identity) --
+
 instance FromSlaw Slaw where
   fromSlaw = Right
 
 instance ToSlaw Slaw where
   toSlaw = id
 
+                        -- instances for lists --
+
 instance FromSlaw a => FromSlaw [a] where
   fromSlaw = listFromSlaw
 
 instance ToSlaw a => ToSlaw [a] where
   toSlaw = listToSlaw
+
+                         -- instances for Bool --
 
 instance FromSlaw Bool where
   fromSlaw (SlawBool b)     = Right b
@@ -615,12 +621,16 @@ instance FromSlaw Bool where
 instance ToSlaw Bool where
   toSlaw = SlawBool
 
+                          -- instances for () --
+
 instance FromSlaw () where
   fromSlaw SlawNil = Right ()
   fromSlaw s       = handleOthers s
 
 instance ToSlaw () where
   toSlaw _ = SlawNil
+
+                         -- instances for Text --
 
 instance FromSlaw T.Text where
   fromSlaw = slawToString
@@ -633,6 +643,8 @@ instance FromSlaw LT.Text where
 
 instance ToSlaw LT.Text where
   toSlaw = slawFromString
+
+                     -- instances for Char/String --
 
 instance FromSlaw Char where
   fromSlaw s@(SlawNumeric _ nd) =
@@ -652,14 +664,7 @@ instance ToSlaw Char where
 
   listToSlaw = slawFromString
 
-instance FromSlaw Integer where
-  fromSlaw = integerFromSlaw "Integer"
-
-instance ToSlaw Integer where
-  toSlaw n =
-    case integerToNum n of
-      Just nd -> SlawNumeric nfScalar nd
-      Nothing -> SlawString $ toUtf8 $ show n
+                     -- instances for bytestrings --
 
 instance FromSlaw B.ByteString where
   fromSlaw = slawToByteString
@@ -678,6 +683,8 @@ instance FromSlaw SBS.ShortByteString where
 
 instance ToSlaw SBS.ShortByteString where
   toSlaw = slawFromByteString
+
+                     -- instances for tuples (2-8) --
 
 instance (FromSlaw a, FromSlaw b) => FromSlaw (a, b) where
   fromSlaw s@(SlawProtein des ing _) = pairFromSlaw s ( des ?> SlawList []
@@ -912,6 +919,33 @@ instance ( ToSlaw a
              , toSlaw z
              ]
 
+                        -- instances for Either --
+
+instance (FromSlaw a, FromSlaw b) => FromSlaw (Either a b) where
+  fromSlaw s =
+    case (fromSlaw s, fromSlaw s) of
+      (Right x, _      ) -> Right $ Left  x
+      (Left  _, Right x) -> Right $ Right x
+      (Left e1, Left e2) ->
+        let msg = s `cantCoerceSlaw` typeName (undefined :: Either a b)
+        in msg `because` [e1, e2]
+
+instance (ToSlaw a, ToSlaw b) => ToSlaw (Either a b) where
+  toSlaw (Left x ) = toSlaw x
+  toSlaw (Right x) = toSlaw x
+
+                        -- instances for Maybe --
+
+instance FromSlaw a => FromSlaw (Maybe a) where
+  fromSlaw SlawNil = Right Nothing
+  fromSlaw s = addErrCtx s (fromSlaw s)
+
+instance ToSlaw a => ToSlaw (Maybe a) where
+  toSlaw Nothing  = SlawNil
+  toSlaw (Just x) = toSlaw x
+
+                         -- instances for maps --
+
 instance (FromSlaw a, FromSlaw b, Ord a) => FromSlaw (M.Map a b) where
   fromSlaw s = mapRight M.fromList $ slawToMap s (M.empty :: M.Map a b)
 
@@ -935,6 +969,8 @@ instance (FromSlaw b) => FromSlaw (IM.IntMap b) where
 instance (ToSlaw b) => ToSlaw (IM.IntMap b) where
   toSlaw = slawFromMap . IM.toList
 
+                       -- instances for Protein --
+
 instance FromSlaw Protein where
   fromSlaw SlawNil                      = Right def
   fromSlaw s@(SlawProtein des ing rude) =
@@ -951,26 +987,24 @@ instance ToSlaw Protein where
         ing' = if M.null ing then Nothing else (Just . toSlaw) ing
     in SlawProtein des' ing' rude
 
-instance (FromSlaw a, FromSlaw b) => FromSlaw (Either a b) where
-  fromSlaw s =
-    case (fromSlaw s, fromSlaw s) of
-      (Right x, _      ) -> Right $ Left  x
-      (Left  _, Right x) -> Right $ Right x
-      (Left e1, Left e2) ->
-        let msg = s `cantCoerceSlaw` typeName (undefined :: Either a b)
-        in msg `because` [e1, e2]
+                 -- instances for Integer and Natural --
 
-instance (ToSlaw a, ToSlaw b) => ToSlaw (Either a b) where
-  toSlaw (Left x ) = toSlaw x
-  toSlaw (Right x) = toSlaw x
+instance FromSlaw Integer where
+  fromSlaw = integerFromSlaw "Integer"
 
-instance FromSlaw a => FromSlaw (Maybe a) where
-  fromSlaw SlawNil = Right Nothing
-  fromSlaw s = addErrCtx s (fromSlaw s)
+instance ToSlaw Integer where
+  toSlaw n =
+    case integerToNum n of
+      Just nd -> SlawNumeric nfScalar nd
+      Nothing -> SlawString $ toUtf8 $ show n
 
-instance ToSlaw a => ToSlaw (Maybe a) where
-  toSlaw Nothing  = SlawNil
-  toSlaw (Just x) = toSlaw x
+instance FromSlaw Natural where
+  fromSlaw = integralFromSlaw
+
+instance ToSlaw Natural where
+  toSlaw = toSlaw . toInteger
+
+                    -- instances for Ratio/Rational --
 
 instance forall a. ( Nameable a
                    , Integral a
@@ -988,11 +1022,7 @@ instance Integral a => ToSlaw (Ratio a) where
   toSlaw rat = SlawCons (f $ numerator rat) (f $ denominator rat)
     where f  = toSlaw . toInteger
 
-instance FromSlaw Natural where
-  fromSlaw = integralFromSlaw
-
-instance ToSlaw Natural where
-  toSlaw = toSlaw . toInteger
+              -- FromSlaw instances for singleton numbers --
 
 --FOR sizedInt, nativeInt
 
@@ -1000,6 +1030,8 @@ instance FromSlaw TYPEXX where
   fromSlaw = integralFromSlaw
 
 --END
+
+               -- ToSlaw instances for singleton numbers --
 
 --FOR sizedInt, floating
 
@@ -1012,6 +1044,8 @@ instance ToSlaw TYPEXX where
   toSlaw = toSlaw . toNativeTYPE
 
 --END
+
+          -- instances for Storable Vectors of numeric types --
 
 instance NumericClass a => FromSlaw (S.Vector a) where
   fromSlaw = numericVectorFromSlaw (typeName (undefined :: S.Vector a))
