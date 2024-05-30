@@ -293,28 +293,14 @@ catNumeric nf nds = SlawNumeric nf' nd
                   else listToNum $ concatMap numToList nds
 
 extractNumeric :: ByteOrder -> NumericData -> (NumericType, B.ByteString)
-extractNumeric bo (NumInt8   v) = (TypInt8  , vToBs bo v)
-extractNumeric bo (NumInt16  v) = (TypInt16 , vToBs bo v)
-extractNumeric bo (NumInt32  v) = (TypInt32 , vToBs bo v)
-extractNumeric bo (NumInt64  v) = (TypInt64 , vToBs bo v)
-extractNumeric bo (NumUnt8   v) = (TypUnt8  , vToBs bo v)
-extractNumeric bo (NumUnt16  v) = (TypUnt16 , vToBs bo v)
-extractNumeric bo (NumUnt32  v) = (TypUnt32 , vToBs bo v)
-extractNumeric bo (NumUnt64  v) = (TypUnt64 , vToBs bo v)
-extractNumeric bo (NumFloat  v) = (TypFloat , vToBs bo v)
-extractNumeric bo (NumDouble v) = (TypDouble, vToBs bo v)
+--FOR sizedInt, floating
+extractNumeric bo (NumNAMEXX v) = (TypNAMEXX, vToBs bo v)
+--END
 
 restoreNumeric :: ByteOrder -> NumericType -> B.ByteString -> NumericData
-restoreNumeric bo TypInt8   bs = NumInt8   (bsToV bo bs)
-restoreNumeric bo TypInt16  bs = NumInt16  (bsToV bo bs)
-restoreNumeric bo TypInt32  bs = NumInt32  (bsToV bo bs)
-restoreNumeric bo TypInt64  bs = NumInt64  (bsToV bo bs)
-restoreNumeric bo TypUnt8   bs = NumUnt8   (bsToV bo bs)
-restoreNumeric bo TypUnt16  bs = NumUnt16  (bsToV bo bs)
-restoreNumeric bo TypUnt32  bs = NumUnt32  (bsToV bo bs)
-restoreNumeric bo TypUnt64  bs = NumUnt64  (bsToV bo bs)
-restoreNumeric bo TypFloat  bs = NumFloat  (bsToV bo bs)
-restoreNumeric bo TypDouble bs = NumDouble (bsToV bo bs)
+--FOR sizedInt, floating
+restoreNumeric bo TypNAMEXX bs = NumNAMEXX (bsToV bo bs)
+--END
 
 data NumElem = ElemInt    !Integer
              | ElemFloat  !Float
@@ -327,16 +313,11 @@ data NumRange = RangeInt  { rangeLo :: !Integer, rangeHi :: !Integer }
               deriving (Eq, Ord, Show, Generic, NFData, Hashable)
 
 numToList :: NumericData -> [NumElem]
-numToList (NumInt8   v) = intToList    v
-numToList (NumInt16  v) = intToList    v
-numToList (NumInt32  v) = intToList    v
-numToList (NumInt64  v) = intToList    v
-numToList (NumUnt8   v) = intToList    v
-numToList (NumUnt16  v) = intToList    v
-numToList (NumUnt32  v) = intToList    v
-numToList (NumUnt64  v) = intToList    v
-numToList (NumFloat  v) = floatToList  v
-numToList (NumDouble v) = doubleToList v
+--FOR sizedInt
+numToList (NumNAMEXX v) = intToList   v
+--FOR floating
+numToList (NumNAMEXX v) = LTYPEToList v
+--END
 
 intToList :: (Integral a, Storable a) => S.Vector a -> [NumElem]
 intToList = map (ElemInt . toInteger) . S.toList
@@ -411,16 +392,11 @@ mkRange dummy typ = ((toInteger lo, toInteger hi), typ)
         hi = maxBound `asTypeOf` dummy
 
 typeToNum :: NumericType -> [NumElem] -> NumericData
-typeToNum TypInt8   = NumInt8   . S.fromList . map intCoerce
-typeToNum TypInt16  = NumInt16  . S.fromList . map intCoerce
-typeToNum TypInt32  = NumInt32  . S.fromList . map intCoerce
-typeToNum TypInt64  = NumInt64  . S.fromList . map intCoerce
-typeToNum TypUnt8   = NumUnt8   . S.fromList . map intCoerce
-typeToNum TypUnt16  = NumUnt16  . S.fromList . map intCoerce
-typeToNum TypUnt32  = NumUnt32  . S.fromList . map intCoerce
-typeToNum TypUnt64  = NumUnt64  . S.fromList . map intCoerce
-typeToNum TypFloat  = NumFloat  . S.fromList . map floatCoerce
-typeToNum TypDouble = NumDouble . S.fromList . map doubleCoerce
+--FOR sizedInt
+typeToNum TypNAMEXX = NumNAMEXX . S.fromList . map intCoerce
+--FOR floating
+typeToNum TypNAMEXX = NumNAMEXX . S.fromList . map LTYPECoerce
+--END
 
 intCoerce :: (Integral a, Storable a) => NumElem -> a
 intCoerce (ElemInt    x) = fromInteger x
