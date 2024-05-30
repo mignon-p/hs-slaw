@@ -150,12 +150,9 @@ sub doTemplate {
 
 open F, "<", $templateFull or die;
 
-# my $skip = 1;
-
 while (<F>) {
     chomp;
-    # $skip = 0 if (/^\{-# LANGUAGE/ or /^module/);
-    push @input, $_; # if (not $skip);
+    push @input, $_;
 }
 
 close F;
