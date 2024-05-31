@@ -2,6 +2,8 @@
 
 # This script generates foo.hs from foo.hs-template
 # First argument is input file; second argument is output file.
+#
+# For more information, see doc/template.txt
 
 use strict;
 use Cwd;
@@ -77,13 +79,28 @@ sub lineDirective {
     pushLine ($ln) if ($useLineDirectives);
 }
 
-sub dieWithError {
+sub dieWithLine {
     my ($lineNo, $msg) = @_;
 
     my $errLine = $lineNo + 1; # report 1-based line number
 
     print STDERR "$templateRel:$errLine: $msg\n";
-    die "$scriptRel: fatal error\n";
+
+    if ($lineNo >= 0 and $lineNo <= $#input) {
+        my $pad = scalar (" " x length ($errLine));
+        print STDERR "$pad |\n";
+        print STDERR "$errLine | ", $input[$lineNo], "\n";
+        print STDERR "$pad |\n";
+    }
+
+    die "$scriptRel: fatal error, exiting\n";
+}
+
+sub dieWithFile {
+    my ($fileName, $msg) = @_;
+
+    print STDERR "$fileName: $msg\n";
+    die "$scriptRel: fatal error, exiting\n";
 }
 
 my $uniqueCounter = 1000;
@@ -109,7 +126,7 @@ sub doTypeTemplate {
             }
 
             if (not defined $addTypes) {
-                dieWithError ($beginLine, "unrecognized $what $group");
+                dieWithLine ($beginLine, "unrecognized $what $group");
             }
 
             foreach my $type (@$addTypes) {
@@ -117,7 +134,7 @@ sub doTypeTemplate {
             }
         }
     } else {
-        dieWithError ($beginLine, "can't parse FOR directive");
+        dieWithLine ($beginLine, "can't parse FOR directive");
     }
 
     my ($bar, $comma) = ("   ", "     ");
@@ -183,7 +200,7 @@ sub doStrTemplate {
         my $args = $1;
         @strings = split (/,\s*/, $args);
     } else {
-        dieWithError ($beginLine, "can't parse FORSTR directive");
+        dieWithLine ($beginLine, "can't parse FORSTR directive");
     }
 
     foreach my $str (@strings) {
@@ -215,12 +232,11 @@ sub doTemplate {
             $msg .= qq[ "$1"];
         }
 
-        dieWithError ($beginLine, $msg);
+        dieWithLine ($beginLine, $msg);
     }
 }
 
-
-open F, "<", $templateFull or die;
+open F, "<", $templateFull or dieWithFile ($templateFull, "$!");
 
 while (<F>) {
     chomp;
@@ -263,11 +279,17 @@ for (my $lineNo = 0; $lineNo <= $#input; $lineNo++) {
     }
 }
 
-die "$0: unterminated FOR loop in $templateRel\n" if (defined $beginLine);
+if (defined $beginLine) {
+    dieWithLine ($beginLine, "unterminated FOR loop");
+}
 
-pop @output if ($output[$#output] eq "");
+# remove blank lines and/or LINE directives at end of file
+while ($#output > 0 and ($output[$#output] eq "" or
+                         $output[$#output] =~ /^\{-# LINE/)) {
+    pop @output;
+}
 
-open F, ">", $outputFull or die;
+open F, ">", $outputFull or dieWithFile ($templateFull, "$!");
 
 foreach my $line (@output) {
     print F $line, "\n";

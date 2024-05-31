@@ -3,6 +3,10 @@ by the Perl script scripts/preprocess-template.pl
 
 The custom Setup.hs should cause this to happen automatically.
 
+The "correct" way to do all of this would probably be Template
+Haskell, rather than a Perl script, but I'm not really a Template
+Haskell kind of girl.
+
 In a template file, the "--FOR" and "--END" directives can be used to
 loop over a set of types.  The available sets of types are:
 
@@ -59,6 +63,3 @@ character except comma, and may not begin with whitespace.
 Only the following string will be replaced in the body of "--FORSTR":
 
   STR      - the string
-
-The "correct" way to do all of this would probably be Template
-Haskell, but I'm not really a Template Haskell kind of girl.
