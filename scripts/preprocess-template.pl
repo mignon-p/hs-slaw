@@ -44,6 +44,29 @@ foreach my $group (sort keys %typeGroups) {
     }
 }
 
+# https://no-color.org/
+my $useColor = -t STDERR;
+$useColor = 0 if (exists $ENV{'NO_COLOR'} and ENV{'NO_COLOR'} ne "");
+
+sub sgr {
+    my $n = $_[0];
+
+    if ($useColor) {
+        return "\e[${n}m";
+    } else {
+        return "";
+    }
+}
+
+my $off     = sgr (0);
+my $bold    = sgr (1);
+my $red     = sgr (31);
+my $green   = sgr (32);
+my $yellow  = sgr (33);
+my $blue    = sgr (34);
+my $magenta = sgr (35);
+my $cyan    = sgr (36);
+
 my @input  = ();
 my @output = ();
 
@@ -84,13 +107,14 @@ sub dieWithLine {
 
     my $errLine = $lineNo + 1; # report 1-based line number
 
-    print STDERR "$templateRel:$errLine: $msg\n";
+    print STDERR "$bold$templateRel:$errLine: $red$msg$off\n";
 
     if ($lineNo >= 0 and $lineNo <= $#input) {
         my $pad = scalar (" " x length ($errLine));
-        print STDERR "$pad |\n";
-        print STDERR "$errLine | ", $input[$lineNo], "\n";
-        print STDERR "$pad |\n";
+        my $ln  = $input[$lineNo];
+        print STDERR $bold, $blue, "$pad |$off\n";
+        print STDERR $bold, $blue, "$errLine | $red", $ln, "$off\n";
+        print STDERR $bold, $blue, "$pad |$off\n";
     }
 
     die "$scriptRel: fatal error, exiting\n";
@@ -99,7 +123,7 @@ sub dieWithLine {
 sub dieWithFile {
     my ($fileName, $msg) = @_;
 
-    print STDERR "$fileName: $msg\n";
+    print STDERR "$bold$fileName: $red$msg$off\n";
     die "$scriptRel: fatal error, exiting\n";
 }
 
