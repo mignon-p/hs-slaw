@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables        #-}
+
 module Data.Slaw.Internal.Util
   ( (##)
   , (??)
@@ -16,6 +18,7 @@ module Data.Slaw.Internal.Util
   , (==~)
   , (?>)
   , uncurry5
+  , safeIntegralFromInteger
   ) where
 
 import Data.Bits
@@ -102,3 +105,24 @@ uncurry5 :: (a -> b -> c -> d -> e -> f)
          -> (a, b, c, d, e)
          -> f
 uncurry5 func (v, w, x, y, z) = func v w x y z
+
+safeIntegralFromInteger :: forall a. (Integral a, Bits a)
+                        => Integer
+                        -> Either (Integer, Maybe Integer) a
+safeIntegralFromInteger n =
+  let signed = isSigned (undefined :: a)
+  in case bitSizeMaybe (undefined :: a) of
+    Nothing ->
+      case (signed, signum n) of
+        (False, (-1)) -> Left (0, Nothing)
+        _             -> Right $ fromInteger n
+    Just nbits ->
+      let (lo, hi) = getLoHi nbits signed
+      in if lo <= n && n <= hi
+         then Right $ fromInteger n
+         else Left (lo, Just hi)
+
+getLoHi :: Int -> Bool -> (Integer, Integer)
+getLoHi nbits False = (0, (2 ^ nbits) - 1)
+getLoHi nbits True  = ((-x), x - 1)
+  where x = 2 ^ (nbits - 1)

@@ -533,28 +533,21 @@ integralFromSlaw :: forall a. (Nameable a, Integral a, Bits a)
                  -> Either PlasmaException a
 integralFromSlaw s = do
   let tn     = typeName (undefined :: a)
-      signed = isSigned (undefined :: a)
   n <- integerFromSlaw tn s
   let desc   = describeSlaw s
+  integralFromInteger desc n
+
+integralFromInteger :: forall a. (Nameable a, Integral a, Bits a)
+                    => String
+                    -> Integer
+                    -> Either PlasmaException a
+integralFromInteger desc n = do
+  let tn     = typeName (undefined :: a)
       nParen = '(' : show n ++ ")"
       rErr   = rangeError desc nParen tn
-  case bitSizeMaybe (undefined :: a) of
-    Nothing    ->
-      let rangeErr = rErr "0" ""
-      in case (signed, signum n) of
-           (False, (-1)) -> Left rangeErr
-           _             -> return $ fromInteger n
-    Just nbits ->
-      let (lo, hi) = getLoHi nbits signed
-          rangeErr = rErr (show lo) (show hi)
-      in if lo <= n && n <= hi
-         then return $ fromInteger n
-         else Left rangeErr
-
-getLoHi :: Int -> Bool -> (Integer, Integer)
-getLoHi nbits False = (0, (2 ^ nbits) - 1)
-getLoHi nbits True  = ((-x), x - 1)
-  where x = 2 ^ (nbits - 1)
+  case safeIntegralFromInteger n of
+    Left (lo, mhi) -> Left $ rErr (show lo) (fmap show mhi ?> "")
+    Right x        -> return x
 
 integralPairFromSlaw :: forall a. (Nameable a, Integral a, Bits a)
                      => (Slaw, Slaw)
