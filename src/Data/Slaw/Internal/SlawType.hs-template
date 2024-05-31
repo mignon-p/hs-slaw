@@ -18,6 +18,7 @@ module Data.Slaw.Internal.SlawType
   , NumElem(..)
   , describeNumericFormat
   , describeNumericData
+  , describeNumeric
   , numToList
   , intCoerce
   , halfCoerce
@@ -163,6 +164,11 @@ describeVectorType Vt3mv = ["3-multivector of"]
 describeVectorType Vt4mv = ["4-multivector of"]
 describeVectorType Vt5mv = ["5-multivector of"]
 
+describeNumeric :: NumericFormat -> NumericData -> String
+describeNumeric nf nd = intercalate " " (nfl ++ [nds])
+  where nfl = describeNumericFormat nf
+        nds = describeNumericData   nd
+
 describeSlaw :: Slaw -> String
 describeSlaw (SlawProtein _ _ _) = "protein"
 describeSlaw (SlawBool    b    ) = "boolean " ++ show b
@@ -172,9 +178,7 @@ describeSlaw (SlawString  _    ) = "string"
 describeSlaw (SlawList    _    ) = "list"
 describeSlaw (SlawMap     _    ) = "map"
 describeSlaw (SlawCons    _ _  ) = "cons"
-describeSlaw (SlawNumeric nf nd) = intercalate " " (nfl ++ ndl)
-  where nfl =  describeNumericFormat nf
-        ndl = [describeNumericData   nd]
+describeSlaw (SlawNumeric nf nd) = describeNumeric nf nd
 describeSlaw (SlawError   _ _  ) = "error"
 
 dnf :: NumericFormat -> String

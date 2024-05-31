@@ -14,7 +14,7 @@ import Data.Complex
 import Data.Default.Class
 import Data.Hashable
 import Data.Int
-import Data.List
+-- import Data.List
 import qualified Data.Vector.Storable as S
 import Data.Word
 import Foreign.Storable
@@ -50,11 +50,6 @@ checkNF cnf nf (fromTypeNF, fromTypeND, toType) =
                                        , " to "
                                        , toType
                                        ]
-
-describeNumeric :: NumericFormat -> NumericData -> String
-describeNumeric nf nd = intercalate " " (nfl ++ [nds])
-  where nfl = describeNumericFormat nf
-        nds = describeNumericData   nd
 
 rangeErr :: Show a
          => (String, String)
