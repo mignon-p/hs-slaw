@@ -50,33 +50,13 @@ typeName' x =
 mkTupleName :: [String] -> String
 mkTupleName names = "(" ++ intercalate ", " names ++ ")"
 
-instance Nameable Slaw where
-  typeName _ = "Slaw"
-
-instance Nameable a => Nameable [a] where
-  typeName _ =
-    let tn = typeName (undefined :: a)
-    in if tn == "Char"
-       then "String"
-       else "[" ++ tn ++ "]"
-
-instance Nameable Bool where
-  typeName _ = "Bool"
-
-instance Nameable () where
-  typeName _ = "()"
+              -- Nameable instances for some basic types --
 
 instance Nameable T.Text where
   typeName _ = "Text"
 
 instance Nameable LT.Text where
   typeName _ = "lazy Text"
-
-instance Nameable Char where
-  typeName _ = "Char"
-
-instance Nameable Integer where
-  typeName _ = "Integer"
 
 instance Nameable B.ByteString where
   typeName _ = "ByteString"
@@ -86,6 +66,99 @@ instance Nameable L.ByteString where
 
 instance Nameable SBS.ShortByteString where
   typeName _ = "ShortByteString"
+
+--FORSTR (), Bool, Slaw, Char, Integer, Natural
+instance Nameable STR where
+  typeName _ = "STR"
+
+--END
+
+                  -- Nameable instances for FFI types --
+
+--FORSTR CChar, CSChar,   CUChar,     CWchar
+instance Nameable STR where
+  typeName _ = "STR"
+
+--FORSTR CBool, CPtrdiff, CSigAtomic, CSize
+instance Nameable STR where
+  typeName _ = "STR"
+
+--FORSTR CShort,  CInt,  CLong,  CLLong,  CIntMax,  CIntPtr,  IntPtr
+instance Nameable STR where
+  typeName _ = "STR"
+
+--FORSTR CUShort, CUInt, CULong, CULLong, CUIntMax, CUIntPtr, WordPtr
+instance Nameable STR where
+  typeName _ = "STR"
+
+--END
+
+                -- Nameable instances for numeric types --
+
+--FOR sizedInt, nativeInt, floating
+instance Nameable TYPE where
+  typeName _ = "TYPE"
+
+--FOR vectors
+instance Nameable a => Nameable (TYPE a) where
+  typeName _ = "TYPE " ++ typeName' (undefined :: a)
+
+--END
+
+           -- Nameable instances for various compound types --
+
+instance Nameable a => Nameable [a] where
+  typeName _ =
+    let tn = typeName (undefined :: a)
+    in if tn == "Char"
+       then "String"
+       else "[" ++ tn ++ "]"
+
+instance Nameable a => Nameable (Maybe a) where
+  typeName _ = "Maybe " ++ typeName' (undefined :: a)
+
+instance (Nameable a, Nameable b) => Nameable (Either a b) where
+  typeName _ = concat [ "Either "
+                      , typeName' (undefined :: a)
+                      , " "
+                      , typeName' (undefined :: b)
+                      ]
+
+instance Nameable a => Nameable (S.Vector a) where
+  typeName _ = "Vector " ++ typeName' (undefined :: a)
+
+instance Nameable a => Nameable (Ratio a) where
+  typeName _ =
+    let tn = typeName' (undefined :: a)
+    in if tn == "Integer"
+       then "Rational"
+       else "Ratio " ++ tn
+
+instance Nameable a => Nameable (Complex a) where
+  typeName _ = "Complex " ++ typeName' (undefined :: a)
+
+                    -- Nameable instances for maps --
+
+instance (Nameable a, Nameable b) => Nameable (M.Map a b) where
+  typeName _ = concat [ "Map "
+                      , typeName' (undefined :: a)
+                      , " "
+                      , typeName' (undefined :: b)
+                      ]
+
+instance (Nameable a, Nameable b) => Nameable (HM.HashMap a b) where
+  typeName _ = concat [ "HashMap "
+                      , typeName' (undefined :: a)
+                      , " "
+                      , typeName' (undefined :: b)
+                      ]
+
+instance (Nameable b) => Nameable (IM.IntMap b) where
+  typeName _ = concat [ "IntMap "
+                      , typeName' (undefined :: b)
+                      ]
+
+                -- Nameable instances for tuples (2-8) --
 
 instance (Nameable a, Nameable b) => Nameable (a, b) where
   typeName _ = mkTupleName [ typeName (undefined :: a)
@@ -175,162 +248,3 @@ instance ( Nameable a
                            , typeName (undefined :: g)
                            , typeName (undefined :: h)
                            ]
-
-instance (Nameable a, Nameable b) => Nameable (M.Map a b) where
-  typeName _ = concat [ "Map "
-                      , typeName' (undefined :: a)
-                      , " "
-                      , typeName' (undefined :: b)
-                      ]
-
-instance (Nameable a, Nameable b) => Nameable (HM.HashMap a b) where
-  typeName _ = concat [ "HashMap "
-                      , typeName' (undefined :: a)
-                      , " "
-                      , typeName' (undefined :: b)
-                      ]
-
-instance (Nameable b) => Nameable (IM.IntMap b) where
-  typeName _ = concat [ "IntMap "
-                      , typeName' (undefined :: b)
-                      ]
-
-instance (Nameable a, Nameable b) => Nameable (Either a b) where
-  typeName _ = concat [ "Either "
-                      , typeName' (undefined :: a)
-                      , " "
-                      , typeName' (undefined :: b)
-                      ]
-
-instance Nameable a => Nameable (Maybe a) where
-  typeName _ = "Maybe " ++ typeName' (undefined :: a)
-
-instance Nameable a => Nameable (Ratio a) where
-  typeName _ =
-    let tn = typeName' (undefined :: a)
-    in if tn == "Integer"
-       then "Rational"
-       else "Ratio " ++ tn
-
-instance Nameable a => Nameable (V2 a) where
-  typeName _ = "V2 " ++ typeName' (undefined :: a)
-
-instance Nameable a => Nameable (V3 a) where
-  typeName _ = "V3 " ++ typeName' (undefined :: a)
-
-instance Nameable a => Nameable (V4 a) where
-  typeName _ = "V4 " ++ typeName' (undefined :: a)
-
-instance Nameable a => Nameable (S.Vector a) where
-  typeName _ = "Vector " ++ typeName' (undefined :: a)
-
-instance Nameable Int8 where
-  typeName _ = "Int8"
-
-instance Nameable Int16 where
-  typeName _ = "Int16"
-
-instance Nameable Int32 where
-  typeName _ = "Int32"
-
-instance Nameable Int64 where
-  typeName _ = "Int64"
-
-instance Nameable Word8 where
-  typeName _ = "Word8"
-
-instance Nameable Word16 where
-  typeName _ = "Word16"
-
-instance Nameable Word32 where
-  typeName _ = "Word32"
-
-instance Nameable Word64 where
-  typeName _ = "Word64"
-
-instance Nameable Int where
-  typeName _ = "Int"
-
-instance Nameable Word where
-  typeName _ = "Word"
-
-instance Nameable Float where
-  typeName _ = "Float"
-
-instance Nameable Half where
-  typeName _ = "Float"
-
-instance Nameable Double where
-  typeName _ = "Double"
-
-instance Nameable Natural where
-  typeName _ = "Natural"
-
-instance Nameable CBool where
-  typeName _ = "CBool"
-
-instance Nameable CChar where
-  typeName _ = "CChar"
-
-instance Nameable CInt where
-  typeName _ = "CInt"
-
-instance Nameable CIntMax where
-  typeName _ = "CIntMax"
-
-instance Nameable CIntPtr where
-  typeName _ = "CIntPtr"
-
-instance Nameable CLLong where
-  typeName _ = "CLLong"
-
-instance Nameable CLong where
-  typeName _ = "CLong"
-
-instance Nameable CPtrdiff where
-  typeName _ = "CPtrdiff"
-
-instance Nameable CSChar where
-  typeName _ = "CSChar"
-
-instance Nameable CShort where
-  typeName _ = "CShort"
-
-instance Nameable CSigAtomic where
-  typeName _ = "CSigAtomic"
-
-instance Nameable CSize where
-  typeName _ = "CSize"
-
-instance Nameable CUChar where
-  typeName _ = "CUChar"
-
-instance Nameable CUInt where
-  typeName _ = "CUInt"
-
-instance Nameable CUIntMax where
-  typeName _ = "CUIntMax"
-
-instance Nameable CUIntPtr where
-  typeName _ = "CUIntPtr"
-
-instance Nameable CULLong where
-  typeName _ = "CULLong"
-
-instance Nameable CULong where
-  typeName _ = "CULong"
-
-instance Nameable CUShort where
-  typeName _ = "CUShort"
-
-instance Nameable CWchar where
-  typeName _ = "CWchar"
-
-instance Nameable IntPtr where
-  typeName _ = "IntPtr"
-
-instance Nameable WordPtr where
-  typeName _ = "WordPtr"
-
-instance Nameable a => Nameable (Complex a) where
-  typeName _ = "Complex " ++ typeName' (undefined :: a)
