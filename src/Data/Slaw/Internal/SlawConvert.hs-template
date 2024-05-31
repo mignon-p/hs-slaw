@@ -592,6 +592,35 @@ numericSingletonToSlaw x = SlawNumeric nf' nd
         nf'      = nf { nfArray = True }
         v        = S.singleton x
 
+ndToRat :: forall a. (Nameable a, Integral a, Bits a)
+        => NumericFormat
+        -> NumericData
+        -> Either PlasmaException (Ratio a)
+ndToRat nf nd = do
+  let desc   = describeNumeric nf nd
+      descNd = describeNumericData nd
+      toType = typeName (undefined :: Ratio a)
+      ctx    = addErrCtxStr desc toType
+      iFi    = integralFromInteger descNd
+  case numToList nd of
+    [ElemInt num, ElemInt den] -> ctx $ do
+      num' <- iFi num
+      den' <- iFi den
+      makeRat num' den'
+    [ElemInt num]              -> ctx $ do
+      num' <- iFi num
+      makeRat num' 1
+--FOR floating
+    [ElemTYPEXX x]             -> return (realToFrac x)
+--END
+    _                          ->
+      Left $ typeMismatch $ desc `cantCoerce` toType
+
+makeRat :: Integral a => a -> a -> Either PlasmaException (Ratio a)
+makeRat num den
+  | den == 0  = Left  $ rangeError0 "denominator is zero"
+  | otherwise = Right $ num % den
+
 ---- types
 
 data Protein = Protein
@@ -1031,7 +1060,8 @@ instance forall a. ( Nameable a
       Left err ->
         let msg = s `cantCoerceSlaw` typeName (undefined :: Ratio a)
         in msg `because` [err]
-      Right (num, den) -> Right $ num % den
+      Right (num, den) -> addErrCtx s $ makeRat num den
+  fromSlaw (SlawNumeric nf nd) = ndToRat nf nd
   fromSlaw s = handleOthers s
 
 instance Integral a => ToSlaw (Ratio a) where
