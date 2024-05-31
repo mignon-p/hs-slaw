@@ -50,3 +50,15 @@ line.
 The variables TYPEXX, NAMEXX, SIGNEDXX, UNIQ, BAR, and COMMA all
 expand to a string which is the same length as the variable name, so
 these will help keep the column numbers in sync.
+
+There is also a "--FORSTR" directive which works similarly, but
+instead of taking a list of types and/or type sets, it takes a
+comma-separated list of strings.  The strings can contain any
+character except comma, and may not begin with whitespace.
+
+Only the following string will be replaced in the body of "--FORSTR":
+
+  STR      - the string
+
+The "correct" way to do all of this would probably be Template
+Haskell, but I'm not really a Template Haskell kind of girl.

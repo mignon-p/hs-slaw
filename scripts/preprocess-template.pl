@@ -77,9 +77,18 @@ sub lineDirective {
     pushLine ($ln) if ($useLineDirectives);
 }
 
+sub dieWithError {
+    my ($lineNo, $msg) = @_;
+
+    my $errLine = $lineNo + 1; # report 1-based line number
+
+    print STDERR "$templateRel:$errLine: $msg\n";
+    die "$scriptRel: fatal error\n";
+}
+
 my $uniqueCounter = 1000;
 
-sub doTemplate {
+sub doTypeTemplate {
     my ($beginLine, $endLine) = @_;
     my @types                 = ();
 
@@ -100,8 +109,7 @@ sub doTemplate {
             }
 
             if (not defined $addTypes) {
-                my $errLine = $beginLine + 1; # report 1-based line number
-                die "line $errLine: unrecognized $what $group\n";
+                dieWithError ($beginLine, "unrecognized $what $group");
             }
 
             foreach my $type (@$addTypes) {
@@ -109,8 +117,7 @@ sub doTemplate {
             }
         }
     } else {
-        my $errLine = $beginLine + 1; # report 1-based line number
-        die "line $errLine: can't parse FOR directive\n";
+        dieWithError ($beginLine, "can't parse FOR directive");
     }
 
     my ($bar, $comma) = ("   ", "     ");
@@ -166,6 +173,52 @@ sub doTemplate {
         $comma = ",    ";
     }
 }
+
+sub doStrTemplate {
+    my ($beginLine, $endLine) = @_;
+    my @strings               = ();
+
+    my $header = $input[$beginLine];
+    if ($header =~ /^--FORSTR\s+(\S.*)$/) {
+        my $args = $1;
+        @strings = split (/,\s*/, $args);
+    } else {
+        dieWithError ($beginLine, "can't parse FORSTR directive");
+    }
+
+    foreach my $str (@strings) {
+        my $begLine = $beginLine + 1;
+        lineDirective ($begLine);
+
+        for (my $lineNo = $begLine; $lineNo < $endLine; $lineNo++) {
+            my $line = $input[$lineNo];
+
+            $line =~ s/STR/$str/g;
+
+            pushLine ($line);
+        }
+    }
+}
+
+sub doTemplate {
+    my ($beginLine, $endLine) = @_;
+
+    my $header = $input[$beginLine];
+    if ($header =~ /^--FOR\s+/) {
+        doTypeTemplate ($beginLine, $endLine);
+    } elsif ($header =~ /^--FORSTR\s+/) {
+        doStrTemplate ($beginLine, $endLine);
+    } else {
+        my $msg = "unrecognized directive";
+
+        if ($header =~ /^--(\w+)\s+/) {
+            $msg .= qq[ "$1"];
+        }
+
+        dieWithError ($beginLine, $msg);
+    }
+}
+
 
 open F, "<", $templateFull or die;
 
