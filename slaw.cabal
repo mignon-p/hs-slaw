@@ -109,3 +109,33 @@ library
 
   ghc-options:         -Wall -Wno-unused-do-bind -Wno-incomplete-uni-patterns
   -- ghc-options:         -Wall -Wno-unused-do-bind -Wno-incomplete-uni-patterns -Wno-unused-top-binds -Wno-unused-imports
+
+test-suite test
+  type:                exitcode-stdio-1.0
+
+  main-is:             test.hs
+
+  other-modules:       SlawInstances
+
+  default-extensions:  BangPatterns
+                     , MultiWayIf
+                     , NumericUnderscores
+                     , OverloadedStrings
+                     , TupleSections
+
+  build-depends:       base                 >= 4.12      && < 5
+                     , bytestring           >= 0.11.3.0  && < 0.13
+                     , half                 >= 0.3.1     && < 0.4
+                     , QuickCheck           >= 2.14.3    && < 2.16
+                     , quickcheck-unicode   >= 1.0.1.0   && < 1.1
+                     , slaw
+                     , tasty                >= 1.4.3     && < 1.6
+                     , tasty-quickcheck     >= 0.10.2    && < 0.11
+                     , text                 >= 1.2.3.1   && < 2.2
+                     , vector               >= 0.12.0.3  && < 0.14
+
+  hs-source-dirs:      tests
+
+  default-language:    Haskell2010
+
+  ghc-options:         -Wall -Wno-unused-do-bind -Wno-incomplete-uni-patterns -Wno-orphans
