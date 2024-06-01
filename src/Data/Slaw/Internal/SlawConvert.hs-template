@@ -1,8 +1,6 @@
 -- See doc/template.txt for more information about template files.
 
-{-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE TypeSynonymInstances       #-}
 
 module Data.Slaw.Internal.SlawConvert
   ( FromSlaw(..)
