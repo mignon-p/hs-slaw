@@ -9,6 +9,7 @@ module Data.Slaw.Internal.SlawEncode
   , Sym(..)
   , Oct
   , computeBsize
+  , vectorSize
   ) where
 
 import Control.DeepSeq
@@ -257,7 +258,10 @@ upperBits nf nt = (uBits, bsize)
 computeBsize :: NumericFormat -> Int -> Int
 computeBsize nf size = size * cplxSize * vectSize
   where cplxSize = if nfComplex nf then 2 else 1
-        vectSize = "123448@P" #! fromEnum (nfVector nf)
+        vectSize = vectorSize (nfVector nf)
+
+vectorSize :: VectorType -> Int
+vectorSize vt = "123448@P" #! fromEnum vt
 
 (#!) :: (Integral a, Integral b) => B.ByteString -> a -> b
 bs #! idx = fromIntegral $ (bs `B.index` fromIntegral idx) - 48
