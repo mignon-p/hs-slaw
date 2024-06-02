@@ -134,7 +134,9 @@ shrinkPairToMap = map f . shrinkPair
         f x                  = x
 
 shrSlawNum :: NumericFormat -> NumericData -> [Slaw]
-shrSlawNum nf nd = catMaybes $ simpler ++ [unArray]
+shrSlawNum nf nd
+  | numericDataLength nd == 0 = []
+  | otherwise                 = catMaybes $ simpler ++ [unArray]
   where
     unVector  x = x { nfVector  = VtScalar }
     unComplex x = x { nfComplex = False    }
