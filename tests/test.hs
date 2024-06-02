@@ -1,4 +1,4 @@
-import Data.List
+-- import Data.List
 import System.Environment
 import Test.Tasty
 import qualified Test.Tasty.QuickCheck as QC
@@ -27,10 +27,8 @@ setIfNotSet var val = do
 
 qcProps :: TestTree
 qcProps = testGroup "(checked by QuickCheck)"
-  [ QC.testProperty "sort == sort . reverse" $
-      \list -> sort (list :: [Int]) == sort (reverse list)
-  , QC.testProperty "decodeSlaw . encodeSlaw == id (big endian)" $
+  [ QC.testProperty "round-trip (big endian)" $
       \slaw -> slaw QC.=== decodeSlaw BigEndian (encodeSlaw BigEndian slaw)
-  , QC.testProperty "decodeSlaw . encodeSlaw == id (little endian)" $
+  , QC.testProperty "round-trip (little endian)" $
       \slaw -> slaw QC.=== decodeSlaw LittleEndian (encodeSlaw LittleEndian slaw)
   ]
