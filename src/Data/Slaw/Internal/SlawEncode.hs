@@ -10,6 +10,7 @@ module Data.Slaw.Internal.SlawEncode
   , Oct
   , computeBsize
   , vectorSize
+  , numericFormatSize
   ) where
 
 import Control.DeepSeq
@@ -262,6 +263,9 @@ computeBsize nf size = size * cplxSize * vectSize
 
 vectorSize :: VectorType -> Int
 vectorSize vt = "123448@P" #! fromEnum vt
+
+numericFormatSize :: NumericFormat -> Int
+numericFormatSize = (`computeBsize` 1)
 
 (#!) :: (Integral a, Integral b) => B.ByteString -> a -> b
 bs #! idx = fromIntegral $ (bs `B.index` fromIntegral idx) - 48

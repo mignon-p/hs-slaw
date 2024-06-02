@@ -26,6 +26,8 @@ module Data.Slaw.Internal.SlawType
   , doubleCoerce
   , NumTyp(..)
   , classifyNumeric
+  , numericDataSlice
+  , numericDataLength
   ) where
 
 import Control.Arrow (second)
@@ -466,4 +468,14 @@ data NumTyp =
 classifyNumeric :: NumericType -> (NumTyp, Int)
 --FOR sizedInt, floating
 classifyNumeric TypNAMEXX = (NumTypSIGNEDXX, BITS `div` 8)
+--END
+
+numericDataSlice :: Int -> Int -> NumericData -> NumericData
+--FOR sizedInt, floating
+numericDataSlice i n (NumNAMEXX v) = NumNAMEXX (S.slice i n v)
+--END
+
+numericDataLength :: NumericData -> Int
+--FOR sizedInt, floating
+numericDataLength (NumNAMEXX v) = S.length v
 --END
