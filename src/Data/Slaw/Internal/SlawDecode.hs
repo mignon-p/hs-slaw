@@ -391,10 +391,10 @@ getComplex :: Oct -> Bool
 getComplex = (`testBit` 57)
 
 getVtype :: Oct -> VectorType
-getVtype o = toEnum $ fromIntegral $ 7 .&. (o `shiftL` 54)
+getVtype o = toEnum $ fromIntegral $ 7 .&. (o `shiftR` 54)
 
 getElemSize :: Oct -> Int
-getElemSize o = 1 `shiftL` fromIntegral (3 .&. (o `shiftL` 58))
+getElemSize o = 1 `shiftL` fromIntegral (3 .&. (o `shiftR` 58))
 
 decNum :: (Bool, NumTyp)
        -> Oct
