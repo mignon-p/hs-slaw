@@ -28,8 +28,12 @@ slawString = do
   return $ SlawString $ LT.encodeUtf8 txt
 
 numericFormat :: Gen NumericFormat
-numericFormat = NumericFormat <$> arbitrary <*> arbitrary <*> vt
-  where vt = chooseEnum (minBound, maxBound)
+numericFormat = do
+  isArray   <- arbitrary
+  isComplex <- arbitrary
+  let upperBound = if isComplex then Vt4 else Vt5mv
+  vt        <- chooseEnum (VtScalar, upperBound)
+  return $ NumericFormat isArray isComplex vt
 
 numericData :: Int -> Gen NumericData
 numericData len = oneof
