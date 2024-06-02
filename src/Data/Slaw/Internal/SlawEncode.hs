@@ -131,10 +131,10 @@ encP2 False rudeLen top5 rude =
 
 mkTop5 :: Bool -> Bool -> Bool -> Word64
 mkTop5 dFlag iFlag bigRude =
-  sum [ if dFlag   then bit 62 else 0
-      , if iFlag   then bit 61 else 0
-      , if bigRude then bit 59 else 0
-      ]
+  orList [ if dFlag   then bit 62 else 0
+         , if iFlag   then bit 61 else 0
+         , if bigRude then bit 59 else 0
+         ]
 
 encDesIng :: (?bo::ByteOrder) => Maybe Slaw -> (Octs, Bool)
 encDesIng Nothing  = (mempty,        False)
@@ -247,14 +247,14 @@ upperBits nf nt = (uBits, bsize)
         cplxBit    = (fromEnum . nfComplex) nf
         vectBits   = (fromEnum . nfVector ) nf
         bsize      = computeBsize nf siz
-        uBits      = sum [ bsize - 1
-                         , vectBits `shiftL` 8
-                         , cplxBit  `shiftL` 11
-                         , sizBits  `shiftL` 12
-                         , fuBits   `shiftL` 14
-                         , arrayBit `shiftL` 16
-                         , 1        `shiftL` 17
-                         ]
+        uBits      = orList [ bsize - 1
+                            , vectBits `shiftL` 8
+                            , cplxBit  `shiftL` 11
+                            , sizBits  `shiftL` 12
+                            , fuBits   `shiftL` 14
+                            , arrayBit `shiftL` 16
+                            , 1        `shiftL` 17
+                            ]
 
 computeBsize :: NumericFormat -> Int -> Int
 computeBsize nf size = size * cplxSize * vectSize

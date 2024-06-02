@@ -19,12 +19,14 @@ module Data.Slaw.Internal.Util
   , (?>)
   , uncurry5
   , safeIntegralFromInteger
+  , orList
   ) where
 
 import Data.Bits
 import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.Char
 import Data.Hashable
+import Data.List
 import Data.Word
 import GHC.ByteOrder
 import GHC.Float
@@ -126,3 +128,7 @@ getLoHi :: Int -> Bool -> (Integer, Integer)
 getLoHi nbits False = (0, (2 ^ nbits) - 1)
 getLoHi nbits True  = ((-x), x - 1)
   where x = 2 ^ (nbits - 1)
+
+{-# INLINE orList #-}
+orList :: Bits a => [a] -> a
+orList = foldl' (.|.) zeroBits
