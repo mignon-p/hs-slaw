@@ -168,7 +168,7 @@ encList nib ss = hdr <> body
         hdr    = if ext then hdr1 <> hdr2 else hdr1
 
 encMap :: (?bo::ByteOrder) => [(Slaw, Slaw)] -> Octs
-encMap = encList NibMap . map (uncurry SlawCons) . removeDups
+encMap = encList NibMap . map (uncurry SlawCons)
 
 encNumeric :: (?bo::ByteOrder) => NumericFormat -> NumericData -> Octs
 encNumeric nf nd =
