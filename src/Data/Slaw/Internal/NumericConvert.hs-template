@@ -20,8 +20,10 @@ import Data.Word
 import Foreign.Storable
 import GHC.Generics (Generic)
 import Numeric.Half
+import Text.Printf
 
 import Data.Slaw.Internal.Exception
+import Data.Slaw.Internal.HalfOrphans ()
 import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.NativeInt
 import Data.Slaw.Internal.NumericTypes
@@ -103,7 +105,15 @@ cnfReal = CheckNF
 
                              -- RealClass --
 
-class (Storable a, Num a, Nameable a) => RealClass a where
+class ( Real      a
+      , Storable  a
+      , Show      a
+      , Read      a
+      , NFData    a
+      , Hashable  a
+      , PrintfArg a
+      , Nameable  a
+      ) => RealClass a where
   ndToReal :: (NumericFormat, NumericData)
            -> Either PlasmaException (S.Vector a)
 

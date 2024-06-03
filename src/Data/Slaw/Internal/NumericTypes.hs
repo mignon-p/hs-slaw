@@ -22,7 +22,7 @@ import GHC.Generics (Generic)
 
 data V2 a = V2 { v2x :: !a
                , v2y :: !a
-               } deriving (Eq, Ord, Show, Functor,
+               } deriving (Eq, Ord, Show, Read, Functor,
                            Generic, NFData, Hashable)
 
 instance Default a => Default (V2 a) where
@@ -46,7 +46,7 @@ instance Storable a => Storable (V2 a) where
 data V3 a = V3 { v3x :: !a
                , v3y :: !a
                , v3z :: !a
-               } deriving (Eq, Ord, Show, Functor,
+               } deriving (Eq, Ord, Show, Read, Functor,
                            Generic, NFData, Hashable)
 
 instance Default a => Default (V3 a) where
@@ -73,7 +73,7 @@ data V4 a = V4 { v4x :: !a
                , v4y :: !a
                , v4z :: !a
                , v4w :: !a
-               } deriving (Eq, Ord, Show, Functor,
+               } deriving (Eq, Ord, Show, Read, Functor,
                            Generic, NFData, Hashable)
 
 instance Default a => Default (V4 a) where
