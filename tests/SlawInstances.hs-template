@@ -2,6 +2,7 @@
 
 module SlawInstances where
 
+import Data.Bits
 import qualified Data.ByteString.Lazy    as L
 import Data.List
 import Data.Maybe
@@ -10,6 +11,7 @@ import qualified Data.Text.Lazy.Encoding as LT
 import qualified Data.Vector.Storable    as S
 import Numeric.Half
 import Test.QuickCheck
+import Test.QuickCheck.Gen
 import qualified Test.QuickCheck.Unicode as U
 
 import Data.Slaw.Internal.SlawEncode
@@ -35,11 +37,37 @@ numericFormat = do
   vt        <- chooseEnum (VtScalar, upperBound)
   return $ NumericFormat isArray isComplex vt
 
+genHalfBitPattern :: Gen Half
+genHalfBitPattern = do
+  -- generate all possible bit patterns, except NaN
+  w16 <- chooseBoundedIntegral (0, 0b11111000_00000000)
+  -- move the sign bit up to the top, where it belongs
+  let w16' = w16 `rotateR` 1
+  return $ Half w16'
+
+genHalfInteger :: Gen Half
+genHalfInteger = do
+  n <- chooseInt (-2048, 2048)
+  return $ fromIntegral n
+
+instance Arbitrary Half where
+  arbitrary = oneof
+    [ genHalfBitPattern
+    , genHalfInteger
+    , toHalf <$> genFloat -- in the range 0..1
+    ]
+
+  shrink x
+    | x `elem` suggestions = []
+    | otherwise            = suggestions
+    where suggestions = concatMap f [0, 1, 2048, 65504]
+          f y = [y, -y]
+
 numericData :: Int -> Gen NumericData
 numericData len = oneof
-  [ (NumHalf   . S.fromList) <$> vectorOf len (toHalf <$> arbitrary)
---FOR sizedInt, Float, Double
-  , (NumNAMEXX . S.fromList) <$> vectorOf len arbitrary
+  [
+--FOR sizedInt, floating
+  COMMA (NumNAMEXX . S.fromList) <$> vectorOf len arbitrary
 --END
   ]
 

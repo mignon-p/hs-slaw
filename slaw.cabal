@@ -74,6 +74,7 @@ library
 
   -- LANGUAGE extensions enabled for all modules in this package.
   default-extensions:  BangPatterns
+                     , BinaryLiterals
                      , DeriveAnyClass
                      , DeriveFunctor
                      , DeriveGeneric
@@ -118,6 +119,7 @@ test-suite test
   other-modules:       SlawInstances
 
   default-extensions:  BangPatterns
+                     , BinaryLiterals
                      , MultiWayIf
                      , NumericUnderscores
                      , OverloadedStrings
