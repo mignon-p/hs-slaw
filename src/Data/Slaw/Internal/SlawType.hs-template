@@ -53,6 +53,7 @@ import Numeric.Half
 import System.IO.Unsafe (unsafePerformIO)
 
 import Data.Slaw.Internal.Exception
+import Data.Slaw.Internal.HalfOrphans ()
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
 import Data.Slaw.Internal.VectorConvert
@@ -103,9 +104,7 @@ data NumericData =
 instance Hashable NumericData where
 --FOR sizedInt
   salt `hashWithSalt` NumNAMEXX v = hh v salt UNIQ `hashRawVector` v
---END
-  salt `hashWithSalt` NumHalf   v = hh v salt  666 ## halfList v
---FOR Float, Double
+--FOR floating
   salt `hashWithSalt` NumNAMEXX v = hh v salt UNIQ ## S.toList v
 --END
 
@@ -119,12 +118,6 @@ hashRawVector salt v
       let byteLen = len * sizeOf (S.head v)
       hashPtrWithSalt ptr byteLen salt
   where len = S.length v
-
-halfList :: S.Vector Half -> [Word16]
-halfList = map f . S.toList
-  where f half
-          | isZero half = 0
-          | otherwise   = (fromIntegral . getHalf) half
 
 data NumericType =
 --FOR sizedInt, floating

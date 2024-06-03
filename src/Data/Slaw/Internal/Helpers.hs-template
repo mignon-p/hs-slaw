@@ -9,10 +9,12 @@ module Data.Slaw.Internal.Helpers
 
 import Control.DeepSeq
 import Data.Bits
+import Data.Hashable
 import qualified Data.Vector.Storable as S
 import Foreign.Storable
--- import Text.Printf
+import Text.Printf
 
+import Data.Slaw.Internal.HalfOrphans ()
 import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.SlawType
 
@@ -21,6 +23,8 @@ mapNumericData :: (forall a. ( Real      a
                              , Show      a
                              , Read      a
                              , NFData    a
+                             , Hashable  a
+                             , PrintfArg a
                              , Nameable  a
                              ) => S.Vector a -> S.Vector a)
                -> NumericData
@@ -37,6 +41,8 @@ bimapNumericData :: (forall a. ( Integral  a
                                , Show      a
                                , Read      a
                                , NFData    a
+                               , Hashable  a
+                               , PrintfArg a
                                , Nameable  a
                                ) => S.Vector a -> S.Vector a)
                  -> (forall b. ( RealFloat b
@@ -44,6 +50,8 @@ bimapNumericData :: (forall a. ( Integral  a
                                , Show      b
                                , Read      b
                                , NFData    b
+                               , Hashable  b
+                               , PrintfArg b
                                , Nameable  b
                                ) => S.Vector b -> S.Vector b)
                  -> NumericData
