@@ -68,6 +68,7 @@ library
                      , Data.Slaw.Internal.SlawDecode
                      , Data.Slaw.Internal.NumericConvert
                      , Data.Slaw.Internal.SlawConvert
+                     , Data.Slaw.Internal.Helpers
 
   -- Modules included in this library but not exported.
   -- other-modules:

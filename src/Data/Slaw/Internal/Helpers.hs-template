@@ -1,0 +1,55 @@
+-- See doc/template.txt for more information about template files.
+
+{-# LANGUAGE RankNTypes                 #-}
+
+module Data.Slaw.Internal.Helpers
+  ( mapNumericData
+  , bimapNumericData
+  ) where
+
+import Control.DeepSeq
+import Data.Bits
+import qualified Data.Vector.Storable as S
+import Foreign.Storable
+-- import Text.Printf
+
+import Data.Slaw.Internal.Nameable
+import Data.Slaw.Internal.SlawType
+
+mapNumericData :: (forall a. ( Real      a
+                             , Storable  a
+                             , Show      a
+                             , Read      a
+                             , NFData    a
+                             , Nameable  a
+                             ) => S.Vector a -> S.Vector a)
+               -> NumericData
+               -> NumericData
+--FOR sizedInt, floating
+mapNumericData func (NumNAMEXX v) = NumNAMEXX $ func v
+--END
+
+bimapNumericData :: (forall a. ( Integral  a
+                               , Storable  a
+                               , Bounded   a
+                               , Enum      a
+                               , Bits      a
+                               , Show      a
+                               , Read      a
+                               , NFData    a
+                               , Nameable  a
+                               ) => S.Vector a -> S.Vector a)
+                 -> (forall b. ( RealFloat b
+                               , Storable  b
+                               , Show      b
+                               , Read      b
+                               , NFData    b
+                               , Nameable  b
+                               ) => S.Vector b -> S.Vector b)
+                 -> NumericData
+                 -> NumericData
+--FOR sizedInt
+bimapNumericData func _ (NumNAMEXX v) = NumNAMEXX $ func v
+--FOR floating
+bimapNumericData _ func (NumNAMEXX v) = NumNAMEXX $ func v
+--END
