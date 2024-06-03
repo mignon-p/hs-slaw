@@ -6,9 +6,9 @@ module Data.Slaw.Internal.Helpers
   ( PlasmaIntegral
   , PlasmaFloat
   , mapNumericData
-  , bimapNumericData
-  , mapNumericDataTo
-  , bimapNumericDataTo
+  , mapNumericData2
+  , fromNumericData
+  , fromNumericData2
   , sliceNumericData
   , lengthNumericData
   ) where
@@ -54,35 +54,35 @@ mapNumericData :: (forall a. (PlasmaReal a) => S.Vector a -> S.Vector a)
 mapNumericData func (NumNAMEXX v) = NumNAMEXX $ func v
 --END
 
-bimapNumericData :: (forall a. ( PlasmaIntegral a
-                               ) => S.Vector a -> S.Vector a)
-                 -> (forall b. ( PlasmaFloat b
-                               ) => S.Vector b -> S.Vector b)
-                 -> NumericData
-                 -> NumericData
+mapNumericData2 :: (forall a. ( PlasmaIntegral a
+                              ) => S.Vector a -> S.Vector a)
+                -> (forall b. ( PlasmaFloat b
+                              ) => S.Vector b -> S.Vector b)
+                -> NumericData
+                -> NumericData
 --FOR sizedInt
-bimapNumericData func _ (NumNAMEXX v) = NumNAMEXX $ func v
+mapNumericData2 func _ (NumNAMEXX v) = NumNAMEXX $ func v
 --FOR floating
-bimapNumericData _ func (NumNAMEXX v) = NumNAMEXX $ func v
+mapNumericData2 _ func (NumNAMEXX v) = NumNAMEXX $ func v
 --END
 
-mapNumericDataTo :: (forall a. (PlasmaReal a) => S.Vector a -> b)
-                 -> NumericData
-                 -> b
+fromNumericData :: (forall a. (PlasmaReal a) => S.Vector a -> b)
+                -> NumericData
+                -> b
 --FOR sizedInt, floating
-mapNumericDataTo func (NumNAMEXX v) = func v
+fromNumericData func (NumNAMEXX v) = func v
 --END
 
-bimapNumericDataTo :: (forall a. ( PlasmaIntegral  a
-                                 ) => S.Vector a -> c)
-                   -> (forall b. ( PlasmaFloat b
-                                 ) => S.Vector b -> c)
-                   -> NumericData
-                   -> c
+fromNumericData2 :: (forall a. ( PlasmaIntegral  a
+                               ) => S.Vector a -> c)
+                 -> (forall b. ( PlasmaFloat b
+                               ) => S.Vector b -> c)
+                 -> NumericData
+                 -> c
 --FOR sizedInt
-bimapNumericDataTo func _ (NumNAMEXX v) = func v
+fromNumericData2 func _ (NumNAMEXX v) = func v
 --FOR floating
-bimapNumericDataTo _ func (NumNAMEXX v) = func v
+fromNumericData2 _ func (NumNAMEXX v) = func v
 --END
 
 sliceNumericData :: Int -> Int -> NumericData -> NumericData
@@ -96,4 +96,4 @@ sliceNumericData' :: Storable a
 sliceNumericData' i n v = S.slice i n v
 
 lengthNumericData :: NumericData -> Int
-lengthNumericData = mapNumericDataTo S.length
+lengthNumericData = fromNumericData S.length
