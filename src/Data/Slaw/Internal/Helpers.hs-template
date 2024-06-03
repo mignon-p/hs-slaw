@@ -5,6 +5,10 @@
 module Data.Slaw.Internal.Helpers
   ( mapNumericData
   , bimapNumericData
+  , mapNumericDataTo
+  , bimapNumericDataTo
+  , sliceNumericData
+  , lengthNumericData
   ) where
 
 import Control.DeepSeq
@@ -61,3 +65,60 @@ bimapNumericData func _ (NumNAMEXX v) = NumNAMEXX $ func v
 --FOR floating
 bimapNumericData _ func (NumNAMEXX v) = NumNAMEXX $ func v
 --END
+
+mapNumericDataTo :: (forall a. ( Real      a
+                               , Storable  a
+                               , Show      a
+                               , Read      a
+                               , NFData    a
+                               , Hashable  a
+                               , PrintfArg a
+                               , Nameable  a
+                               ) => S.Vector a -> b)
+                 -> NumericData
+                 -> b
+--FOR sizedInt, floating
+mapNumericDataTo func (NumNAMEXX v) = func v
+--END
+
+bimapNumericDataTo :: (forall a. ( Integral  a
+                                 , Storable  a
+                                 , Bounded   a
+                                 , Enum      a
+                                 , Bits      a
+                                 , Show      a
+                                 , Read      a
+                                 , NFData    a
+                                 , Hashable  a
+                                 , PrintfArg a
+                                 , Nameable  a
+                                 ) => S.Vector a -> c)
+                   -> (forall b. ( RealFloat b
+                                 , Storable  b
+                                 , Show      b
+                                 , Read      b
+                                 , NFData    b
+                                 , Hashable  b
+                                 , PrintfArg b
+                                 , Nameable  b
+                                 ) => S.Vector b -> c)
+                   -> NumericData
+                   -> c
+--FOR sizedInt
+bimapNumericDataTo func _ (NumNAMEXX v) = func v
+--FOR floating
+bimapNumericDataTo _ func (NumNAMEXX v) = func v
+--END
+
+sliceNumericData :: Int -> Int -> NumericData -> NumericData
+sliceNumericData i n = mapNumericData (sliceNumericData' i n)
+
+sliceNumericData' :: Storable a
+                  => Int
+                  -> Int
+                  -> S.Vector a
+                  -> S.Vector a
+sliceNumericData' i n v = S.slice i n v
+
+lengthNumericData :: NumericData -> Int
+lengthNumericData = mapNumericDataTo S.length
