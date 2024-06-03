@@ -101,9 +101,10 @@ cnfReal = CheckNF
   , cnfVector  = Just VtScalar
   }
 
+                             -- RealClass --
+
 class (Storable a, Num a, Nameable a) => RealClass a where
-  ndToReal :: Maybe String
-           -> (NumericFormat, NumericData)
+  ndToReal :: (NumericFormat, NumericData)
            -> Either PlasmaException (S.Vector a)
 
   realToNd :: S.Vector a
@@ -112,9 +113,9 @@ class (Storable a, Num a, Nameable a) => RealClass a where
 --FOR sizedInt
 
 instance RealClass TYPE where
-  ndToReal tname (nf, nd) = do
+  ndToReal (nf, nd) = do
     let fromType = numTypeName nd
-        toType   = tname ?> "TYPE"
+        toType   = "TYPE"
     checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
     case nd of
       NumNAMEXX v -> return v
@@ -128,9 +129,13 @@ instance RealClass TYPE where
 --FOR nativeInt
 
 instance RealClass TYPE where
-  ndToReal _ = mapRight f . ndToReal (Just "TYPE")
-    where f :: S.Vector NativeTYPE -> S.Vector TYPE
-          f = S.unsafeCast
+  ndToReal (nf, nd) = do
+    let fromType = numTypeName nd
+        toType   = "TYPE"
+    checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
+    let typePair = (fromType, toType)
+    nes <- mapM (checkRange' typePair (0 :: TYPE)) $ numToList nd
+    return $ S.fromList $ map intCoerce nes
 
   realToNd = realToNd . f
     where f :: S.Vector TYPE -> S.Vector NativeTYPE
@@ -139,8 +144,8 @@ instance RealClass TYPE where
 --FOR floating
 
 instance RealClass TYPE where
-  ndToReal tname (nf, nd) = do
-    let toType   = tname ?> "TYPE"
+  ndToReal (nf, nd) = do
+    let toType   = "TYPE"
     checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
     case nd of
       NumNAMEXX v -> return v
@@ -169,6 +174,8 @@ insertZeros v = S.generate len' f
                   then v S.! q
                   else 0
 
+                            -- ScalarClass --
+
 class (Storable a, Nameable a) => ScalarClass a where
   ndToScalar :: (NumericFormat, NumericData)
              -> Either PlasmaException (S.Vector a)
@@ -182,7 +189,7 @@ instance RealClass a => ScalarClass (Complex a) where
         realNF   = nf { nfComplex = False }
         singleNF = nf { nfArray   = False }
     checkNF cnfScalar nf (singleNF, nd, toType)
-    v1 <- case ndToReal Nothing (realNF, nd) of
+    v1 <- case ndToReal (realNF, nd) of
             Left err ->
               let msg = describeNumeric singleNF nd `cantCoerce` toType
               in msg `because` [err]
@@ -205,10 +212,12 @@ instance RealClass a => ScalarClass (Complex a) where
 --FOR sizedInt, nativeInt, floating
 
 instance ScalarClass TYPE where
-  ndToScalar = ndToReal Nothing
+  ndToScalar = ndToReal
   scalarToNd = realToNd
 
 --END
+
+                            -- NumericClass --
 
 class (Storable a, Nameable a) => NumericClass a where
   ndToNumeric :: (NumericFormat, NumericData)
