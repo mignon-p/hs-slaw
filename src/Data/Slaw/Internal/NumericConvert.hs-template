@@ -3,9 +3,9 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 
 module Data.Slaw.Internal.NumericConvert
-  ( RealClass(..)
-  , ScalarClass(..)
-  , NumericClass(..)
+  ( PlasmaReal(..)
+  , PlasmaScalar(..)
+  , PlasmaNumeric(..)
   ) where
 
 -- import Control.Arrow (second)
@@ -103,7 +103,7 @@ cnfReal = CheckNF
   , cnfVector  = Just VtScalar
   }
 
-                             -- RealClass --
+                             -- PlasmaReal --
 
 class ( Real      a
       , Storable  a
@@ -113,7 +113,7 @@ class ( Real      a
       , Hashable  a
       , PrintfArg a
       , Nameable  a
-      ) => RealClass a where
+      ) => PlasmaReal a where
   ndToReal :: (NumericFormat, NumericData)
            -> Either PlasmaException (S.Vector a)
 
@@ -122,7 +122,7 @@ class ( Real      a
 
 --FOR sizedInt
 
-instance RealClass TYPE where
+instance PlasmaReal TYPE where
   ndToReal (nf, nd) = do
     let fromType = numTypeName nd
         toType   = "TYPE"
@@ -138,7 +138,7 @@ instance RealClass TYPE where
 
 --FOR nativeInt
 
-instance RealClass TYPE where
+instance PlasmaReal TYPE where
   ndToReal (nf, nd) = do
     let fromType = numTypeName nd
         toType   = "TYPE"
@@ -153,7 +153,7 @@ instance RealClass TYPE where
 
 --FOR floating
 
-instance RealClass TYPE where
+instance PlasmaReal TYPE where
   ndToReal (nf, nd) = do
     let toType   = "TYPE"
     checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
@@ -184,16 +184,16 @@ insertZeros v = S.generate len' f
                   then v S.! q
                   else 0
 
-                            -- ScalarClass --
+                            -- PlasmaScalar --
 
-class (Storable a, Nameable a) => ScalarClass a where
+class (Storable a, Nameable a) => PlasmaScalar a where
   ndToScalar :: (NumericFormat, NumericData)
              -> Either PlasmaException (S.Vector a)
 
   scalarToNd :: S.Vector a
              -> (NumericFormat, NumericData)
 
-instance RealClass a => ScalarClass (Complex a) where
+instance PlasmaReal a => PlasmaScalar (Complex a) where
   ndToScalar (nf, nd) = do
     let toType   = typeName (undefined :: Complex a)
         realNF   = nf { nfComplex = False }
@@ -221,15 +221,15 @@ instance RealClass a => ScalarClass (Complex a) where
 
 --FOR sizedInt, nativeInt, floating
 
-instance ScalarClass TYPE where
+instance PlasmaScalar TYPE where
   ndToScalar = ndToReal
   scalarToNd = realToNd
 
 --END
 
-                            -- NumericClass --
+                            -- PlasmaNumeric --
 
-class (Storable a, Nameable a) => NumericClass a where
+class (Storable a, Nameable a) => PlasmaNumeric a where
   ndToNumeric :: (NumericFormat, NumericData)
               -> Either PlasmaException (S.Vector a)
 
@@ -238,7 +238,7 @@ class (Storable a, Nameable a) => NumericClass a where
 
 --FOR vectors
 
-instance ScalarClass a => NumericClass (TYPE a) where
+instance PlasmaScalar a => PlasmaNumeric (TYPE a) where
   ndToNumeric (nf, nd) = do
     let toType    = typeName (undefined :: TYPE a)
         scalarNF  = nf { nfVector = VtScalar }
@@ -264,13 +264,13 @@ instance ScalarClass a => NumericClass (TYPE a) where
 
 --END
 
-instance RealClass a => NumericClass (Complex a) where
+instance PlasmaReal a => PlasmaNumeric (Complex a) where
   ndToNumeric = ndToScalar
   numericToNd = scalarToNd
 
 --FOR sizedInt, nativeInt, floating
 
-instance NumericClass TYPE where
+instance PlasmaNumeric TYPE where
   ndToNumeric = ndToScalar
   numericToNd = scalarToNd
 

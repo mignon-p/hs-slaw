@@ -555,21 +555,21 @@ integralPairFromSlaw (x, y) = do
   y' <- integralFromSlaw y
   return (x', y')
 
-numericVectorFromSlaw :: NumericClass a
+numericVectorFromSlaw :: PlasmaNumeric a
                       => Slaw
                       -> Either PlasmaException (S.Vector a)
 numericVectorFromSlaw s@(SlawNumeric nf nd) =
   addErrCtx s $ ndToNumeric (nf, nd)
 numericVectorFromSlaw s = handleOthers s
 
-numericVectorToSlaw :: NumericClass a
+numericVectorToSlaw :: PlasmaNumeric a
                     => S.Vector a
                     -> Slaw
 numericVectorToSlaw v = SlawNumeric nf' nd
   where (nf, nd) = numericToNd v
         nf'      = nf { nfArray = True }
 
-numericSingletonFromSlaw :: NumericClass a
+numericSingletonFromSlaw :: PlasmaNumeric a
                          => Slaw
                          -> Either PlasmaException a
 numericSingletonFromSlaw s@(SlawNumeric nf nd) = addErrCtx s $ do
@@ -582,7 +582,7 @@ numericSingletonFromSlaw s@(SlawNumeric nf nd) = addErrCtx s $ do
                                       ]
 numericSingletonFromSlaw s = handleOthers s
 
-numericSingletonToSlaw :: NumericClass a
+numericSingletonToSlaw :: PlasmaNumeric a
                        => a
                        -> Slaw
 numericSingletonToSlaw x = SlawNumeric nf' nd
@@ -1102,28 +1102,28 @@ instance ToSlaw TYPEXX where
 
                   -- instances for Complex singletons --
 
-instance (RealClass a) => FromSlaw (Complex a) where
+instance (PlasmaReal a) => FromSlaw (Complex a) where
   fromSlaw = numericSingletonFromSlaw
 
-instance (RealClass a) => ToSlaw (Complex a) where
+instance (PlasmaReal a) => ToSlaw (Complex a) where
   toSlaw = numericSingletonToSlaw
 
             -- instances for (geometric) vectors (V2/V3/V4) --
 
 --FOR vectors
 
-instance (ScalarClass a) => FromSlaw (TYPEXX a) where
+instance (PlasmaScalar a) => FromSlaw (TYPEXX a) where
   fromSlaw = numericSingletonFromSlaw
 
-instance (ScalarClass a) => ToSlaw (TYPEXX a) where
+instance (PlasmaScalar a) => ToSlaw (TYPEXX a) where
   toSlaw = numericSingletonToSlaw
 
 --END
 
           -- instances for Storable Vectors of numeric types --
 
-instance NumericClass a => FromSlaw (S.Vector a) where
+instance PlasmaNumeric a => FromSlaw (S.Vector a) where
   fromSlaw = numericVectorFromSlaw
 
-instance NumericClass a => ToSlaw (S.Vector a) where
+instance PlasmaNumeric a => ToSlaw (S.Vector a) where
   toSlaw   = numericVectorToSlaw
