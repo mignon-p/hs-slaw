@@ -186,7 +186,13 @@ insertZeros v = S.generate len' f
 
                             -- PlasmaScalar --
 
-class (Storable a, Nameable a) => PlasmaScalar a where
+class ( Storable  a
+      , Show      a
+      , Read      a
+      , NFData    a
+      , Hashable  a
+      , Nameable  a
+      ) => PlasmaScalar a where
   ndToScalar :: (NumericFormat, NumericData)
              -> Either PlasmaException (S.Vector a)
 
@@ -229,7 +235,13 @@ instance PlasmaScalar TYPE where
 
                             -- PlasmaNumeric --
 
-class (Storable a, Nameable a) => PlasmaNumeric a where
+class ( Storable  a
+      , Show      a
+      , Read      a
+      , NFData    a
+      , Hashable  a
+      , Nameable  a
+      ) => PlasmaNumeric a where
   ndToNumeric :: (NumericFormat, NumericData)
               -> Either PlasmaException (S.Vector a)
 
