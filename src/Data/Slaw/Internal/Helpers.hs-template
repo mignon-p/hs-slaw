@@ -3,7 +3,9 @@
 {-# LANGUAGE RankNTypes                 #-}
 
 module Data.Slaw.Internal.Helpers
-  ( mapNumericData
+  ( PlasmaIntegral
+  , PlasmaFloat
+  , mapNumericData
   , bimapNumericData
   , mapNumericDataTo
   , bimapNumericDataTo
@@ -11,52 +13,50 @@ module Data.Slaw.Internal.Helpers
   , lengthNumericData
   ) where
 
-import Control.DeepSeq
+-- import Control.DeepSeq
 import Data.Bits
-import Data.Hashable
+-- import Data.Hashable
+import Data.Int
 import qualified Data.Vector.Storable as S
+import Data.Word
 import Foreign.Storable
-import Text.Printf
+import Numeric.Half
+-- import Text.Printf
 
 import Data.Slaw.Internal.HalfOrphans ()
-import Data.Slaw.Internal.Nameable
+-- import Data.Slaw.Internal.Nameable
+import Data.Slaw.Internal.NumericConvert
 import Data.Slaw.Internal.SlawType
 
-mapNumericData :: (forall a. ( Real      a
-                             , Storable  a
-                             , Show      a
-                             , Read      a
-                             , NFData    a
-                             , Hashable  a
-                             , PrintfArg a
-                             , Nameable  a
-                             ) => S.Vector a -> S.Vector a)
+class ( PlasmaReal a
+      , Integral   a
+      , Bounded    a
+      , Enum       a
+      , Bits       a
+      ) => PlasmaIntegral a
+
+--FOR sizedInt, nativeInt
+instance PlasmaIntegral TYPE
+--END
+
+class ( PlasmaReal a
+      , RealFloat  a
+      ) => PlasmaFloat a
+
+--FOR floating
+instance PlasmaFloat TYPE
+--END
+
+mapNumericData :: (forall a. (PlasmaReal a) => S.Vector a -> S.Vector a)
                -> NumericData
                -> NumericData
 --FOR sizedInt, floating
 mapNumericData func (NumNAMEXX v) = NumNAMEXX $ func v
 --END
 
-bimapNumericData :: (forall a. ( Integral  a
-                               , Storable  a
-                               , Bounded   a
-                               , Enum      a
-                               , Bits      a
-                               , Show      a
-                               , Read      a
-                               , NFData    a
-                               , Hashable  a
-                               , PrintfArg a
-                               , Nameable  a
+bimapNumericData :: (forall a. ( PlasmaIntegral a
                                ) => S.Vector a -> S.Vector a)
-                 -> (forall b. ( RealFloat b
-                               , Storable  b
-                               , Show      b
-                               , Read      b
-                               , NFData    b
-                               , Hashable  b
-                               , PrintfArg b
-                               , Nameable  b
+                 -> (forall b. ( PlasmaFloat b
                                ) => S.Vector b -> S.Vector b)
                  -> NumericData
                  -> NumericData
@@ -66,41 +66,16 @@ bimapNumericData func _ (NumNAMEXX v) = NumNAMEXX $ func v
 bimapNumericData _ func (NumNAMEXX v) = NumNAMEXX $ func v
 --END
 
-mapNumericDataTo :: (forall a. ( Real      a
-                               , Storable  a
-                               , Show      a
-                               , Read      a
-                               , NFData    a
-                               , Hashable  a
-                               , PrintfArg a
-                               , Nameable  a
-                               ) => S.Vector a -> b)
+mapNumericDataTo :: (forall a. (PlasmaReal a) => S.Vector a -> b)
                  -> NumericData
                  -> b
 --FOR sizedInt, floating
 mapNumericDataTo func (NumNAMEXX v) = func v
 --END
 
-bimapNumericDataTo :: (forall a. ( Integral  a
-                                 , Storable  a
-                                 , Bounded   a
-                                 , Enum      a
-                                 , Bits      a
-                                 , Show      a
-                                 , Read      a
-                                 , NFData    a
-                                 , Hashable  a
-                                 , PrintfArg a
-                                 , Nameable  a
+bimapNumericDataTo :: (forall a. ( PlasmaIntegral  a
                                  ) => S.Vector a -> c)
-                   -> (forall b. ( RealFloat b
-                                 , Storable  b
-                                 , Show      b
-                                 , Read      b
-                                 , NFData    b
-                                 , Hashable  b
-                                 , PrintfArg b
-                                 , Nameable  b
+                   -> (forall b. ( PlasmaFloat b
                                  ) => S.Vector b -> c)
                    -> NumericData
                    -> c
