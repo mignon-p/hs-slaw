@@ -7,12 +7,16 @@ module Data.Slaw.Internal.Helpers
   , PlasmaFloat
   , mapNumericData
   , mapNumericData2
+  , mapNumericData'
+  , mapNumericData2'
   , fromNumericData
   , fromNumericData2
+  , toNumericData
   , sliceNumericData
   , lengthNumericData
   ) where
 
+import Control.Arrow (first)
 -- import Control.DeepSeq
 import Data.Bits
 -- import Data.Hashable
@@ -27,6 +31,8 @@ import Data.Slaw.Internal.HalfOrphans ()
 -- import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.NumericConvert
 import Data.Slaw.Internal.SlawType
+
+                              -- classes --
 
 class ( PlasmaReal a
       , Integral   a
@@ -47,6 +53,8 @@ class ( PlasmaReal a
 instance PlasmaFloat TYPE
 --END
 
+                           -- mapNumericData --
+
 mapNumericData :: (forall a. (PlasmaReal a) => S.Vector a -> S.Vector a)
                -> NumericData
                -> NumericData
@@ -65,6 +73,30 @@ mapNumericData2 func _ (NumNAMEXX v) = NumNAMEXX $ func v
 --FOR floating
 mapNumericData2 _ func (NumNAMEXX v) = NumNAMEXX $ func v
 --END
+
+                          -- mapNumericData' --
+
+mapNumericData' :: (forall a. ( PlasmaReal a
+                              ) => S.Vector a -> (S.Vector a, b))
+                -> NumericData
+                -> (NumericData, b)
+--FOR sizedInt, floating
+mapNumericData' func (NumNAMEXX v) = first NumNAMEXX $ func v
+--END
+
+mapNumericData2' :: (forall a. ( PlasmaIntegral a
+                               ) => S.Vector a -> (S.Vector a, c))
+                 -> (forall b. ( PlasmaFloat b
+                               ) => S.Vector b -> (S.Vector b, c))
+                 -> NumericData
+                 -> (NumericData, c)
+--FOR sizedInt
+mapNumericData2' func _ (NumNAMEXX v) = first NumNAMEXX $ func v
+--FOR floating
+mapNumericData2' _ func (NumNAMEXX v) = first NumNAMEXX $ func v
+--END
+
+                          -- fromNumericData --
 
 fromNumericData :: (forall a. (PlasmaReal a) => S.Vector a -> b)
                 -> NumericData
@@ -85,6 +117,13 @@ fromNumericData2 func _ (NumNAMEXX v) = func v
 fromNumericData2 _ func (NumNAMEXX v) = func v
 --END
 
+                           -- toNumericData --
+
+toNumericData :: PlasmaReal a => S.Vector a -> NumericData
+toNumericData = snd . realToNd
+
+                          -- sliceNumericData --
+
 sliceNumericData :: Int -> Int -> NumericData -> NumericData
 sliceNumericData i n = mapNumericData (sliceNumericData' i n)
 
@@ -94,6 +133,8 @@ sliceNumericData' :: Storable a
                   -> S.Vector a
                   -> S.Vector a
 sliceNumericData' i n v = S.slice i n v
+
+                         -- lengthNumericData --
 
 lengthNumericData :: NumericData -> Int
 lengthNumericData = fromNumericData S.length
