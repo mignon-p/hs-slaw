@@ -132,7 +132,12 @@ sliceNumericData' :: Storable a
                   -> Int
                   -> S.Vector a
                   -> S.Vector a
-sliceNumericData' i n v = S.slice i n v
+sliceNumericData' i n v
+  | end < len = S.slice i n v
+  | n == 0    = v
+  | otherwise = S.drop i v
+  where end = i + n
+        len = S.length v
 
                          -- lengthNumericData --
 
