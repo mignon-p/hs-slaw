@@ -6,7 +6,7 @@ import qualified Test.Tasty.QuickCheck as QC
 import Data.Slaw.Internal.SlawDecode
 import Data.Slaw.Internal.SlawEncode
 -- import Data.Slaw.Internal.SlawType
--- import Data.Slaw.Internal.Util
+import Data.Slaw.Internal.Util
 
 import SlawInstances ()
 

@@ -10,7 +10,7 @@ module Data.Slaw.Internal.SlawType
   , BinarySlaw
   , ErrPair
   , describeSlaw
-  , removeDups
+  -- , removeDups
   , NumericType(..)
   , extractNumeric
   , restoreNumeric

@@ -1,0 +1,76 @@
+module Data.Slaw
+  ( -- * Slaw
+    Slaw(..)
+  , describeSlaw
+    -- ** Conversion
+  , š
+  , ŝ
+  , ŝm
+  , ŝes
+  , ŝee
+  , (?:)
+    -- ** Decoding
+  , decodeSlaw
+  , decodeProtein
+    -- ** Encoding
+  , encodeSlaw
+    -- * Typedefs
+  , Symbol
+  , RudeData
+  , BinarySlaw
+    -- * Other types
+  , Protein(..)
+    -- * Numeric types
+  , NumericFormat(..)
+  , NumericData(..)
+  , VectorType(..)
+  , isNumericFormatLegal
+  , vectorSize
+  , numericFormatSize
+    -- ** Operations on NumericData
+  , mapNumericData
+  , mapNumericData2
+  , mapNumericData'
+  , mapNumericData2'
+  , fromNumericData
+  , fromNumericData2
+  , toNumericData
+  , sliceNumericData
+  , lengthNumericData
+    -- ** Vector types
+  , V2(..)
+  , V3(..)
+  , V4(..)
+    -- * Exceptions
+  , PlasmaException(..)
+  , displayPlasmaException
+  , ErrLocation(..)
+  , displayErrLocation
+  , DataSource(..)
+  , displayDataSource
+    -- * Byte Order
+  , ByteOrder(..)
+  , nativeByteOrder
+  , oppositeByteOrder
+    -- * Typeclasses
+  , Nameable(..)
+  , PlasmaReal(..)
+  , PlasmaIntegral
+  , PlasmaFloat
+  , PlasmaScalar(..)
+  , PlasmaNumeric(..)
+  , FromSlaw(..)
+  , ToSlaw(..)
+  ) where
+
+import Data.Slaw.Internal.Exception
+import Data.Slaw.Internal.HalfOrphans ()
+import Data.Slaw.Internal.Helpers
+import Data.Slaw.Internal.Nameable
+import Data.Slaw.Internal.NumericConvert
+import Data.Slaw.Internal.SlawConvert
+import Data.Slaw.Internal.SlawDecode
+import Data.Slaw.Internal.SlawEncode
+import Data.Slaw.Internal.SlawType
+import Data.Slaw.Internal.Util
+import Data.Slaw.Internal.VectorTypes

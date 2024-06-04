@@ -1,10 +1,10 @@
 {-# LANGUAGE ImplicitParams             #-}
 
 module Data.Slaw.Internal.SlawEncode
-  ( ByteOrder(..)     -- re-export
-  , nativeByteOrder   -- re-export
-  , oppositeByteOrder -- re-export
-  , encodeSlaw
+  ( -- ByteOrder(..)     -- re-export
+  -- , nativeByteOrder   -- re-export
+  -- , oppositeByteOrder -- re-export
+    encodeSlaw
   , Nib(..)
   , Sym(..)
   , Oct
