@@ -1,5 +1,7 @@
 -- See doc/template.txt for more information about template files.
 
+{-# LANGUAGE RankNTypes                 #-}
+
 module Data.Slaw.Internal.SlawType
   ( Slaw(..)
   , NumericFormat(..)
@@ -34,6 +36,7 @@ import Control.DeepSeq
 -- import Control.Exception
 import qualified Data.ByteString      as B
 import qualified Data.ByteString.Lazy as L
+import Data.Complex
 import Data.Default.Class
 import Data.Containers.ListUtils (nubOrd)
 import Data.Hashable
@@ -42,6 +45,7 @@ import Data.Int
 import Data.List
 -- import qualified Data.Map.Strict      as M
 import Data.Maybe
+import Data.Ratio
 import Data.String
 -- import qualified Data.Text            as T
 import qualified Data.Vector.Storable as S
@@ -51,6 +55,7 @@ import GHC.Generics (Generic)
 -- import GHC.Stack
 import Numeric.Half
 import System.IO.Unsafe (unsafePerformIO)
+import Text.Read
 
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.HalfOrphans ()
@@ -471,3 +476,128 @@ classifyNumeric TypNAMEXX = (NumTypSIGNEDXX, BITS `div` 8)
 isNumericFormatLegal :: NumericFormat -> Bool
 isNumericFormatLegal nf = not legal
   where legal = nfComplex nf && nfVector nf >= Vt2mv
+
+               -- Num and Fractional instances for Slaw --
+
+instance Num Slaw where
+  (+)          = numBinOp    (+)    "(+)"
+  (-)          = numBinOp    (-)    "(-)"
+  (*)          = numBinOp    (*)    "(*)"
+  negate       = numUnOp     negate "negate"
+  abs          = numUnOp     abs    "abs"
+  signum       = numUnOp     signum "signum"
+  fromInteger  = argToSlaw . OpArgInt
+
+instance Fractional Slaw where
+  (/)          = fracBinOp   (/)    "(/)"
+  recip        = fracUnOp    recip  "recip"
+  fromRational = argToSlaw . OpArgDouble . fromRational
+
+data OpArg = OpArgInt     !Integer
+           | OpArgDouble  !Double
+           | OpArgComplex !(Complex Double)
+
+data ArgPair = ArgPairInt     !Integer          !Integer
+             | ArgPairDouble  !Double           !Double
+             | ArgPairComplex !(Complex Double) !(Complex Double)
+
+promote :: OpArg -> OpArg -> ArgPair
+promote (OpArgInt x) (OpArgInt     y) = ArgPairInt           x  y
+promote (OpArgInt x) (OpArgDouble  y) = ArgPairDouble  (dbl  x) y
+promote (OpArgInt x) (OpArgComplex y) = ArgPairComplex (cplx x) y
+
+promote (OpArgDouble x) (OpArgInt     y) = ArgPairDouble   x    (dbl y)
+promote (OpArgDouble x) (OpArgDouble  y) = ArgPairDouble   x         y
+promote (OpArgDouble x) (OpArgComplex y) = ArgPairComplex (x :+ 0)   y
+
+promote (OpArgComplex x) (OpArgInt     y) = ArgPairComplex x   (cplx y)
+promote (OpArgComplex x) (OpArgDouble  y) = ArgPairComplex x   (y :+ 0)
+promote (OpArgComplex x) (OpArgComplex y) = ArgPairComplex x    y
+
+dbl :: Integer -> Double
+dbl = fromInteger
+
+cplx :: Integer -> Complex Double
+cplx = (:+ 0) . fromInteger
+
+slawToArg :: String -> Slaw -> OpArg
+slawToArg op s =
+  case slawToArg' op s of
+    Left  msg -> error msg
+    Right arg -> arg
+
+slawToArg' :: String -> Slaw -> Either String OpArg
+slawToArg' op (SlawString    lbs) =
+  let str = fromUtf8 lbs
+  in case (readMaybe str, readMaybe str) of
+       (Just i,  _     ) -> Right $ OpArgInt    i
+       (Nothing, Just d) -> Right $ OpArgDouble d
+       _                 -> Left  $ slawOpErr op $ show str
+slawToArg' op (SlawCons  car cdr) =
+  case (slawToArg' op car, slawToArg' op cdr) of
+    (Right (OpArgInt num), Right (OpArgInt den)) ->
+      Right $ OpArgDouble $ fromRational $ num % den
+    _ -> Left $ slawOpErr op $ concat [ "cons ("
+                                      , describeSlaw car
+                                      , ", "
+                                      , describeSlaw cdr
+                                      , ")"
+                                      ]
+slawToArg' op (SlawNumeric nf nd) =
+  case (nfComplex nf, numToList nd) of
+    (False, [ElemInt i]) -> Right $ OpArgInt i
+    (False, [x]        ) -> Right $ OpArgDouble $ doubleCoerce x
+    (True,  [re, im]   ) ->
+      Right $ OpArgComplex $ doubleCoerce re :+ doubleCoerce im
+    _                    -> Left $ slawOpErr op $ describeNumeric nf nd
+slawToArg' op s = Left $ slawOpErr op $ describeSlaw s
+
+slawOpErr :: String -> String -> String
+slawOpErr op arg = concat [ "Unable to use "
+                          , arg
+                          , " as an argument to "
+                          , op
+                          ]
+
+argToSlaw :: OpArg -> Slaw
+argToSlaw (OpArgInt    i) =
+  case integerToNum i of
+    Just nd -> SlawNumeric def nd
+    Nothing -> (SlawString . toUtf8 . show) i
+argToSlaw (OpArgDouble d) =
+  SlawNumeric def $ NumDouble $ S.singleton d
+argToSlaw (OpArgComplex (re :+ im)) =
+  SlawNumeric nfCplx $ NumDouble $ S.fromList [re, im]
+  where nfCplx = def { nfComplex = True }
+
+numOp :: (forall a. (Num a) => a -> a -> a)
+      -> OpArg -> OpArg -> Slaw
+numOp f x y = argToSlaw $ g $ promote x y
+  where g (ArgPairInt     x' y') = OpArgInt     $ f x' y'
+        g (ArgPairDouble  x' y') = OpArgDouble  $ f x' y'
+        g (ArgPairComplex x' y') = OpArgComplex $ f x' y'
+
+fracOp :: (forall a. (Fractional a) => a -> a -> a)
+       -> OpArg -> OpArg -> Slaw
+fracOp f x y = argToSlaw $ g $ promote x y
+  where g (ArgPairInt     x' y') = OpArgDouble  $ f (dbl x') (dbl y')
+        g (ArgPairDouble  x' y') = OpArgDouble  $ f x' y'
+        g (ArgPairComplex x' y') = OpArgComplex $ f x' y'
+
+numBinOp  :: (forall a. (Num a) => a -> a -> a)
+          -> String -> Slaw -> Slaw -> Slaw
+numBinOp f op x y = numOp f (slawToArg op x) (slawToArg op y)
+
+numUnOp   :: (forall a. (Num a) => a -> a)
+          -> String -> Slaw -> Slaw
+numUnOp f op x = numOp (curry (f . fst)) x' x'
+  where x' = slawToArg op x
+
+fracBinOp :: (forall a. (Fractional a) => a -> a -> a)
+          -> String -> Slaw -> Slaw -> Slaw
+fracBinOp f op x y = fracOp f (slawToArg op x) (slawToArg op y)
+
+fracUnOp  :: (forall a. (Fractional a) => a -> a)
+          -> String -> Slaw -> Slaw
+fracUnOp f op x = fracOp (curry (f . fst)) x' x'
+  where x' = slawToArg op x
