@@ -411,6 +411,8 @@ decNum (isArray, typ) o special inp = do
         elemSize  = getElemSize o -- size in bytes (1, 2, 4, or 8)
         nf        = NumericFormat isArray isComplex vType
         bsize'    = computeBsize nf elemSize
+    when (not $ isNumericFormatLegal nf) $
+      Left "multivectors of complex numbers are not allowed"
     when (bsize /= fromIntegral bsize') $
       Left $ concat [ "Bsize is "
                     , show bsize

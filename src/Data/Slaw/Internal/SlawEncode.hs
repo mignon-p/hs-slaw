@@ -173,7 +173,16 @@ encMap :: (?bo::ByteOrder) => [(Slaw, Slaw)] -> Octs
 encMap = encList NibMap . map (uncurry SlawCons)
 
 encNumeric :: (?bo::ByteOrder) => NumericFormat -> NumericData -> Octs
-encNumeric nf nd =
+encNumeric nf nd = encNumeric1 nf' nd
+  -- It's illegal to have a multivector of complex numbers.
+  -- So, if we do have one, turn the multivector into an
+  -- array of scalars, instead.
+  where nf' = if isNumericFormatLegal nf
+              then nf
+              else nf { nfArray = True, nfVector = VtScalar }
+
+encNumeric1 :: (?bo::ByteOrder) => NumericFormat -> NumericData -> Octs
+encNumeric1 nf nd =
   let (nt, bs)       = extractNumeric ?bo nd
       (uBits, bsize) = upperBits nf nt
       breadth        = B.length bs `div` bsize

@@ -26,6 +26,7 @@ module Data.Slaw.Internal.SlawType
   , doubleCoerce
   , NumTyp(..)
   , classifyNumeric
+  , isNumericFormatLegal
   ) where
 
 import Control.Arrow (second)
@@ -460,3 +461,9 @@ classifyNumeric :: NumericType -> (NumTyp, Int)
 --FOR sizedInt, floating
 classifyNumeric TypNAMEXX = (NumTypSIGNEDXX, BITS `div` 8)
 --END
+
+-- all combinations are legal, EXCEPT that you can't be complex and
+-- also a multivector
+isNumericFormatLegal :: NumericFormat -> Bool
+isNumericFormatLegal nf = not legal
+  where legal = nfComplex nf && nfVector nf >= Vt2mv
