@@ -42,6 +42,7 @@ import Data.Int
 import Data.List
 -- import qualified Data.Map.Strict      as M
 import Data.Maybe
+import Data.String
 -- import qualified Data.Text            as T
 import qualified Data.Vector.Storable as S
 import Data.Word
@@ -80,6 +81,9 @@ instance Monoid Slaw where
 
 instance Semigroup Slaw where
   x <> y = mconcat [x, y]
+
+instance IsString Slaw where
+  fromString = SlawString . toUtf8
 
 data NumericFormat = NumericFormat
   { nfArray   :: !Bool
