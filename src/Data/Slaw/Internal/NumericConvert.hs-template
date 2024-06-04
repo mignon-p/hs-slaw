@@ -26,9 +26,9 @@ import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.HalfOrphans ()
 import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.NativeInt
-import Data.Slaw.Internal.NumericTypes
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.Util
+import Data.Slaw.Internal.VectorTypes
 
 data CheckNF = CheckNF
   { cnfArray   :: Maybe Bool

@@ -49,11 +49,11 @@ import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.NativeInt
 import Data.Slaw.Internal.NumericConvert
-import Data.Slaw.Internal.NumericTypes
 import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
+import Data.Slaw.Internal.VectorTypes
 
 ---- FromSlaw and ToSlaw classes
 

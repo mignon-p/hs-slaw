@@ -1,4 +1,7 @@
-module Data.Slaw.Internal.NumericTypes
+-- Geometric vectors (V2, V3, and V4), not to be confused with
+-- Data.Vector, which is an entirely different animal.
+
+module Data.Slaw.Internal.VectorTypes
   ( V2(..)
   , V3(..)
   , V4(..)

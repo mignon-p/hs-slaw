@@ -36,8 +36,8 @@ import Numeric.Natural
 -- import System.IO.Unsafe (unsafePerformIO)
 -- import Text.Read
 
-import Data.Slaw.Internal.NumericTypes
 import Data.Slaw.Internal.SlawType
+import Data.Slaw.Internal.VectorTypes
 
 class Nameable a where
   typeName :: a -> String
