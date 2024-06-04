@@ -18,6 +18,7 @@ module Data.Slaw
   , Symbol
   , RudeData
   , BinarySlaw
+  , Utf8Str
     -- * Other types
   , Protein(..)
     -- * Numeric types
@@ -72,5 +73,6 @@ import Data.Slaw.Internal.SlawConvert
 import Data.Slaw.Internal.SlawDecode
 import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
+import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
 import Data.Slaw.Internal.VectorTypes

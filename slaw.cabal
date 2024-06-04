@@ -56,7 +56,10 @@ custom-setup
 
 library
   -- Modules exported by the library.
-  exposed-modules:     Data.Slaw.Internal.NativeInt
+  exposed-modules:     Data.Slaw
+
+  -- Modules included in this library but not exported.
+  other-modules:       Data.Slaw.Internal.NativeInt
                      , Data.Slaw.Internal.Util
                      , Data.Slaw.Internal.HalfOrphans
                      , Data.Slaw.Internal.String
@@ -70,10 +73,6 @@ library
                      , Data.Slaw.Internal.NumericConvert
                      , Data.Slaw.Internal.SlawConvert
                      , Data.Slaw.Internal.Helpers
-                     , Data.Slaw
-
-  -- Modules included in this library but not exported.
-  -- other-modules:
 
   -- LANGUAGE extensions enabled for all modules in this package.
   default-extensions:  BangPatterns

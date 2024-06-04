@@ -14,9 +14,7 @@ import Test.QuickCheck
 import Test.QuickCheck.Gen
 import qualified Test.QuickCheck.Unicode as U
 
-import Data.Slaw.Internal.Helpers
-import Data.Slaw.Internal.SlawEncode
-import Data.Slaw.Internal.SlawType
+import Data.Slaw
 
 decrease :: Double -> Int -> Int
 decrease factor x = floor (factor * fromIntegral x)
