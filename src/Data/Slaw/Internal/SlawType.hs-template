@@ -33,7 +33,7 @@ module Data.Slaw.Internal.SlawType
 
 import Control.Arrow (second)
 import Control.DeepSeq
--- import Control.Exception
+import Control.Exception
 import qualified Data.ByteString      as B
 import qualified Data.ByteString.Lazy as L
 import Data.Complex
@@ -52,7 +52,7 @@ import qualified Data.Vector.Storable as S
 import Data.Word
 import Foreign.Storable
 import GHC.Generics (Generic)
--- import GHC.Stack
+import GHC.Stack
 import Numeric.Half
 import System.IO.Unsafe (unsafePerformIO)
 import Text.Read
@@ -520,10 +520,11 @@ dbl = fromInteger
 cplx :: Integer -> Complex Double
 cplx = (:+ 0) . fromInteger
 
-slawToArg :: String -> Slaw -> OpArg
+slawToArg :: HasCallStack => String -> Slaw -> OpArg
 slawToArg op s =
   case slawToArg' op s of
-    Left  msg -> error msg
+    Left  msg ->
+      throw $ (typeMismatch msg) { peCallstack = Just callStack }
     Right arg -> arg
 
 slawToArg' :: String -> Slaw -> Either String OpArg
@@ -584,20 +585,24 @@ fracOp f x y = argToSlaw $ g $ promote x y
         g (ArgPairDouble  x' y') = OpArgDouble  $ f x' y'
         g (ArgPairComplex x' y') = OpArgComplex $ f x' y'
 
-numBinOp  :: (forall a. (Num a) => a -> a -> a)
+numBinOp  :: HasCallStack
+          => (forall a. (Num a) => a -> a -> a)
           -> String -> Slaw -> Slaw -> Slaw
 numBinOp f op x y = numOp f (slawToArg op x) (slawToArg op y)
 
-numUnOp   :: (forall a. (Num a) => a -> a)
+numUnOp   :: HasCallStack
+          => (forall a. (Num a) => a -> a)
           -> String -> Slaw -> Slaw
 numUnOp f op x = numOp (curry (f . fst)) x' x'
   where x' = slawToArg op x
 
-fracBinOp :: (forall a. (Fractional a) => a -> a -> a)
+fracBinOp :: HasCallStack
+          => (forall a. (Fractional a) => a -> a -> a)
           -> String -> Slaw -> Slaw -> Slaw
 fracBinOp f op x y = fracOp f (slawToArg op x) (slawToArg op y)
 
-fracUnOp  :: (forall a. (Fractional a) => a -> a)
+fracUnOp  :: HasCallStack
+          => (forall a. (Fractional a) => a -> a)
           -> String -> Slaw -> Slaw
 fracUnOp f op x = fracOp (curry (f . fst)) x' x'
   where x' = slawToArg op x
