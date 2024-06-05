@@ -527,11 +527,16 @@ slawToArg op s =
     Right arg -> arg
 
 slawToArg0 :: String -> Slaw -> Either PlasmaException OpArg
-slawToArg0 _ (SlawError msg loc) =
+slawToArg0 op (SlawError msg loc) =
   Left $ def { peType     = etFromMsg msg
-             , peMessage  = msg
+             , peMessage  = msg'
              , peLocation = Just loc
              }
+  where msg' = concat [ "Argument to "
+                      , op
+                      , " was an error:\n"
+                      , indentLines "  " msg
+                      ]
 slawToArg0 op s = mapLeft typeMismatch $ slawToArg' op s
 
 slawToArg' :: String -> Slaw -> Either String OpArg
