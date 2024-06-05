@@ -58,7 +58,3 @@ testErrorSlaw bo = do
       s2    = decodeSlaw bo bin1
   assertBool "isError s1" $ isError s1
   assertBool "isError s2" $ isError s2
-
-isError :: Slaw -> Bool
-isError (SlawError _ _) = True
-isError _               = False

@@ -14,6 +14,17 @@ module Data.Slaw.Internal.Helpers
   , toNumericData
   , sliceNumericData
   , lengthNumericData
+    -- predicates
+  , isProtein
+  , isBool
+  , isNil
+  , isSymbol
+  , isString
+  , isList
+  , isMap
+  , isCons
+  , isNumeric
+  , isError
   ) where
 
 import Control.Arrow (first)
@@ -143,3 +154,27 @@ sliceNumericData' i n v
 
 lengthNumericData :: NumericData -> Int
 lengthNumericData = fromNumericData S.length
+
+                             -- Predicates --
+
+isNil :: Slaw -> Bool
+isNil SlawNil = True
+isNil _       = False
+
+--FORSTR Bool, Symbol, String, List, Map
+
+isSTR :: Slaw -> Bool
+isSTR (SlawSTR _) = True
+isSTR _           = False
+
+--FORSTR Cons, Numeric, Error
+
+isSTR :: Slaw -> Bool
+isSTR (SlawSTR _ _) = True
+isSTR _             = False
+
+--END
+
+isProtein :: Slaw -> Bool
+isProtein (SlawProtein _ _ _) = True
+isProtein _                   = False

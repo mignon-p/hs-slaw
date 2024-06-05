@@ -2,6 +2,17 @@ module Data.Slaw
   ( -- * Slaw
     Slaw(..)
   , describeSlaw
+    -- ** Predicates
+  , isProtein
+  , isBool
+  , isNil
+  , isSymbol
+  , isString
+  , isList
+  , isMap
+  , isCons
+  , isNumeric
+  , isError
     -- ** Conversion
   , š
   , ŝ
