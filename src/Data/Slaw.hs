@@ -73,6 +73,8 @@ module Data.Slaw
   , PlasmaNumeric(..)
   , FromSlaw(..)
   , ToSlaw(..)
+    -- * Misc
+  , qw
   ) where
 
 import Data.Slaw.Internal.Exception

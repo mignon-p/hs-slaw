@@ -48,6 +48,7 @@ unitTests :: TestTree
 unitTests = testGroup "HUnit tests"
   [ testCase "Error slaw (big endian)"    $ testErrorSlaw BigEndian
   , testCase "Error slaw (little endian)" $ testErrorSlaw LittleEndian
+  , testCase "qw"                         $ testQw
   ]
 
 testErrorSlaw :: ByteOrder -> Assertion
@@ -58,3 +59,6 @@ testErrorSlaw bo = do
       s2    = decodeSlaw bo bin1
   assertBool "isError s1" $ isError s1
   assertBool "isError s2" $ isError s2
+
+testQw :: Assertion
+testQw = SlawList ["hello", "world"] @=? qw "  hello   world "
