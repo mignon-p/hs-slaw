@@ -7,9 +7,10 @@ module Data.Slaw.Internal.Exception
   , displayPlasmaException
   , corruptSlaw
   , typeMismatch
-  , typeMismatch'
+  -- , typeMismatch'
   , typeMismatchPfx
   , rangeErrorPfx
+  , etFromMsg
   , because
   , because1
   , cantCoerce
@@ -133,17 +134,26 @@ typeMismatch msg = def { peType      = EtTypeMismatch
                        , peMessage   = typeMismatchPfx ++ msg
                        }
 
+{-
 typeMismatch' :: String -> ErrLocation -> PlasmaException
 typeMismatch' msg loc = def { peType      = EtTypeMismatch
                             , peMessage   = msg
                             , peLocation  = Just loc
                             }
+-}
 
 typeMismatchPfx :: String
 typeMismatchPfx = "type mismatch: "
 
 rangeErrorPfx :: String
 rangeErrorPfx = "range error: "
+
+-- This is a hack.  Guess the exception type based on the message.
+etFromMsg :: String -> PlasmaExceptionType
+etFromMsg msg
+  | typeMismatchPfx `isPrefixOf` msg = EtTypeMismatch
+  | rangeErrorPfx   `isPrefixOf` msg = EtTypeMismatch
+  | otherwise                        = EtCorruptSlaw
 
 because :: String -> [PlasmaException] -> Either PlasmaException a
 because msg = Left . because1 msg

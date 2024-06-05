@@ -522,10 +522,17 @@ cplx = (:+ 0) . fromInteger
 
 slawToArg :: HasCallStack => String -> Slaw -> OpArg
 slawToArg op s =
-  case slawToArg' op s of
-    Left  msg ->
-      throw $ (typeMismatch msg) { peCallstack = Just callStack }
+  case slawToArg0 op s of
+    Left  exc -> throw $ exc { peCallstack = Just callStack }
     Right arg -> arg
+
+slawToArg0 :: String -> Slaw -> Either PlasmaException OpArg
+slawToArg0 _ (SlawError msg loc) =
+  Left $ def { peType     = etFromMsg msg
+             , peMessage  = msg
+             , peLocation = Just loc
+             }
+slawToArg0 op s = mapLeft typeMismatch $ slawToArg' op s
 
 slawToArg' :: String -> Slaw -> Either String OpArg
 slawToArg' op (SlawString    lbs) =

@@ -120,10 +120,11 @@ handleOthers :: forall a. (Nameable a)
 handleOthers = handleOthers' (typeName (undefined :: a))
 
 handleOthers' :: String -> Slaw -> Either PlasmaException a
-handleOthers' _ (SlawError msg loc)
-  | typeMismatchPfx `isPrefixOf` msg = Left $ typeMismatch' msg loc
-  | rangeErrorPfx   `isPrefixOf` msg = Left $ typeMismatch' msg loc
-  | otherwise                        = Left $ corruptSlaw   msg loc
+handleOthers' _ (SlawError msg loc) =
+  Left $ def { peType     = etFromMsg msg
+             , peMessage  = msg
+             , peLocation = Just loc
+             }
 handleOthers' toType slaw = Left $ typeMismatch msg
   where msg = slaw `cantCoerceSlaw` toType
 
