@@ -28,4 +28,16 @@ qcProps = testGroup "(checked by QuickCheck)"
       \slaw -> slaw QC.=== decodeSlaw BigEndian (encodeSlaw BigEndian slaw)
   , QC.testProperty "round-trip (little endian)" $
       \slaw -> slaw QC.=== decodeSlaw LittleEndian (encodeSlaw LittleEndian slaw)
+  , QC.testProperty "Slaw addition" $
+      \(x, y) -> (x :: Integer) + (y :: Integer) QC.=== ŝ (š x + š y)
+  , QC.testProperty "Slaw subtraction" $
+      \(x, y) -> (x :: Integer) - (y :: Integer) QC.=== ŝ (š x - š y)
+  , QC.testProperty "Slaw multiplication" $
+      \(x, y) -> (x :: Integer) * (y :: Integer) QC.=== ŝ (š x * š y)
+  , QC.testProperty "Slaw negation" $
+      \x -> (-x :: Integer) QC.=== ŝ (-š x)
+  , QC.testProperty "Slaw absolute value" $
+      \x -> abs (x :: Integer) QC.=== ŝ (abs (š x))
+  , QC.testProperty "Slaw signum" $
+      \x -> signum (x :: Integer) QC.=== ŝ (signum (š x))
   ]
