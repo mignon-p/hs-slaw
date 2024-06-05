@@ -1,6 +1,8 @@
+import qualified Data.ByteString.Lazy as L
 -- import Data.List
 import System.Environment
 import Test.Tasty
+import Test.Tasty.HUnit
 import qualified Test.Tasty.QuickCheck as QC
 
 import Data.Slaw
@@ -13,7 +15,7 @@ main = do
   defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Tests" [qcProps]
+tests = testGroup "Tests" [qcProps, unitTests]
 
 setIfNotSet :: String -> String -> IO ()
 setIfNotSet var val = do
@@ -41,3 +43,22 @@ qcProps = testGroup "(checked by QuickCheck)"
   , QC.testProperty "Slaw signum" $
       \x -> signum (x :: Integer) QC.=== ŝ (signum (š x))
   ]
+
+unitTests :: TestTree
+unitTests = testGroup "HUnit tests"
+  [ testCase "Error slaw (big endian)"    $ testErrorSlaw BigEndian
+  , testCase "Error slaw (little endian)" $ testErrorSlaw LittleEndian
+  ]
+
+testErrorSlaw :: ByteOrder -> Assertion
+testErrorSlaw bo = do
+  let zeros = L.replicate 80 0
+      s1    = decodeSlaw bo zeros
+      bin1  = encodeSlaw bo s1
+      s2    = decodeSlaw bo bin1
+  assertBool "isError s1" $ isError s1
+  assertBool "isError s2" $ isError s2
+
+isError :: Slaw -> Bool
+isError (SlawError _ _) = True
+isError _               = False
