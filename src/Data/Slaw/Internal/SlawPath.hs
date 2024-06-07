@@ -3,6 +3,8 @@ module Data.Slaw.Internal.SlawPath
   , slawPath_m
   , slawPath_es
   , slawPath_ee
+  , (!)
+  , (!?)
   ) where
 
 import Control.Exception
@@ -21,23 +23,43 @@ import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
 
+infixl 9 !
+infixl 9 !?
+
+(!) :: (HasCallStack, FromSlaw a) => Slaw -> T.Text -> a
+(!) s path =
+  case slawPathCvt s path of
+    Left exc -> throw $ exc { peCallstack = Just callStack }
+    Right x  -> x
+
+(!?) :: FromSlaw a => Slaw -> T.Text -> Maybe a
+s !? path = eth2mby $ slawPathCvt s path
+
+slawPathCvt :: FromSlaw a
+            => Slaw
+            -> T.Text
+            -> Either PlasmaException a
+slawPathCvt s path = slawPath_ee' s path >>= fromSlaw
+
 slawPath :: HasCallStack => Slaw -> T.Text -> Slaw
 slawPath s path =
-  case slawPath_ee s path of
+  case slawPath_ee' s path of
     Left exc -> throw $ exc { peCallstack = Just callStack }
     Right x  -> x
 
 slawPath_m :: Slaw -> T.Text -> Maybe Slaw
-slawPath_m s path = case slawPath_ee s path of
-                      Left  _ -> Nothing
-                      Right x -> Just x
+slawPath_m s = eth2mby . slawPath_ee' s
 
 slawPath_es :: Slaw -> T.Text -> Either String Slaw
-slawPath_es s = first   (displayPlasmaException False) . slawPath_ee s
+slawPath_es s = first (displayPlasmaException False) . slawPath_ee' s
 
 slawPath_ee :: Slaw -> T.Text -> Either PlasmaException Slaw
-slawPath_ee s path =
-  first   (mapExc path) $ slawPath1 0 s $ T.splitOn "/" path
+slawPath_ee s =
+  first (\e -> e { peCallstack = Just callStack }) . slawPath_ee' s
+
+slawPath_ee' :: Slaw -> T.Text -> Either PlasmaException Slaw
+slawPath_ee' s path =
+  first (mapExc path) $ slawPath1 0 s $ T.splitOn "/" path
 
 mapExc :: T.Text -> (Int, Int, String) -> PlasmaException
 mapExc path (pos, len, msg) =
