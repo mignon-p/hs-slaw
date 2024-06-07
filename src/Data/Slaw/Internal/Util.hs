@@ -16,6 +16,7 @@ module Data.Slaw.Internal.Util
   , uncurry5
   , safeIntegralFromInteger
   , orList
+  , eth2mby
   ) where
 
 import Data.Bits
@@ -110,3 +111,8 @@ getLoHi nbits True  = ((-x), x - 1)
 {-# INLINE orList #-}
 orList :: Bits a => [a] -> a
 orList = foldl' (.|.) zeroBits
+
+{-# INLINABLE eth2mby #-}
+eth2mby :: Either a b -> Maybe b
+eth2mby (Left  _) = Nothing
+eth2mby (Right x) = Just x

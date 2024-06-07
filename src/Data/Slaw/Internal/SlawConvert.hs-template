@@ -88,21 +88,17 @@ class ToSlaw a where
 -- "from slaw, maybe"
 {-# INLINABLE ŝm #-}
 ŝm :: FromSlaw a => Slaw -> Maybe a
-ŝm s = case fromSlaw s of
-         Left  _ -> Nothing
-         Right x -> Just x
+ŝm = eth2mby . fromSlaw
 
 -- "from slaw, either string"
 {-# INLINABLE ŝes #-}
 ŝes :: FromSlaw a => Slaw -> Either String a
-ŝes s = case fromSlaw s of
-          Left exc -> Left $ displayPlasmaException False exc
-          Right x  -> Right x
+ŝes = first (displayPlasmaException False) . fromSlaw
 
 -- "from slaw, either exception"
 {-# INLINE ŝee #-}
 ŝee :: (HasCallStack, FromSlaw a) => Slaw -> Either PlasmaException a
-ŝee = first   f . fromSlaw
+ŝee = first f . fromSlaw
   where cs  = Just callStack
         f e = e { peCallstack = cs }
 
