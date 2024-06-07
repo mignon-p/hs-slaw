@@ -29,7 +29,7 @@ module Data.Slaw.Internal.Helpers
   , qw
   ) where
 
-import Control.Arrow (first)
+import Data.Bifunctor (first)
 -- import Control.DeepSeq
 import Data.Bits
 -- import Data.Hashable

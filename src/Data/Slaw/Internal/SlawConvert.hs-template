@@ -17,6 +17,7 @@ module Data.Slaw.Internal.SlawConvert
 
 import Control.DeepSeq
 import Control.Exception
+import Data.Bifunctor
 import Data.Bits
 import qualified Data.ByteString          as B
 import qualified Data.ByteString.Lazy     as L
@@ -101,7 +102,7 @@ class ToSlaw a where
 -- "from slaw, either exception"
 {-# INLINE ŝee #-}
 ŝee :: (HasCallStack, FromSlaw a) => Slaw -> Either PlasmaException a
-ŝee = mapLeft f . fromSlaw
+ŝee = first   f . fromSlaw
   where cs  = Just callStack
         f e = e { peCallstack = cs }
 
@@ -135,7 +136,7 @@ addErrCtx :: forall a. (Nameable a)
           => Slaw
           -> Either PlasmaException a
           -> Either PlasmaException a
-addErrCtx s = mapLeft f
+addErrCtx s = first   f
   where f err = msg `because1` [err]
         msg = s `cantCoerceSlaw` typeName (undefined :: a)
 
@@ -143,7 +144,7 @@ addErrCtxStr :: String
              -> String
              -> Either PlasmaException a
              -> Either PlasmaException a
-addErrCtxStr fromType toType = mapLeft f
+addErrCtxStr fromType toType = first   f
   where f err = msg `because1` [err]
         msg = fromType `cantCoerce` toType
 
@@ -991,7 +992,7 @@ instance ToSlaw a => ToSlaw (Maybe a) where
                          -- instances for maps --
 
 instance (FromSlaw a, FromSlaw b, Ord a) => FromSlaw (M.Map a b) where
-  fromSlaw s = mapRight M.fromList $ slawToMap s (M.empty :: M.Map a b)
+  fromSlaw s = second   M.fromList $ slawToMap s (M.empty :: M.Map a b)
 
 instance (ToSlaw a, ToSlaw b, Ord a) => ToSlaw (M.Map a b) where
   toSlaw = slawFromMap . M.toList
@@ -1001,14 +1002,14 @@ instance ( FromSlaw a
          , Hashable a
          ) => FromSlaw (HM.HashMap a b) where
   fromSlaw s =
-    mapRight HM.fromList $ slawToMap s (HM.empty :: HM.HashMap a b)
+    second   HM.fromList $ slawToMap s (HM.empty :: HM.HashMap a b)
 
 instance (ToSlaw a, ToSlaw b, Ord a) => ToSlaw (HM.HashMap a b) where
   toSlaw = slawFromMap . HM.toList
 
 instance (FromSlaw b) => FromSlaw (IM.IntMap b) where
   fromSlaw s =
-    mapRight IM.fromList $ slawToMap s (IM.empty :: IM.IntMap b)
+    second   IM.fromList $ slawToMap s (IM.empty :: IM.IntMap b)
 
 instance (ToSlaw b) => ToSlaw (IM.IntMap b) where
   toSlaw = slawFromMap . IM.toList

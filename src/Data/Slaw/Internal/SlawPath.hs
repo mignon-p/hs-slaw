@@ -6,6 +6,7 @@ module Data.Slaw.Internal.SlawPath
   ) where
 
 import Control.Exception
+import Data.Bifunctor
 import Data.List
 import Data.Maybe
 import qualified Data.Text                as T
@@ -32,11 +33,11 @@ slawPath_m s path = case slawPath_ee s path of
                       Right x -> Just x
 
 slawPath_es :: Slaw -> T.Text -> Either String Slaw
-slawPath_es s = mapLeft (displayPlasmaException False) . slawPath_ee s
+slawPath_es s = first   (displayPlasmaException False) . slawPath_ee s
 
 slawPath_ee :: Slaw -> T.Text -> Either PlasmaException Slaw
 slawPath_ee s path =
-  mapLeft (mapExc path) $ slawPath1 0 s $ T.splitOn "/" path
+  first   (mapExc path) $ slawPath1 0 s $ T.splitOn "/" path
 
 mapExc :: T.Text -> (Int, Int, String) -> PlasmaException
 mapExc path (pos, len, msg) =

@@ -31,9 +31,9 @@ module Data.Slaw.Internal.SlawType
   , isNumericFormatLegal
   ) where
 
-import Control.Arrow (second)
 import Control.DeepSeq
 import Control.Exception
+import Data.Bifunctor
 import qualified Data.ByteString      as B
 import qualified Data.ByteString.Lazy as L
 import Data.Complex
@@ -537,7 +537,7 @@ slawToArg0 op (SlawError msg loc) =
                       , " was an error:\n"
                       , indentLines stdIndent msg
                       ]
-slawToArg0 op s = mapLeft typeMismatch $ slawToArg' op s
+slawToArg0 op s = first   typeMismatch $ slawToArg' op s
 
 slawToArg' :: String -> Slaw -> Either String OpArg
 slawToArg' op (SlawString    lbs) =

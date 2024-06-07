@@ -3,7 +3,7 @@ module Data.Slaw.Internal.SlawDecode
  , decodeProtein
  ) where
 
-import Control.Arrow (first)
+import Data.Bifunctor (first)
 -- import Control.DeepSeq
 import Control.Monad
 import Data.Bits
@@ -164,12 +164,12 @@ decodeSlaw1 inp = do
                      , "), "
                      ]
   (octLen, nSpecial) <-
-    mapLeft ((addLoc hdr) . (ctx ++)) $ niLen info oHdr
+    first   ((addLoc hdr) . (ctx ++)) $ niLen info oHdr
   let special = getSpecial bo hdrBs nSpecial
   when (octLen == 0) $
     Left $ addLoc inp $ ctx ++ "octlen of 0 is not allowed"
   (body, leftover) <-
-    mapLeft (first (ctx ++)) $ rest // (octLen - 1)
+    first   (first (ctx ++)) $ rest // (octLen - 1)
   case niDecode info oHdr special body of
     Left msg -> Right (mkSlawErr $ first (ctx ++) msg, leftover)
     Right s  -> Right (s, leftover)
@@ -221,7 +221,7 @@ decPro _ _ inp = do
       bigRude = tb 59
       hasIng  = tb 61
       hasDes  = tb 62
-  mapLeft ((addLoc . prev) inp) $ checkBits [(63, "nonstandard")] hdrOct2
+  first   ((addLoc . prev) inp) $ checkBits [(63, "nonstandard")] hdrOct2
   let (rudeBytes, rudeOcts) =
         if bigRude
         then let rudeLen = hdrOct2 .&. 0x07ff_ffff_ffff_ffff
@@ -275,7 +275,7 @@ lenWstr o = return (1, msb3lsb o)
 
 decWstr :: Oct -> Special -> Input -> Either ErrPair Slaw
 decWstr o spec inp = do
-  mapLeft ((addLoc . prev) inp) $ checkBits stringReservedBit o
+  first   ((addLoc . prev) inp) $ checkBits stringReservedBit o
   (return . SlawString . trimNul . L.fromStrict) spec
 
 decList :: Oct -> Special -> Input -> Either ErrPair Slaw
@@ -340,7 +340,7 @@ decCons o _ inp = do
   let nElems   = penultimateNibble o
       butMsg   = "Cons should have 2 elements, but "
       elements = " elements"
-  mapLeft (addLoc inp) $ do
+  first   (addLoc inp) $ do
     when (nElems /= (2 :: Int)) $ do
       Left $ concat [ butMsg
                     , "claims to have "
@@ -348,7 +348,7 @@ decCons o _ inp = do
                     , elements
                     ]
   elems <- decodeSequence0 False "cons" o inp
-  mapLeft (addLoc inp) $ do
+  first   (addLoc inp) $ do
     case elems of
       [car, cdr] -> return $ SlawCons car cdr
       _ -> Left $ concat [ butMsg
@@ -367,7 +367,7 @@ decStr :: Oct -> Special -> Input -> Either ErrPair Slaw
 decStr o _ inp = do
   let padding = msb3lsb o
       lbs     = L.dropEnd padding (iLbs inp)
-  mapLeft ((addLoc . prev) inp) $ checkBits stringReservedBit o
+  first   ((addLoc . prev) inp) $ checkBits stringReservedBit o
   (return . SlawString . trimNul) lbs
 
 lenNum :: Bool -> Oct -> Either String (Word64, Word)
@@ -402,7 +402,7 @@ decNum :: (Bool, NumTyp)
        -> Input
        -> Either ErrPair Slaw
 decNum (isArray, typ) o special inp = do
-  mapLeft ((addLoc . prev) inp) $ do
+  first   ((addLoc . prev) inp) $ do
     let bsize     = getBsize o
         breadth   = getBreadth isArray o
         byteLen   = bsize * breadth
