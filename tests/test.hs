@@ -1,11 +1,19 @@
-import qualified Data.ByteString.Lazy as L
+import qualified Data.ByteString.Lazy     as L
+import Data.Complex
+import Data.Default.Class
+import Data.Int
+import qualified Data.IntMap.Strict       as IM
 -- import Data.List
+import qualified Data.Map.Strict          as M
+import qualified Data.Text                as T
+import qualified Data.Vector.Storable     as S
 import System.Environment
 import Test.Tasty
 import Test.Tasty.HUnit
-import qualified Test.Tasty.QuickCheck as QC
+import qualified Test.Tasty.QuickCheck    as QC
 
 import Data.Slaw
+import Data.Slaw.Path
 
 import SlawInstances ()
 
@@ -49,6 +57,7 @@ unitTests = testGroup "HUnit tests"
   [ testCase "Error slaw (big endian)"    $ testErrorSlaw BigEndian
   , testCase "Error slaw (little endian)" $ testErrorSlaw LittleEndian
   , testCase "qw"                         $ testQw
+  , testCase "slaw-path"                  $ testSlawPath
   ]
 
 testErrorSlaw :: ByteOrder -> Assertion
@@ -62,3 +71,74 @@ testErrorSlaw bo = do
 
 testQw :: Assertion
 testQw = SlawList ["hello", "world"] @=? qw "  hello   world "
+
+mySlaw :: Slaw
+mySlaw = š $ protein "have an ice day"
+  [ ("vaults",  š vaults)
+  , ("pair",    SlawCons "foo" "bar")
+  , ("vectors", š (S.fromList vectors))
+  ]
+
+vaults :: IM.IntMap (M.Map T.Text Slaw)
+vaults = IM.fromList
+  [ (33, M.fromList [ ("status",    "good")
+                    , ("neighbors", š $ S.fromList [31, 32 :: Int8])
+                    ])
+  , (32, M.fromList [ ("status",    "destroyed")
+                    , ("neighbors", š $ S.fromList [31, 33 :: Int8])
+                    ])
+  , (31, M.fromList [ ("status",    "fake")
+                    , ("neighbors", š $ S.fromList [32, 33 :: Int8])
+                    ])
+  ]
+
+vectors :: [V4 (Complex Double)]
+vectors =
+  [ V4 (1 :+ 2) (3 :+ 4) (5 :+ 6) (7 :+ 8)
+  , V4 (9 :+ 8) (7 :+ 6) (5 :+ 4) (3 :+ 2)
+  , V4 0 0 0 0
+  , V4 11 12 13 14
+  ]
+
+testSlawPath :: Assertion
+testSlawPath = do
+  let sp   = slawPath_m PmFullyVisible mySlaw
+      jstr = Just . T.unpack
+      nf   = def { nfArray = True }
+      nd   = NumUnt8 S.empty
+
+  Just "have" @=? sp "des/0"
+  Just "an"   @=? sp "des/1"
+  Just "ice"  @=? sp "des/2"
+  Just "day"  @=? sp "des/3"
+  Nothing     @=? sp "des/4"
+
+  Just "foo"  @=? sp "ing/pair/car"
+  Just "bar"  @=? sp "ing/pair/cdr"
+
+  Just (SlawNumeric nf nd) @=? sp "rude"
+
+  jstr "fake"      @=? mySlaw !? "vaults/31/status"
+  jstr "destroyed" @=? mySlaw !? "vaults/32/status"
+  jstr "good"      @=? mySlaw !? "vaults/33/status"
+
+  Just (32 :: Int) @=? mySlaw !? "vaults/31/neighbors/0"
+  Just (33 :: Int) @=? mySlaw !? "vaults/31/neighbors/1"
+
+  Just (31 :: Int) @=? mySlaw !? "vaults/32/neighbors/0"
+  Just (33 :: Int) @=? mySlaw !? "vaults/32/neighbors/1"
+
+  Just (31 :: Int) @=? mySlaw !? "vaults/33/neighbors/0"
+  Just (32 :: Int) @=? mySlaw !? "vaults/33/neighbors/1"
+
+  Just (1 :: Double) @=? mySlaw !? "vectors/0/x/re"
+  Just (2 :: Double) @=? mySlaw !? "vectors/0/x/im"
+  Just (3 :: Double) @=? mySlaw !? "vectors/0/y/re"
+  Just (4 :: Double) @=? mySlaw !? "vectors/0/y/im"
+  Just (5 :: Double) @=? mySlaw !? "vectors/0/z/re"
+  Just (6 :: Double) @=? mySlaw !? "vectors/0/z/im"
+  Just (7 :: Double) @=? mySlaw !? "vectors/0/w/re"
+  Just (8 :: Double) @=? mySlaw !? "vectors/0/w/im"
+
+  (Nothing :: Maybe Double) @=? mySlaw !? "vectors/0/w/banana"
+  Just (14 :: Double)       @=? mySlaw !? "vectors/-1/-1/0"
