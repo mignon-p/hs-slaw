@@ -11,10 +11,6 @@ module Data.Slaw.Internal.Util
   , ucFirst
   , lo56
   , hi8
-  , mapLeft
-  , mapRight
-  , forLeft
-  , forRight
   , (==~)
   , (?>)
   , uncurry5
@@ -66,24 +62,6 @@ lo56 = (.&. complement 0xff00_0000_0000_0000)
 {-# INLINE hi8 #-}
 hi8 :: Word64 -> Word64
 hi8 = (`shiftR` 56)
-
-{-# INLINABLE mapLeft #-}
-mapLeft :: (a -> c) -> Either a b -> Either c b
-mapLeft f (Left x)  = Left (f x)
-mapLeft _ (Right x) = Right x
-
-{-# INLINABLE mapRight #-}
-mapRight :: (b -> c) -> Either a b -> Either a c
-mapRight _ (Left x)  = Left  x
-mapRight f (Right x) = Right (f x)
-
-{-# INLINE forLeft #-}
-forLeft :: Either a b -> (a -> c) -> Either c b
-forLeft = flip mapLeft
-
-{-# INLINE forRight #-}
-forRight :: Either a b -> (b -> c) -> Either a c
-forRight = flip mapRight
 
 -- case insensitive (for ASCII chars only) equality for lazy ByteStrings
 {-# INLINABLE (==~) #-}
