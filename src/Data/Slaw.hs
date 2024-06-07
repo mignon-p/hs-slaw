@@ -32,6 +32,7 @@ module Data.Slaw
   , Utf8Str
     -- * Other types
   , Protein(..)
+  , protein
     -- * Numeric types
   , NumericFormat(..)
   , NumericData(..)

@@ -27,14 +27,18 @@ module Data.Slaw.Internal.Helpers
   , isError
     -- misc
   , qw
+  , protein
   ) where
 
 -- import Control.DeepSeq
-import Data.Bifunctor (first)
+import Data.Bifunctor
 import Data.Bits
+import Data.Default.Class
 -- import Data.Hashable
 import Data.Int
-import qualified Data.Vector.Storable as S
+import qualified Data.Map.Strict          as M
+import qualified Data.Text                as T
+import qualified Data.Vector.Storable     as S
 import Data.Word
 import Foreign.Storable
 import Numeric.Half
@@ -43,6 +47,7 @@ import Numeric.Half
 import Data.Slaw.Internal.HalfOrphans ()
 -- import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.NumericConvert
+import Data.Slaw.Internal.SlawConvert
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
 
@@ -186,3 +191,11 @@ isProtein _                   = False
 
 qw :: String -> Slaw
 qw = SlawList . map (SlawString . toUtf8) . words
+
+                         -- Creating a Protein --
+
+protein :: T.Text -> [(T.Text, Slaw)] -> Protein
+protein des ing = def
+  { pDescrips = T.words    des
+  , pIngests  = M.fromList ing
+  }
