@@ -40,7 +40,7 @@ slawPath_ee s path =
 
 mapExc :: T.Text -> (Int, Int, String) -> PlasmaException
 mapExc path (pos, len, msg) =
-  notFoundErr $ intercalate "\n" [msg, "  " ++ ln2, "  " ++ ln3]
+  notFoundErr $ intercalate "\n" [msg, stdIndent ++ ln2, stdIndent ++ ln3]
   where
     ln2 = T.unpack path
     ln3 = replicate pos ' ' ++ replicate len '^'

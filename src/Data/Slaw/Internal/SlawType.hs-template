@@ -535,7 +535,7 @@ slawToArg0 op (SlawError msg loc) =
   where msg' = concat [ "Argument to "
                       , op
                       , " was an error:\n"
-                      , indentLines "  " msg
+                      , indentLines stdIndent msg
                       ]
 slawToArg0 op s = mapLeft typeMismatch $ slawToArg' op s
 

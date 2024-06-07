@@ -18,6 +18,7 @@ module Data.Slaw.Internal.Exception
   , rangeError
   , rangeError'
   , notFoundErr
+  , stdIndent
   ) where
 
 import Control.Exception
@@ -163,7 +164,7 @@ because msg = Left . because1 msg
 because1 :: String -> [PlasmaException] -> PlasmaException
 because1 msg reasons = typeMismatch msg'
   where msg'     = concat [ msg, ", because:\n", reasons']
-        reasons0 = map (indentLines "  " . peMessage) reasons
+        reasons0 = map (indentLines stdIndent . peMessage) reasons
         reasons' = intercalate "\nand:\n" reasons0
 
 cantCoerce :: String -> String -> String
@@ -202,3 +203,6 @@ notFoundErr :: String -> PlasmaException
 notFoundErr msg = def { peType      = EtNotFound
                       , peMessage   = msg
                       }
+
+stdIndent :: String
+stdIndent = "  "
