@@ -12,8 +12,8 @@ module Data.Slaw.Internal.String
   ) where
 
 import Control.DeepSeq
-import Control.Monad
 -- import Control.Exception
+import Control.Monad
 import qualified Data.ByteString          as B
 import qualified Data.ByteString.Lazy     as L
 import qualified Data.ByteString.Short    as SBS

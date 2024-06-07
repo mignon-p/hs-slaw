@@ -21,8 +21,8 @@ module Data.Slaw.Internal.Exception
   , stdIndent
   ) where
 
-import Control.Exception
 import Control.DeepSeq
+import Control.Exception
 import Data.Default.Class
 import Data.Hashable
 import Data.Int

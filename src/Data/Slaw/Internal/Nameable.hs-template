@@ -20,8 +20,8 @@ import qualified Data.HashMap.Strict      as HM
 import Data.Int
 import qualified Data.IntMap.Strict       as IM
 import Data.List
-import Data.Ratio
 import qualified Data.Map.Strict          as M
+import Data.Ratio
 -- import Data.String
 import qualified Data.Text                as T
 import qualified Data.Text.Lazy           as LT

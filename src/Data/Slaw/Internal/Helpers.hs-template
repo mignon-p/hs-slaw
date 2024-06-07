@@ -29,8 +29,8 @@ module Data.Slaw.Internal.Helpers
   , qw
   ) where
 
-import Data.Bifunctor (first)
 -- import Control.DeepSeq
+import Data.Bifunctor (first)
 import Data.Bits
 -- import Data.Hashable
 import Data.Int

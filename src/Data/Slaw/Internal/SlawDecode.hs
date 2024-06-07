@@ -3,9 +3,9 @@ module Data.Slaw.Internal.SlawDecode
  , decodeProtein
  ) where
 
-import Data.Bifunctor (first)
 -- import Control.DeepSeq
 import Control.Monad
+import Data.Bifunctor (first)
 import Data.Bits
 import qualified Data.ByteString         as B
 -- import qualified Data.ByteString.Builder as R
