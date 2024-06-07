@@ -57,6 +57,7 @@ custom-setup
 library
   -- Modules exported by the library.
   exposed-modules:     Data.Slaw
+                     , Data.Slaw.Path
 
   -- Modules included in this library but not exported.
   other-modules:       Data.Slaw.Internal.NativeInt
