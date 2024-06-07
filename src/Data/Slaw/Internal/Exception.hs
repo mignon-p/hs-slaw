@@ -17,6 +17,7 @@ module Data.Slaw.Internal.Exception
   , rangeError0
   , rangeError
   , rangeError'
+  , notFoundErr
   ) where
 
 import Control.Exception
@@ -117,6 +118,7 @@ instance Default PlasmaException where
 
 data PlasmaExceptionType = EtCorruptSlaw
                          | EtTypeMismatch
+                         | EtNotFound
                          | EtSlawIO
                          | EtPools
                          | EtOther
@@ -195,3 +197,8 @@ rangeError fromType fromValue toType lo hi = rangeError0 msg
 rangeError' :: (String, String, String, String, String)
             -> PlasmaException
 rangeError' = uncurry5 rangeError
+
+notFoundErr :: String -> PlasmaException
+notFoundErr msg = def { peType      = EtNotFound
+                      , peMessage   = msg
+                      }

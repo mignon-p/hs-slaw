@@ -73,6 +73,7 @@ library
                      , Data.Slaw.Internal.NumericConvert
                      , Data.Slaw.Internal.SlawConvert
                      , Data.Slaw.Internal.Helpers
+                     , Data.Slaw.Internal.SlawPath
 
   -- LANGUAGE extensions enabled for all modules in this package.
   default-extensions:  BangPatterns
