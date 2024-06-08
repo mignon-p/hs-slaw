@@ -655,8 +655,18 @@ instance FromSlaw Bool where
   fromSlaw (SlawBool b)     = Right b
   fromSlaw SlawNil          = Right False
   fromSlaw (SlawString lbs)
-    | lbs ==~ "false"       = Right False
-    | lbs ==~ "true"        = Right True
+    | lbs =~= "false"       = Right False
+    | lbs =~= "true"        = Right True
+    | lbs =~= "off"         = Right False
+    | lbs =~= "on"          = Right True
+    | lbs =~= "no"          = Right False
+    | lbs =~= "yes"         = Right True
+    | lbs =~= "0"           = Right False
+    | lbs =~= "1"           = Right True
+  fromSlaw (SlawNumeric _ nd)
+    | i == Just 0           = Right False
+    | i /= Nothing          = Right True
+    where i = numToInteger nd
   fromSlaw s                = handleOthers s
 
 instance ToSlaw Bool where

@@ -59,6 +59,7 @@ unitTests = testGroup "HUnit tests"
   , testCase "Error slaw (little endian)" $ testErrorSlaw LittleEndian
   , testCase "qw"                         $ testQw
   , testCase "slaw-path"                  $ testSlawPath
+  , testCase "slaw-convert"               $ testSlawConvert
   ]
 
 testErrorSlaw :: ByteOrder -> Assertion
@@ -155,3 +156,18 @@ testSlawPath = do
 
   SemanticCI "FOO" @=? SemanticCI (mySlaw ! "pair/0")
   SemanticCI "bAr" @=? SemanticCI (mySlaw ! "pair/1")
+
+testSlawConvert :: Assertion
+testSlawConvert = do
+  Just False @=? ŝm "fAlse"
+  Just True  @=? ŝm "truE"
+  Just False @=? ŝm "off"
+  Just True  @=? ŝm "on"
+  Just False @=? ŝm "no"
+  Just True  @=? ŝm "yes"
+  Just False @=? ŝm "0"
+  Just True  @=? ŝm "1"
+  Just False @=? ŝm 0
+  Just True  @=? ŝm 1
+  Just True  @=? ŝm (-5)
+  Just True  @=? ŝm 0xdefacedbadfacade

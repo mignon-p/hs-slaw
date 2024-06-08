@@ -11,7 +11,7 @@ module Data.Slaw.Internal.Util
   , ucFirst
   , lo56
   , hi8
-  , (==~)
+  , (=~=)
   , (?>)
   , uncurry5
   , safeIntegralFromInteger
@@ -30,7 +30,7 @@ import GHC.Float
 
 infixl 0 ##
 infix  7 ??
-infix  4 ==~
+infix  4 =~=
 infix  4 ?>
 
 {-# INLINE (##) #-}
@@ -65,9 +65,9 @@ hi8 :: Word64 -> Word64
 hi8 = (`shiftR` 56)
 
 -- case insensitive (for ASCII chars only) equality for lazy ByteStrings
-{-# INLINABLE (==~) #-}
-(==~) :: L8.ByteString -> L8.ByteString -> Bool
-x ==~ y
+{-# INLINABLE (=~=) #-}
+(=~=) :: L8.ByteString -> L8.ByteString -> Bool
+x =~= y
   | L8.length x /= L8.length y = False
   | otherwise = L8.map lcAscii x == L8.map lcAscii y
 
