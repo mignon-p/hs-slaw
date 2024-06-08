@@ -14,6 +14,7 @@ import qualified Test.Tasty.QuickCheck    as QC
 
 import Data.Slaw
 import Data.Slaw.Path
+import Data.Slaw.Semantic
 
 import SlawInstances ()
 
@@ -140,5 +141,17 @@ testSlawPath = do
   Just (7 :: Double) @=? mySlaw !? "vectors/0/w/re"
   Just (8 :: Double) @=? mySlaw !? "vectors/0/w/im"
 
+  Semantic 9 @=? Semantic (mySlaw ! "vectors/1/x/re")
+  Semantic 8 @=? Semantic (mySlaw ! "vectors/1/x/im")
+  Semantic 7 @=? Semantic (mySlaw ! "vectors/1/y/re")
+  Semantic 6 @=? Semantic (mySlaw ! "vectors/1/y/im")
+  Semantic 5 @=? Semantic (mySlaw ! "vectors/1/z/re")
+  Semantic 4 @=? Semantic (mySlaw ! "vectors/1/z/im")
+  Semantic 3 @=? Semantic (mySlaw ! "vectors/1/w/re")
+  Semantic 2 @=? Semantic (mySlaw ! "vectors/1/w/im")
+
   (Nothing :: Maybe Double) @=? mySlaw !? "vectors/0/w/banana"
   Just (14 :: Double)       @=? mySlaw !? "vectors/-1/-1/0"
+
+  SemanticCI "FOO" @=? SemanticCI (mySlaw ! "pair/0")
+  SemanticCI "bAr" @=? SemanticCI (mySlaw ! "pair/1")
