@@ -176,6 +176,6 @@ testSlawConvert = do
 
 testSlawSemantic :: Assertion
 testSlawSemantic = do
-  assertBool "" $ š (5 :: Int8) ==~ š (5 :: Word64)
-  assertBool "" $ not $ "foo" ==~  "Foo"
-  assertBool "" $       "foo" ==~~ "Foo"
+  assertBool "[0]" $ š (5 :: Int8) ==~ š (5 :: Word64)
+  assertBool "[1]" $ not $ "foo" ==~  "Foo"
+  assertBool "[2]" $       "foo" ==~~ "Foo"

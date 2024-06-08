@@ -28,12 +28,18 @@ import Data.Slaw.Internal.Util
 infix 4 ==~
 infix 4 ==~~
 
+type TextFunc = Utf8Str -> T.Text
+
+textFunc, textFuncCI :: TextFunc
+textFunc   = fromUtf8
+textFuncCI = T.toCaseFold . fromUtf8
+
 newtype Semantic = Semantic1 SemWrap
                    deriving newtype (Eq, Ord, Show, NFData, Hashable)
 
 pattern Semantic :: Slaw -> Semantic
 pattern Semantic x <- Semantic1 (SemWrap { swOrig = x }) where
-  Semantic x = Semantic1 (semWrap fromUtf8 x)
+  Semantic x = Semantic1 (semWrap textFunc x)
 
 unSemantic :: Semantic -> Slaw
 unSemantic (Semantic1 sw) = swOrig sw
@@ -43,7 +49,7 @@ newtype SemanticCI = SemanticCI1 SemWrap
 
 pattern SemanticCI :: Slaw -> SemanticCI
 pattern SemanticCI x <- SemanticCI1 (SemWrap { swOrig = x }) where
-  SemanticCI x = SemanticCI1 (semWrap (T.toCaseFold . fromUtf8) x)
+  SemanticCI x = SemanticCI1 (semWrap textFuncCI x)
 
 unSemanticCI :: SemanticCI -> Slaw
 unSemanticCI (SemanticCI1 sw) = swOrig sw
@@ -82,7 +88,7 @@ instance Hashable SemWrap where
 instance NFData SemWrap where
   rnf x = swOrig x `deepseq` swSem x `deepseq` rnf (swHash x)
 
-semWrap :: (Utf8Str -> T.Text) -> Slaw -> SemWrap
+semWrap :: TextFunc -> Slaw -> SemWrap
 semWrap f slaw = SemWrap
   { swOrig = slaw
   , swSem  = sem
@@ -91,7 +97,7 @@ semWrap f slaw = SemWrap
   where
     sem = mkSemSlaw f slaw
 
-mkSemSlaw :: (Utf8Str -> T.Text) -> Slaw -> SemSlaw
+mkSemSlaw :: TextFunc -> Slaw -> SemSlaw
 mkSemSlaw _ SlawNil             = SemNil
 mkSemSlaw _ (SlawBool b)        = SemBool    b
 mkSemSlaw _ (SlawSymbol sym)    = SemSymbol  sym
@@ -106,7 +112,7 @@ mkSemSlaw f (SlawProtein d i r) = SemProtein d' i' r
         i' = mkSemSlaw f $ i ?> SlawMap  []
 mkSemSlaw _ (SlawError _ _)     = SemError
 
-mkSemMap :: (Utf8Str -> T.Text)
+mkSemMap :: TextFunc
          -> [(Slaw, Slaw)]
          -> [(SemSlaw, SemSlaw)]
 mkSemMap f = M.toList . M.fromList . map (bimap g g)
@@ -117,8 +123,8 @@ ndToRats = fromNumericData (map toRational . S.toList)
 
 {-# INLINABLE (==~) #-}
 (==~) :: Slaw -> Slaw -> Bool
-x ==~ y = Semantic x == Semantic y
+x ==~ y = mkSemSlaw textFunc x == mkSemSlaw textFunc y
 
 {-# INLINABLE (==~~) #-}
 (==~~) :: Slaw -> Slaw -> Bool
-x ==~~ y = SemanticCI x == SemanticCI y
+x ==~~ y = mkSemSlaw textFuncCI x == mkSemSlaw textFuncCI y
