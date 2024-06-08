@@ -7,6 +7,8 @@ module Data.Slaw.Internal.SemanticSlaw
   , unSemantic
   , SemanticCI(SemanticCI)
   , unSemanticCI
+  , (==~)
+  , (==~~)
   ) where
 
 import Control.DeepSeq
@@ -22,6 +24,9 @@ import Data.Slaw.Internal.Helpers
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
+
+infix 4 ==~
+infix 4 ==~~
 
 newtype Semantic = Semantic1 SemWrap
                    deriving newtype (Eq, Ord, Show, NFData, Hashable)
@@ -109,3 +114,11 @@ mkSemMap f = M.toList . M.fromList . map (bimap g g)
 
 ndToRats :: NumericData -> [Rational]
 ndToRats = fromNumericData (map toRational . S.toList)
+
+{-# INLINABLE (==~) #-}
+(==~) :: Slaw -> Slaw -> Bool
+x ==~ y = Semantic x == Semantic y
+
+{-# INLINABLE (==~~) #-}
+(==~~) :: Slaw -> Slaw -> Bool
+x ==~~ y = SemanticCI x == SemanticCI y

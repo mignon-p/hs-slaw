@@ -7,6 +7,7 @@ import qualified Data.IntMap.Strict       as IM
 import qualified Data.Map.Strict          as M
 import qualified Data.Text                as T
 import qualified Data.Vector.Storable     as S
+import Data.Word
 import System.Environment
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -60,6 +61,7 @@ unitTests = testGroup "HUnit tests"
   , testCase "qw"                         $ testQw
   , testCase "slaw-path"                  $ testSlawPath
   , testCase "slaw-convert"               $ testSlawConvert
+  , testCase "slaw-semantic"              $ testSlawSemantic
   ]
 
 testErrorSlaw :: ByteOrder -> Assertion
@@ -171,3 +173,9 @@ testSlawConvert = do
   Just True  @=? ŝm 1
   Just True  @=? ŝm (-5)
   Just True  @=? ŝm 0xdefacedbadfacade
+
+testSlawSemantic :: Assertion
+testSlawSemantic = do
+  assertBool "" $ š (5 :: Int8) ==~ š (5 :: Word64)
+  assertBool "" $ not $ "foo" ==~  "Foo"
+  assertBool "" $       "foo" ==~~ "Foo"

@@ -3,6 +3,8 @@ module Data.Slaw.Semantic
   , unSemantic
   , SemanticCI(..)
   , unSemanticCI
+  , (==~)
+  , (==~~)
   ) where
 
 import Data.Slaw.Internal.SemanticSlaw
