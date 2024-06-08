@@ -58,6 +58,7 @@ library
   -- Modules exported by the library.
   exposed-modules:     Data.Slaw
                      , Data.Slaw.Path
+                     , Data.Slaw.Semantic
 
   -- Modules included in this library but not exported.
   other-modules:       Data.Slaw.Internal.NativeInt
@@ -75,6 +76,7 @@ library
                      , Data.Slaw.Internal.SlawConvert
                      , Data.Slaw.Internal.Helpers
                      , Data.Slaw.Internal.SlawPath
+                     , Data.Slaw.Internal.SemanticSlaw
 
   -- LANGUAGE extensions enabled for all modules in this package.
   default-extensions:  BangPatterns
@@ -89,8 +91,11 @@ library
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    CPP
+                     , DerivingStrategies
                      , FlexibleInstances
+                     , GeneralizedNewtypeDeriving
                      , ImplicitParams
+                     , PatternSynonyms
                      , ScopedTypeVariables
                      , TypeSynonymInstances
 
