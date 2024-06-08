@@ -4,6 +4,9 @@
 
 module Data.Slaw.Internal.SemanticSlaw
   ( Semantic(Semantic)
+  , unSemantic
+  , SemanticCI(SemanticCI)
+  , unSemanticCI
   ) where
 
 import Control.DeepSeq
@@ -24,8 +27,21 @@ newtype Semantic = Semantic1 SemWrap
                    deriving newtype (Eq, Ord, Show, NFData, Hashable)
 
 pattern Semantic :: Slaw -> Semantic
-pattern Semantic a <- Semantic1 (SemWrap { swOrig = a }) where
-  Semantic a = Semantic1 (semWrap fromUtf8 a)
+pattern Semantic x <- Semantic1 (SemWrap { swOrig = x }) where
+  Semantic x = Semantic1 (semWrap fromUtf8 x)
+
+unSemantic :: Semantic -> Slaw
+unSemantic (Semantic1 sw) = swOrig sw
+
+newtype SemanticCI = SemanticCI1 SemWrap
+                   deriving newtype (Eq, Ord, Show, NFData, Hashable)
+
+pattern SemanticCI :: Slaw -> SemanticCI
+pattern SemanticCI x <- SemanticCI1 (SemWrap { swOrig = x }) where
+  SemanticCI x = SemanticCI1 (semWrap (T.toCaseFold . fromUtf8) x)
+
+unSemanticCI :: SemanticCI -> Slaw
+unSemanticCI (SemanticCI1 sw) = swOrig sw
 
 data SemSlaw = SemNil
              | SemBool    !Bool
