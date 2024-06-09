@@ -25,6 +25,7 @@ import Data.Ratio
 -- import Data.String
 import qualified Data.Text                as T
 import qualified Data.Text.Lazy           as LT
+import qualified Data.Vector              as V
 import qualified Data.Vector.Storable     as S
 import Data.Word
 import Foreign.C.Types
@@ -126,8 +127,11 @@ instance (Nameable a, Nameable b) => Nameable (Either a b) where
                       , typeName' (undefined :: b)
                       ]
 
-instance Nameable a => Nameable (S.Vector a) where
+instance Nameable a => Nameable (V.Vector a) where
   typeName _ = "Vector " ++ typeName' (undefined :: a)
+
+instance Nameable a => Nameable (S.Vector a) where
+  typeName _ = "storable Vector " ++ typeName' (undefined :: a)
 
 instance Nameable a => Nameable (Ratio a) where
   typeName _ =

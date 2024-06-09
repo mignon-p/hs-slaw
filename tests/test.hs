@@ -6,6 +6,7 @@ import qualified Data.IntMap.Strict       as IM
 -- import Data.List
 import qualified Data.Map.Strict          as M
 import qualified Data.Text                as T
+import qualified Data.Vector              as V
 import qualified Data.Vector.Storable     as S
 import Data.Word
 import System.Environment
@@ -173,6 +174,13 @@ testSlawConvert = do
   Just True  @=? ŝm 1
   Just True  @=? ŝm (-5)
   Just True  @=? ŝm 0xdefacedbadfacade
+
+  let s = SlawList ["one", "two", 3]
+      v = ŝ s :: V.Vector T.Text
+
+  Just "one" @=? v V.!? 0
+  Just "two" @=? v V.!? 1
+  Just "3"   @=? v V.!? 2
 
 testSlawSemantic :: Assertion
 testSlawSemantic = do
