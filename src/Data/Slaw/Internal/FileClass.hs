@@ -1,9 +1,13 @@
+{-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeSynonymInstances       #-}
 
 module Data.Slaw.Internal.FileClass
   ( FileClass(..)
   , FileReader(..)
+  , NoClose(..)
+  , HPair
   , makeFileReader
   , readBytes
   , peekBytes
@@ -20,20 +24,22 @@ import System.IO
 import System.IO.MMap
 import System.OsPath
 
+type HPair = (Handle, Bool)
+
 class FileClass a where
   fcName              :: a -> String
 
-  fcOpenRead          :: a -> IO Handle
+  fcOpenRead          :: a -> IO HPair
 
-  fcOpenWrite         :: a -> IO Handle
+  fcOpenWrite         :: a -> IO HPair
 
-  fcOpenReadOrMap     :: a -> IO (Either B.ByteString Handle)
+  fcOpenReadOrMap     :: a -> IO (Either B.ByteString HPair)
   fcOpenReadOrMap name = Right <$> fcOpenRead name
 
 instance FileClass FilePath where
   fcName           = id
-  fcOpenRead  name = openBinaryFile name ReadMode
-  fcOpenWrite name = openBinaryFile name WriteMode
+  fcOpenRead  name = (,True) <$> openBinaryFile name ReadMode
+  fcOpenWrite name = (,True) <$> openBinaryFile name WriteMode
 
   fcOpenReadOrMap name = do
     mbs <- mmapMaybe name
@@ -47,8 +53,8 @@ instance FileClass OsPath where
       Just str -> str
       Nothing  -> show name
 
-  fcOpenRead  name = F.openBinaryFile name ReadMode
-  fcOpenWrite name = F.openBinaryFile name WriteMode
+  fcOpenRead  name = (,True) <$> F.openBinaryFile name ReadMode
+  fcOpenWrite name = (,True) <$> F.openBinaryFile name WriteMode
 
   fcOpenReadOrMap name = do
     mbs <- case decodeUtf name of
@@ -59,9 +65,17 @@ instance FileClass OsPath where
       Nothing -> Right <$> fcOpenRead name
 
 instance FileClass Handle where
-  fcName      = show
-  fcOpenRead  = return
-  fcOpenWrite = return
+  fcName        = show
+  fcOpenRead  h = return (h, True)
+  fcOpenWrite h = return (h, True)
+
+newtype NoClose = NoClose { unNoClose :: Handle }
+                  deriving newtype (Show, Eq)
+
+instance FileClass NoClose where
+  fcName      (NoClose h) = show h
+  fcOpenRead  (NoClose h) = return (h, False)
+  fcOpenWrite (NoClose h) = return (h, False)
 
 mmapMaybe :: FilePath -> IO (Maybe B.ByteString)
 mmapMaybe name = do
@@ -75,10 +89,10 @@ mmapMaybe name = do
 
 data FileReader = FileReader
   { frBytes  :: IORef L.ByteString
-  , frHandle :: Maybe Handle
+  , frHandle :: Maybe HPair
   }
 
-makeFileReader :: Either B.ByteString Handle -> IO FileReader
+makeFileReader :: Either B.ByteString HPair -> IO FileReader
 makeFileReader (Left bs) = do
   r <- newIORef $ L.fromStrict bs
   return $ FileReader r Nothing
@@ -95,8 +109,8 @@ readBytes fr nBytes = do
   if n >= fromIntegral nBytes
     then return lbs2
     else case frHandle fr of
-           Nothing -> return lbs2
-           Just h  -> do
+           Nothing     -> return lbs2
+           Just (h, _) -> do
              let bytesLeft = nBytes - fromIntegral n
              lbs4 <- L.hGet h bytesLeft
              return $ lbs2 <> lbs4
@@ -116,5 +130,5 @@ closeFileReader :: FileReader -> IO ()
 closeFileReader fr = do
   writeIORef (frBytes fr) L.empty
   case frHandle fr of
-    Nothing -> return ()
-    Just h  -> hClose h
+    Just (h, True) -> hClose h
+    _              -> return ()
