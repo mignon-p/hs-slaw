@@ -20,11 +20,12 @@ import Control.Monad
 import qualified Data.ByteString           as B
 import qualified Data.ByteString.Lazy      as L
 import Data.IORef
-import Data.Word
 import qualified System.File.OsPath        as F
 import System.IO
 import System.IO.MMap
 import System.OsPath
+
+import Data.Slaw.Internal.Util
 
 type HPair = (Handle, Bool)
 
@@ -92,7 +93,7 @@ mmapMaybe name = do
 data FileReader = FileReader
   { frBytes  :: IORef L.ByteString
   , frHandle :: Maybe HPair
-  , frOffset :: IORef Word64
+  , frOffset :: IORef Integer
   }
 
 makeFileReader :: Either B.ByteString HPair -> IO FileReader
@@ -101,8 +102,12 @@ makeFileReader (Left bs) = do
   o <- newIORef 0
   return $ FileReader r Nothing o
 makeFileReader (Right h) = do
+  eth <- tryIO $ hTell $ fst h
+  let offset = case eth of
+                 Left  _ -> 0
+                 Right x -> x
   r <- newIORef $ L.empty
-  o <- newIORef 0
+  o <- newIORef offset
   return $ FileReader r (Just h) o
 
 readBytes :: FileReader -> Int -> IO L.ByteString
@@ -145,5 +150,5 @@ closeFileReader fr = do
     Just (h, True) -> hClose h
     _              -> return ()
 
-getOffset :: FileReader -> IO Word64
+getOffset :: FileReader -> IO Integer
 getOffset = readIORef . frOffset

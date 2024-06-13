@@ -17,8 +17,10 @@ module Data.Slaw.Internal.Util
   , safeIntegralFromInteger
   , orList
   , eth2mby
+  , tryIO
   ) where
 
+import Control.Exception
 import Data.Bits
 import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.Char
@@ -116,3 +118,7 @@ orList = foldl' (.|.) zeroBits
 eth2mby :: Either a b -> Maybe b
 eth2mby (Left  _) = Nothing
 eth2mby (Right x) = Just x
+
+{-# INLINE tryIO #-}
+tryIO :: IO a -> IO (Either IOException a)
+tryIO = try
