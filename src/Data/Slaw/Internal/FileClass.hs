@@ -12,6 +12,7 @@ module Data.Slaw.Internal.FileClass
   , readBytes
   , peekBytes
   , closeFileReader
+  , getOffset
   ) where
 
 import Control.Exception
@@ -19,6 +20,7 @@ import Control.Monad
 import qualified Data.ByteString           as B
 import qualified Data.ByteString.Lazy      as L
 import Data.IORef
+import Data.Word
 import qualified System.File.OsPath        as F
 import System.IO
 import System.IO.MMap
@@ -90,18 +92,28 @@ mmapMaybe name = do
 data FileReader = FileReader
   { frBytes  :: IORef L.ByteString
   , frHandle :: Maybe HPair
+  , frOffset :: IORef Word64
   }
 
 makeFileReader :: Either B.ByteString HPair -> IO FileReader
 makeFileReader (Left bs) = do
   r <- newIORef $ L.fromStrict bs
-  return $ FileReader r Nothing
+  o <- newIORef 0
+  return $ FileReader r Nothing o
 makeFileReader (Right h) = do
   r <- newIORef $ L.empty
-  return $ FileReader r (Just h)
+  o <- newIORef 0
+  return $ FileReader r (Just h) o
 
 readBytes :: FileReader -> Int -> IO L.ByteString
 readBytes fr nBytes = do
+  lbs <- readBytes' fr nBytes
+  let len = fromIntegral $ L.length lbs
+  modifyIORef' (frOffset fr) (+ len)
+  return lbs
+
+readBytes' :: FileReader -> Int -> IO L.ByteString
+readBytes' fr nBytes = do
   lbs1 <- readIORef $ frBytes fr
   let (lbs2, lbs3) = L.splitAt (fromIntegral nBytes) lbs1
   when (not $ L.null lbs1) $ writeIORef (frBytes fr) lbs3
@@ -122,7 +134,7 @@ peekBytes fr nBytes = do
   if L.length lbs2 >= fromIntegral nBytes
     then return lbs2
     else do
-    lbs4 <- readBytes fr nBytes
+    lbs4 <- readBytes' fr nBytes
     modifyIORef' (frBytes fr) (lbs4 <>)
     return lbs4
 
@@ -132,3 +144,6 @@ closeFileReader fr = do
   case frHandle fr of
     Just (h, True) -> hClose h
     _              -> return ()
+
+getOffset :: FileReader -> IO Word64
+getOffset = readIORef . frOffset
