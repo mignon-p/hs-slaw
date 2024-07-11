@@ -80,6 +80,7 @@ library
                      , Data.Slaw.Internal.SlawPath
                      , Data.Slaw.Internal.SemanticSlaw
                      , Data.Slaw.Internal.FileClass
+                     , Data.Slaw.Internal.SlawIO
 
   -- LANGUAGE extensions enabled for all modules in this package.
   default-extensions:  BangPatterns
