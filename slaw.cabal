@@ -62,6 +62,8 @@ library
 
   -- Modules included in this library but not exported.
   other-modules:       Data.Slaw.Internal.NativeInt
+                     , Data.Slaw.Internal.Bitfield
+                     , Data.Slaw.Internal.BitfieldDefs
                      , Data.Slaw.Internal.Util
                      , Data.Slaw.Internal.HalfOrphans
                      , Data.Slaw.Internal.String
