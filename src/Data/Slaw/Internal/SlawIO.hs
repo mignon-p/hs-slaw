@@ -14,7 +14,7 @@ import Data.Word
 import Data.Slaw.Internal.FileClass
 import Data.Slaw.Internal.SlawConvert
 import Data.Slaw.Internal.SlawType
--- import Data.Slaw.Internal.Util
+import Data.Slaw.Internal.Util
 
 fileMagic :: Word32
 fileMagic = 0xffff0b10
@@ -46,13 +46,13 @@ instance Show SlawOutputStream where
   showsPrec n x = showParen (n > 10) s
     where s = showString "SlawOutputStream " . showString (soName x)
 
-{-
 data SInput = SInput
   { sinName   :: String
   , sinOrder  :: !ByteOrder
   , sinReader :: FileReader
   }
 
+{-
 data SOutput = SOutput
   { soutName   :: String
   , soutOrder  :: !ByteOrder
@@ -63,9 +63,26 @@ data SOutput = SOutput
 
 openBinarySlawInput :: (FileClass a, ToSlaw b)
                     => a
-                    -> b
+                    -> b -- options map/protein (currently none)
                     -> IO SlawInputStream
-openBinarySlawInput = undefined
+openBinarySlawInput file _ = do
+  let nam = fcName file
+  eth <- fcOpenReadOrMap file
+  rdr <- makeFileReader eth
+  inp <- makeSInput nam rdr
+  return $ SlawInputStream { siName  = nam
+                           , siRead  = readSInput  inp
+                           , siClose = closeSInput inp
+                           }
+
+makeSInput :: String -> FileReader -> IO SInput
+makeSInput = undefined
+
+readSInput :: SInput -> IO Slaw
+readSInput = undefined
+
+closeSInput :: SInput -> IO ()
+closeSInput = closeFileReader . sinReader
 
 openBinarySlawOutput :: (FileClass a, ToSlaw b)
                      => a
