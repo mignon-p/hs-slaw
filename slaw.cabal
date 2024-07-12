@@ -128,7 +128,7 @@ library
                        -Wno-unused-do-bind
                        -Wno-incomplete-uni-patterns
                        -Wno-orphans
-                       -- -Wno-unused-top-binds
+                       -Wno-unused-top-binds
                        -- -Wno-unused-imports
 
 test-suite test
