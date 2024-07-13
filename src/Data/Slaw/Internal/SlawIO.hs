@@ -1,5 +1,6 @@
 module Data.Slaw.Internal.SlawIO
   ( SlawInputStream(..)
+  , siRead
   , SlawOutputStream(..)
   , openBinarySlawInput
   , openBinarySlawOutput
@@ -39,13 +40,16 @@ currentSlawVersion = 2
 
 data SlawInputStream = SlawInputStream
   { siName  :: String
-  , siRead  :: IO (Maybe Slaw)
+  , siRead' :: CallStack -> IO (Maybe Slaw)
   , siClose :: IO ()
   }
 
 instance Show SlawInputStream where
   showsPrec n x = showParen (n > 10) s
     where s = showString "SlawInputStream " . showString (siName x)
+
+siRead :: HasCallStack => SlawInputStream -> IO (Maybe Slaw)
+siRead si = siRead' si callStack
 
 data SlawOutputStream = SlawOutputStream
   { soName  :: String
@@ -83,7 +87,7 @@ openBinarySlawInput file _ = withFrozenCallStack $ do
   rdr <- makeFileReader eth
   inp <- makeSInput nam rdr
   return $ SlawInputStream { siName  = nam
-                           , siRead  = readSInput  inp
+                           , siRead' = readSInput  inp
                            , siClose = closeSInput inp
                            }
 
@@ -133,7 +137,7 @@ slawIOException nam off msg = def
                                      }
   }
 
-readSInput :: SInput -> IO (Maybe Slaw)
+readSInput :: SInput -> CallStack -> IO (Maybe Slaw)
 readSInput = undefined
 
 closeSInput :: SInput -> IO ()
