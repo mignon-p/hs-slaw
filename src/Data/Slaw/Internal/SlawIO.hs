@@ -8,11 +8,20 @@ module Data.Slaw.Internal.SlawIO
   , currentSlawVersion
   ) where
 
+import Control.Exception
+import Control.Monad
+import qualified Data.ByteString         as B
+import qualified Data.ByteString.Lazy    as L
+import Data.Default.Class
 import Data.Word
+import GHC.Stack
 -- import System.IO
 
+import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.FileClass
 import Data.Slaw.Internal.SlawConvert
+import Data.Slaw.Internal.SlawDecode
+-- import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.Util
 
@@ -61,11 +70,11 @@ data SOutput = SOutput
   }
 -}
 
-openBinarySlawInput :: (FileClass a, ToSlaw b)
+openBinarySlawInput :: (HasCallStack, FileClass a, ToSlaw b)
                     => a
                     -> b -- options map/protein (currently none)
                     -> IO SlawInputStream
-openBinarySlawInput file _ = do
+openBinarySlawInput file _ = withFrozenCallStack $ do
   let nam = fcName file
   eth <- fcOpenReadOrMap file
   rdr <- makeFileReader eth
@@ -75,8 +84,26 @@ openBinarySlawInput file _ = do
                            , siClose = closeSInput inp
                            }
 
-makeSInput :: String -> FileReader -> IO SInput
-makeSInput = undefined
+makeSInput :: HasCallStack => String -> FileReader -> IO SInput
+makeSInput nam rdr = do
+  lbs <- readBytes rdr 8
+  let bs = L.toStrict lbs
+  when (B.length bs /= 8) $ do
+    let msg = "unexpected end of file: could not read header"
+    throwIO $ slawIOException nam msg
+  let o = decodeOct BigEndian bs
+  undefined o
+
+slawIOException :: HasCallStack
+                => String
+                -> String
+                -> PlasmaException
+slawIOException nam msg = def
+  { peType      = EtSlawIO
+  , peMessage   = msg
+  , peCallstack = Just callStack
+  , peLocation  = Just $ def { elSource = DsFile nam }
+  }
 
 readSInput :: SInput -> IO Slaw
 readSInput = undefined
