@@ -2,6 +2,7 @@ module Data.Slaw.Internal.SlawDecode
  ( decodeSlaw
  , decodeProtein
  , decodeOct
+ , lengthFromHeader
  ) where
 
 -- import Control.DeepSeq
@@ -526,3 +527,18 @@ showOct o = printf "%04X_%04X_%04X_%04X" (f 3) (f 2) (f 1) (f 0)
 
 get16 :: Oct -> Int -> Word16
 get16 o n = fromIntegral $ o `shiftR` (n * 16)
+
+lengthFromHeader :: Oct -> Either String Word64
+lengthFromHeader oHdr = do
+  let nib   = getNib  oHdr
+      info  = nibInfo nib
+      ctx   = concat [ "in "
+                     , niName info
+                     , " (header oct "
+                     , showOct oHdr
+                     , "), "
+                     ]
+  (octLen, _) <- first (ctx ++) (niLen info oHdr)
+  if octLen == 0
+    then Left $ ctx ++ "octlen of 0 is not allowed"
+    else Right octLen
