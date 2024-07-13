@@ -16,7 +16,10 @@ import Data.Default.Class
 import Data.Word
 import GHC.Stack
 -- import System.IO
+import Text.Printf
 
+import Data.Slaw.Internal.Bitfield
+import Data.Slaw.Internal.BitfieldDefs
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.FileClass
 import Data.Slaw.Internal.SlawConvert
@@ -91,8 +94,27 @@ makeSInput nam rdr = do
   when (B.length bs /= 8) $ do
     let msg = "unexpected end of file: could not read header"
     throwIO $ slawIOException nam msg
-  let o = decodeOct BigEndian bs
-  undefined o
+  let o    = decodeOct BigEndian   bs
+      mag  = getBf'    bfMagic     o
+      vers = getBf'    bfVersion   o
+      typ  = getBf'    bfType      o
+      big  = getBfBool bfBigEndian o
+  when (mag /= fileMagic) $ do
+    let msg = printf "did not begin with magic number %08X" fileMagic
+    throwIO $ slawIOException nam msg
+  when (typ /= binaryFileTypeSlaw) $ do
+    let msg = "not a binary slaw file"
+    throwIO $ slawIOException nam msg
+  when (vers /= currentSlawVersion) $ do
+    let msg = printf
+              "file contains slaw version %u, but only %u is supported"
+              (vers :: Word8)
+              currentSlawVersion
+    throwIO $ slawIOException nam msg
+  return $ SInput { sinName   = nam
+                  , sinOrder  = if big then BigEndian else LittleEndian
+                  , sinReader = rdr
+                  }
 
 slawIOException :: HasCallStack
                 => String
