@@ -128,11 +128,17 @@ slawIOException :: HasCallStack
                 -> Word64
                 -> String
                 -> PlasmaException
-slawIOException nam off msg = def
+slawIOException nam off = slawIOException' callStack (mkLoc nam off)
+
+slawIOException' :: CallStack
+                 -> ErrLocation
+                 -> String
+                 -> PlasmaException
+slawIOException' cs el msg = def
   { peType      = EtSlawIO
   , peMessage   = msg
-  , peCallstack = Just callStack
-  , peLocation  = Just $ mkLoc nam off
+  , peCallstack = Just cs
+  , peLocation  = Just el
   }
 
 mkLoc :: String -> Word64 -> ErrLocation
@@ -160,10 +166,24 @@ readSInput inp cs = do
            Left msg -> do
              let exc = corruptSlaw msg $ mkLoc nam off
              throwIO $ exc { peCallstack = Just cs }
-           Right octLen -> Just <$> readSInput1 inp cs octLen
+           Right octLen -> Just <$> readSInput1 inp cs off octLen
 
-readSInput1 :: SInput -> CallStack -> Word64 -> IO Slaw
-readSInput1 = undefined
+readSInput1 :: SInput -> CallStack -> Word64 -> Word64 -> IO Slaw
+readSInput1 inp cs off octLen = do
+  let nam = sinName   inp
+      bo  = sinOrder  inp
+      rdr = sinReader inp
+      len = 8 * octLen
+      el  = mkLoc nam off
+  lbs <- readBytes rdr (fromIntegral len)
+  when (L.length lbs /= fromIntegral len) $ do
+    let msg = printf
+              "%s: expected %u bytes but only read %d bytes"
+              ("unexpected end of file" :: String)
+              len
+              (L.length lbs)
+    throwIO $ slawIOException' cs el msg
+  return $ decodeSlaw' bo el lbs
 
 closeSInput :: SInput -> IO ()
 closeSInput = closeFileReader . sinReader
