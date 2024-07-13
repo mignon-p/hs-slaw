@@ -89,11 +89,14 @@ openBinarySlawInput file _ = withFrozenCallStack $ do
 
 makeSInput :: HasCallStack => String -> FileReader -> IO SInput
 makeSInput nam rdr = do
+  off <- fromIntegral <$> getOffset rdr
   lbs <- readBytes rdr 8
-  let bs = L.toStrict lbs
-  when (B.length bs /= 8) $ do
+  let bs       = L.toStrict lbs
+      thr off2 = throwIO . slawIOException nam (off + off2)
+      hdrLen   = B.length bs
+  when (hdrLen /= 8) $ do
     let msg = "unexpected end of file: could not read header"
-    throwIO $ slawIOException nam msg
+    thr (fromIntegral hdrLen) msg
   let o    = decodeOct BigEndian   bs
       mag  = getBf'    bfMagic     o
       vers = getBf'    bfVersion   o
@@ -101,16 +104,16 @@ makeSInput nam rdr = do
       big  = getBfBool bfBigEndian o
   when (mag /= fileMagic) $ do
     let msg = printf "did not begin with magic number %08X" fileMagic
-    throwIO $ slawIOException nam msg
+    thr 0 msg
   when (typ /= binaryFileTypeSlaw) $ do
     let msg = "not a binary slaw file"
-    throwIO $ slawIOException nam msg
+    thr 5 msg
   when (vers /= currentSlawVersion) $ do
     let msg = printf
               "file contains slaw version %u, but only %u is supported"
               (vers :: Word8)
               currentSlawVersion
-    throwIO $ slawIOException nam msg
+    thr 4 msg
   return $ SInput { sinName   = nam
                   , sinOrder  = if big then BigEndian else LittleEndian
                   , sinReader = rdr
@@ -118,13 +121,16 @@ makeSInput nam rdr = do
 
 slawIOException :: HasCallStack
                 => String
+                -> Word64
                 -> String
                 -> PlasmaException
-slawIOException nam msg = def
+slawIOException nam off msg = def
   { peType      = EtSlawIO
   , peMessage   = msg
   , peCallstack = Just callStack
-  , peLocation  = Just $ def { elSource = DsFile nam }
+  , peLocation  = Just $ ErrLocation { elSource = DsFile nam
+                                     , elOffset = Just   off
+                                     }
   }
 
 readSInput :: SInput -> IO Slaw
