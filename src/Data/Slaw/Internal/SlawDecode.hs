@@ -7,7 +7,7 @@ module Data.Slaw.Internal.SlawDecode
 
 -- import Control.DeepSeq
 import Control.Monad
-import Data.Bifunctor (first)
+import Data.Bifunctor (first, second)
 import Data.Bits
 import qualified Data.ByteString         as B
 -- import qualified Data.ByteString.Builder as R
@@ -157,21 +157,11 @@ decodeSlaw1 inp = do
   let hdrBs = (L.toStrict . iLbs) hdr
       bo    = iBo hdr
       oHdr  = decodeOct bo hdrBs
-      nib   = getNib oHdr
-      info  = nibInfo nib
-      ctx   = concat [ "in "
-                     , niName info
-                     , " (header oct "
-                     , showOct oHdr
-                     , "), "
-                     ]
-  (octLen, nSpecial) <-
-    first   ((addLoc hdr) . (ctx ++)) $ niLen info oHdr
+  (octLen, (info, ctx, nSpecial)) <-
+    first (addLoc hdr) (lengthFromHeader' oHdr)
   let special = getSpecial bo hdrBs nSpecial
-  when (octLen == 0) $
-    Left $ addLoc inp $ ctx ++ "octlen of 0 is not allowed"
   (body, leftover) <-
-    first   (first (ctx ++)) $ rest // (octLen - 1)
+    first (first (ctx ++)) $ rest // (octLen - 1)
   case niDecode info oHdr special body of
     Left msg -> Right (mkSlawErr $ first (ctx ++) msg, leftover)
     Right s  -> Right (s, leftover)
@@ -529,7 +519,11 @@ get16 :: Oct -> Int -> Word16
 get16 o n = fromIntegral $ o `shiftR` (n * 16)
 
 lengthFromHeader :: Oct -> Either String Word64
-lengthFromHeader oHdr = do
+lengthFromHeader = second fst . lengthFromHeader'
+
+lengthFromHeader' :: Oct
+                  -> Either String (Word64, (NibInfo, String, Word))
+lengthFromHeader' oHdr = do
   let nib   = getNib  oHdr
       info  = nibInfo nib
       ctx   = concat [ "in "
@@ -538,7 +532,7 @@ lengthFromHeader oHdr = do
                      , showOct oHdr
                      , "), "
                      ]
-  (octLen, _) <- first (ctx ++) (niLen info oHdr)
+  (octLen, nSpecial) <- first (ctx ++) (niLen info oHdr)
   if octLen == 0
     then Left $ ctx ++ "octlen of 0 is not allowed"
-    else Right octLen
+    else Right (octLen, (info, ctx, nSpecial))
