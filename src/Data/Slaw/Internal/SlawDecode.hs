@@ -1,5 +1,6 @@
 module Data.Slaw.Internal.SlawDecode
  ( decodeSlaw
+ , decodeSlaw'
  , decodeProtein
  , decodeOct
  , lengthFromHeader
@@ -60,6 +61,15 @@ makeInput bo what lbs = Input { iLbs = lbs
                   (func, loc) : _ ->
                     " passed to " ++ func ++ " at " ++ prettySrcLoc loc
                   _               -> ""
+
+makeInput' :: ByteOrder -> ErrLocation -> L.ByteString -> Input
+makeInput' bo el lbs = Input { iLbs = lbs
+                             , iOff = case elOffset el of
+                                        Nothing  -> 0
+                                        Just off -> off
+                             , iSrc = elSource el
+                             , iBo  = bo
+                             }
 
 addLoc :: IsLocation a => a -> String -> (String, ErrLocation)
 addLoc ilo s = (s, getLocation ilo)
@@ -150,6 +160,10 @@ handleSlawResult (Right (s, _)) = s
 decodeSlaw :: HasCallStack => ByteOrder -> BinarySlaw -> Slaw
 decodeSlaw bo lbs = withFrozenCallStack $
   handleSlawResult $ decodeSlaw1 $ makeInput bo "slaw" lbs
+
+decodeSlaw' :: ByteOrder -> ErrLocation -> BinarySlaw -> Slaw
+decodeSlaw' bo el lbs =
+  handleSlawResult $ decodeSlaw1 $ makeInput' bo el lbs
 
 decodeSlaw1 :: Input -> Either ErrPair (Slaw, Input)
 decodeSlaw1 inp = do
