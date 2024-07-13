@@ -39,7 +39,7 @@ currentSlawVersion = 2
 
 data SlawInputStream = SlawInputStream
   { siName  :: String
-  , siRead  :: IO Slaw
+  , siRead  :: IO (Maybe Slaw)
   , siClose :: IO ()
   }
 
@@ -133,7 +133,7 @@ slawIOException nam off msg = def
                                      }
   }
 
-readSInput :: SInput -> IO Slaw
+readSInput :: SInput -> IO (Maybe Slaw)
 readSInput = undefined
 
 closeSInput :: SInput -> IO ()
