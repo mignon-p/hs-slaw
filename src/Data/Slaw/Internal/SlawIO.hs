@@ -132,13 +132,38 @@ slawIOException nam off msg = def
   { peType      = EtSlawIO
   , peMessage   = msg
   , peCallstack = Just callStack
-  , peLocation  = Just $ ErrLocation { elSource = DsFile nam
-                                     , elOffset = Just   off
-                                     }
+  , peLocation  = Just $ mkLoc nam off
+  }
+
+mkLoc :: String -> Word64 -> ErrLocation
+mkLoc nam off = ErrLocation
+  { elSource = DsFile nam
+  , elOffset = Just   off
   }
 
 readSInput :: SInput -> CallStack -> IO (Maybe Slaw)
-readSInput = undefined
+readSInput inp cs = do
+  let nam = sinName   inp
+      bo  = sinOrder  inp
+      rdr = sinReader inp
+  off <- fromIntegral <$> getOffset rdr
+  lbs <- peekBytes rdr 8
+  let bs     = L.toStrict lbs
+      hdrLen = B.length bs
+  if | hdrLen == 0 -> return Nothing
+     | hdrLen /= 8 -> do
+         let msg = "unexpected end of file: could not read slaw"
+         throwIO $ slawIOException nam (off + fromIntegral hdrLen) msg
+     | otherwise   -> do
+         let o = decodeOct bo bs
+         case lengthFromHeader o of
+           Left msg -> do
+             let exc = corruptSlaw msg $ mkLoc nam off
+             throwIO $ exc { peCallstack = Just cs }
+           Right octLen -> Just <$> readSInput1 inp cs octLen
+
+readSInput1 :: SInput -> CallStack -> Word64 -> IO Slaw
+readSInput1 = undefined
 
 closeSInput :: SInput -> IO ()
 closeSInput = closeFileReader . sinReader
