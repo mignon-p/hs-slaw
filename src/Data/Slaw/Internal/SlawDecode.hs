@@ -1,6 +1,7 @@
 module Data.Slaw.Internal.SlawDecode
  ( decodeSlaw
  , decodeProtein
+ , decodeOct
  ) where
 
 -- import Control.DeepSeq

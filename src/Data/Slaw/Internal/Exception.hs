@@ -5,6 +5,7 @@ module Data.Slaw.Internal.Exception
   , displayErrLocation
   , PlasmaException(..)
   , displayPlasmaException
+  , PlasmaExceptionType(..)
   , corruptSlaw
   , typeMismatch
   -- , typeMismatch'
