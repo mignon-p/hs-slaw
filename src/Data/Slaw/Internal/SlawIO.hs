@@ -16,7 +16,7 @@ import qualified Data.ByteString.Lazy    as L
 import Data.Default.Class
 import Data.Word
 import GHC.Stack
--- import System.IO
+import System.IO
 import Text.Printf
 
 import Data.Slaw.Internal.Bitfield
@@ -26,6 +26,7 @@ import Data.Slaw.Internal.FileClass
 import Data.Slaw.Internal.SlawConvert
 import Data.Slaw.Internal.SlawDecode
 -- import Data.Slaw.Internal.SlawEncode
+-- import Data.Slaw.Internal.SlawPath
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.Util
 
@@ -68,14 +69,12 @@ data SInput = SInput
   , sinReader :: FileReader
   }
 
-{-
 data SOutput = SOutput
   { soutName   :: String
   , soutOrder  :: !ByteOrder
   , soutHandle :: !Handle
   , soutClose  :: !Bool
   }
--}
 
 openBinarySlawInput :: (HasCallStack, FileClass a, ToSlaw b)
                     => a
@@ -188,9 +187,33 @@ readSInput1 inp cs off octLen = do
 closeSInput :: SInput -> IO ()
 closeSInput = closeFileReader . sinReader
 
-openBinarySlawOutput :: (FileClass a, ToSlaw b)
+openBinarySlawOutput :: (HasCallStack, FileClass a, ToSlaw b)
                      => a
-                     -> b
+                     -> b -- options map/protein
                      -> IO SlawOutputStream
-openBinarySlawOutput = undefined
+openBinarySlawOutput file opts = withFrozenCallStack $ do
+  let opts' = toSlaw opts
+      nam   = fcName file
+  bo <- getByteOrder opts'
+  (h, shouldClose) <- fcOpenWrite file
+  out <- makeSOutput nam (h, shouldClose) bo
+  return $ SlawOutputStream { soName = nam
+                            , soWrite = writeSOutput out
+                            , soFlush = flushSOutput out
+                            , soClose = closeSOutput out
+                            }
 
+makeSOutput :: String -> (Handle, Bool) -> ByteOrder -> IO SOutput
+makeSOutput = undefined
+
+getByteOrder :: HasCallStack => Slaw -> IO ByteOrder
+getByteOrder = undefined
+
+writeSOutput :: SOutput -> Slaw -> IO ()
+writeSOutput = undefined
+
+flushSOutput :: SOutput -> IO ()
+flushSOutput = undefined
+
+closeSOutput :: SOutput -> IO ()
+closeSOutput = undefined
