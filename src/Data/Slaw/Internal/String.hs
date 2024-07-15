@@ -27,7 +27,7 @@ import qualified Data.Text.Encoding       as T
 import qualified Data.Text.Encoding.Error as T
 import qualified Data.Text.Lazy           as LT
 import qualified Data.Text.Lazy.Encoding  as LT
--- import Data.Word
+import Data.Word
 import Foreign.C.String
 import Foreign.C.Types
 import Foreign.Marshal.Alloc
@@ -94,37 +94,45 @@ class ( Monoid   a
   toByteString      :: a -> B.ByteString
   toLazyByteString  :: a -> L.ByteString
   toShortByteString :: a -> SBS.ShortByteString
+  toWord8s          :: a -> [Word8]
 
   fromByteString      :: B.ByteString        -> a
   fromLazyByteString  :: L.ByteString        -> a
   fromShortByteString :: SBS.ShortByteString -> a
+  fromWord8s          :: [Word8]             -> a
 
 instance ByteStringClass B.ByteString where
   toByteString      = id
   toLazyByteString  = L.fromStrict
   toShortByteString = SBS.toShort
+  toWord8s          = B.unpack
 
   fromByteString      = id
   fromLazyByteString  = L.toStrict
   fromShortByteString = SBS.fromShort
+  fromWord8s          = B.pack
 
 instance ByteStringClass L.ByteString where
   toByteString      = L.toStrict
   toLazyByteString  = id
   toShortByteString = SBS.toShort . L.toStrict
+  toWord8s          = L.unpack
 
   fromByteString      = L.fromStrict
   fromLazyByteString  = id
   fromShortByteString = L.fromStrict . SBS.fromShort
+  fromWord8s          = L.pack
 
 instance ByteStringClass SBS.ShortByteString where
   toByteString      = SBS.fromShort
   toLazyByteString  = L.fromStrict . SBS.fromShort
   toShortByteString = id
+  toWord8s          = SBS.unpack
 
   fromByteString      = SBS.toShort
   fromLazyByteString  = SBS.toShort . L.toStrict
   fromShortByteString = id
+  fromWord8s          = SBS.pack
 
 --
 
