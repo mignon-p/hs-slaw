@@ -67,6 +67,7 @@ library
                      , Data.Slaw.Internal.Util
                      , Data.Slaw.Internal.HalfOrphans
                      , Data.Slaw.Internal.String
+                     , Data.Slaw.Internal.EnumStrings
                      , Data.Slaw.Internal.Exception
                      , Data.Slaw.Internal.VectorConvert
                      , Data.Slaw.Internal.VectorTypes
