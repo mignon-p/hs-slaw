@@ -47,6 +47,7 @@ import Numeric.Natural
 -- import System.IO.Unsafe (unsafePerformIO)
 import Text.Read
 
+import Data.Slaw.Internal.EnumStrings
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.NativeInt
@@ -663,15 +664,10 @@ instance ToSlaw a => ToSlaw (V.Vector a) where
 instance FromSlaw Bool where
   fromSlaw (SlawBool b)     = Right b
   fromSlaw SlawNil          = Right False
-  fromSlaw (SlawString lbs)
-    | lbs =~= "false"       = Right False
-    | lbs =~= "true"        = Right True
-    | lbs =~= "off"         = Right False
-    | lbs =~= "on"          = Right True
-    | lbs =~= "no"          = Right False
-    | lbs =~= "yes"         = Right True
-    | lbs =~= "0"           = Right False
-    | lbs =~= "1"           = Right True
+  fromSlaw s@(SlawString lbs) =
+    case stringToEnum boolStrings lbs of
+      Just b               -> Right b
+      Nothing              -> handleOthers s
   fromSlaw (SlawNumeric _ nd)
     | i == Just 0           = Right False
     | i /= Nothing          = Right True

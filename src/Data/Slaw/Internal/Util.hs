@@ -11,7 +11,6 @@ module Data.Slaw.Internal.Util
   , ucFirst
   , lo56
   , hi8
-  , (=~=)
   , (?>)
   , uncurry5
   , safeIntegralFromInteger
@@ -22,7 +21,7 @@ module Data.Slaw.Internal.Util
 
 import Control.Exception
 import Data.Bits
-import qualified Data.ByteString.Lazy.Char8 as L8
+-- import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.Char
 import Data.Hashable
 import Data.List
@@ -32,7 +31,6 @@ import GHC.Float
 
 infixl 0 ##
 infix  7 ??
-infix  4 =~=
 infix  4 ?>
 
 {-# INLINE (##) #-}
@@ -65,19 +63,6 @@ lo56 = (.&. complement 0xff00_0000_0000_0000)
 {-# INLINE hi8 #-}
 hi8 :: Word64 -> Word64
 hi8 = (`shiftR` 56)
-
--- case insensitive (for ASCII chars only) equality for lazy ByteStrings
-{-# INLINABLE (=~=) #-}
-(=~=) :: L8.ByteString -> L8.ByteString -> Bool
-x =~= y
-  | L8.length x /= L8.length y = False
-  | otherwise = L8.map lcAscii x == L8.map lcAscii y
-
-lcAscii :: Char -> Char
-lcAscii c
-  | n >= 0x41 && n <= 0x5A = chr (n + 0x20)
-  | otherwise              = c
-  where n = ord c
 
 {-# INLINABLE (?>) #-}
 (?>) :: Maybe a -> a -> a

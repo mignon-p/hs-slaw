@@ -4,6 +4,7 @@ module Data.Slaw.Internal.EnumStrings
   , stringToEnum
   , enumToString
   , getEnumStrings
+  , boolStrings
   ) where
 
 import Control.DeepSeq
@@ -50,3 +51,9 @@ lcAscii8 :: Word8 -> Word8
 lcAscii8 c
   | c >= 0x41 && c <= 0x5A = c + 0x20
   | otherwise              = c
+
+boolStrings :: EnumStrings Bool
+boolStrings =
+  makeEnumStrings [ ("false off no  0", False)
+                  , ("true  on  yes 1", True)
+                  ]
