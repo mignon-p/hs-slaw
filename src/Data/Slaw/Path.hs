@@ -1,5 +1,6 @@
 module Data.Slaw.Path
   ( ProteinMode(..)
+  , SlawPathOpts(..)
   , slawPath
   , slawPath_m
   , slawPath_es

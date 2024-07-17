@@ -107,10 +107,13 @@ vectors =
 
 testSlawPath :: Assertion
 testSlawPath = do
-  let sp   = slawPath_m PmFullyVisible mySlaw
-      jstr = Just . T.unpack
-      nf   = def { nfArray = True }
-      nd   = NumUnt8 S.empty
+  let sp    = slawPath_m spo   mySlaw
+      spCI  = slawPath_m spoCI mySlaw
+      jstr  = Just . T.unpack
+      nf    = def { nfArray = True }
+      nd    = NumUnt8 S.empty
+      spoCI = def   { spoProteinMode     = PmFullyVisible }
+      spo   = spoCI { spoCaseInsensitive = False          }
 
   Just "have" @=? sp "des/0"
   Just "an"   @=? sp "des/1"
@@ -121,11 +124,22 @@ testSlawPath = do
   Just "foo"  @=? sp "ing/pair/car"
   Just "bar"  @=? sp "ing/pair/cdr"
 
+  -- spoCaseInsensitive only affects map lookup.
+  -- special keywords like "ing" and "cdr" are always case insensitive.
+  Just "foo"  @=? sp   "iNg/pair/car"
+  Just "bar"  @=? sp   "ing/pair/cDr"
+
+  Just "foo"  @=? spCI "ing/paiR/car"
+  Just "bar"  @=? spCI "ing/pAir/cdr"
+
+  Nothing     @=? sp   "ing/paiR/car"
+  Nothing     @=? sp   "ing/pAir/cdr"
+
   Just (SlawNumeric nf nd) @=? sp "rude"
 
   jstr "fake"      @=? mySlaw !? "vaults/31/status"
-  jstr "destroyed" @=? mySlaw !? "vaults/32/status"
-  jstr "good"      @=? mySlaw !? "vaults/33/status"
+  jstr "destroyed" @=? mySlaw !? "vaults/32/statUs"
+  jstr "good"      @=? mySlaw !? "vauLts/33/status"
 
   Just (32 :: Int) @=? mySlaw !? "vaults/31/neighbors/0"
   Just (33 :: Int) @=? mySlaw !? "vaults/31/neighbors/1"
@@ -137,28 +151,28 @@ testSlawPath = do
   Just (32 :: Int) @=? mySlaw !? "vaults/33/neighbors/1"
 
   Just (1 :: Double) @=? mySlaw !? "vectors/0/x/re"
-  Just (2 :: Double) @=? mySlaw !? "vectors/0/x/im"
+  Just (2 :: Double) @=? mySlaw !? "vectors/0/X/im"
   Just (3 :: Double) @=? mySlaw !? "vectors/0/y/re"
   Just (4 :: Double) @=? mySlaw !? "vectors/0/y/im"
-  Just (5 :: Double) @=? mySlaw !? "vectors/0/z/re"
+  Just (5 :: Double) @=? mySlaw !? "vectors/0/Z/re"
   Just (6 :: Double) @=? mySlaw !? "vectors/0/z/im"
   Just (7 :: Double) @=? mySlaw !? "vectors/0/w/re"
   Just (8 :: Double) @=? mySlaw !? "vectors/0/w/im"
 
   Semantic 9 @=? Semantic (mySlaw ! "vectors/1/x/re")
   Semantic 8 @=? Semantic (mySlaw ! "vectors/1/x/im")
-  Semantic 7 @=? Semantic (mySlaw ! "vectors/1/y/re")
+  Semantic 7 @=? Semantic (mySlaw ! "vectors/1/y/RE")
   Semantic 6 @=? Semantic (mySlaw ! "vectors/1/y/im")
   Semantic 5 @=? Semantic (mySlaw ! "vectors/1/z/re")
-  Semantic 4 @=? Semantic (mySlaw ! "vectors/1/z/im")
+  Semantic 4 @=? Semantic (mySlaw ! "vectors/1/z/IM")
   Semantic 3 @=? Semantic (mySlaw ! "vectors/1/w/re")
-  Semantic 2 @=? Semantic (mySlaw ! "vectors/1/w/im")
+  Semantic 2 @=? Semantic (mySlaw ! "Vectors/1/w/im")
 
   (Nothing :: Maybe Double) @=? mySlaw !? "vectors/0/w/banana"
   Just (14 :: Double)       @=? mySlaw !? "vectors/-1/-1/0"
 
   SemanticCI "FOO" @=? SemanticCI (mySlaw ! "pair/0")
-  SemanticCI "bAr" @=? SemanticCI (mySlaw ! "pair/1")
+  SemanticCI "bAr" @=? SemanticCI (mySlaw ! "Pair/1")
 
 testSlawConvert :: Assertion
 testSlawConvert = do

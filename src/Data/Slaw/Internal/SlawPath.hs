@@ -1,5 +1,6 @@
 module Data.Slaw.Internal.SlawPath
   ( ProteinMode(..)
+  , SlawPathOpts(..)
   , slawPath
   , slawPath_m
   , slawPath_es
@@ -11,6 +12,7 @@ module Data.Slaw.Internal.SlawPath
 import Control.DeepSeq
 import Control.Exception
 import Data.Bifunctor
+import Data.Default.Class
 import Data.Hashable
 import Data.List
 import Data.Maybe
@@ -35,6 +37,16 @@ data ProteinMode = PmUseIngests
                  deriving (Eq, Ord, Show, Read, Bounded, Enum,
                            Generic, NFData, Hashable)
 
+data SlawPathOpts = SlawPathOpts
+  { spoProteinMode     :: !ProteinMode
+  , spoCaseInsensitive :: !Bool
+  } deriving (Eq, Ord, Show, Read, Generic, NFData, Hashable)
+
+instance Default SlawPathOpts where
+  def = SlawPathOpts { spoProteinMode     = PmUseIngests
+                     , spoCaseInsensitive = True
+                     }
+
 (!) :: (HasCallStack, FromSlaw a) => Slaw -> T.Text -> a
 (!) s path =
   case slawPathCvt s path of
@@ -48,33 +60,33 @@ slawPathCvt :: FromSlaw a
             => Slaw
             -> T.Text
             -> Either PlasmaException a
-slawPathCvt s path = slawPath0 PmUseIngests s path >>= fromSlaw
+slawPathCvt s path = slawPath0 def s path >>= fromSlaw
 
-slawPath :: HasCallStack => ProteinMode -> Slaw -> T.Text -> Slaw
-slawPath pm s path =
-  case slawPath0 pm s path of
+slawPath :: HasCallStack => SlawPathOpts -> Slaw -> T.Text -> Slaw
+slawPath spo s path =
+  case slawPath0 spo s path of
     Left exc -> throw $ exc { peCallstack = Just callStack }
     Right x  -> x
 
-slawPath_m :: ProteinMode -> Slaw -> T.Text -> Maybe Slaw
-slawPath_m pm s = eth2mby . slawPath0 pm s
+slawPath_m :: SlawPathOpts -> Slaw -> T.Text -> Maybe Slaw
+slawPath_m spo s = eth2mby . slawPath0 spo s
 
-slawPath_es :: ProteinMode
+slawPath_es :: SlawPathOpts
             -> Slaw
             -> T.Text
             -> Either String Slaw
-slawPath_es pm s = first (displayPlasmaException False) . slawPath0 pm s
+slawPath_es spo s = first (displayPlasmaException False) . slawPath0 spo s
 
-slawPath_ee :: ProteinMode
+slawPath_ee :: SlawPathOpts
             -> Slaw
             -> T.Text
             -> Either PlasmaException Slaw
-slawPath_ee pm s =
-  first (\e -> e { peCallstack = Just callStack }) . slawPath0 pm s
+slawPath_ee spo s =
+  first (\e -> e { peCallstack = Just callStack }) . slawPath0 spo s
 
-slawPath0 :: ProteinMode -> Slaw -> T.Text -> Either PlasmaException Slaw
-slawPath0 pm s path =
-  first (mapExc path) $ slawPath1 pm 0 s $ T.splitOn "/" path
+slawPath0 :: SlawPathOpts -> Slaw -> T.Text -> Either PlasmaException Slaw
+slawPath0 spo s path =
+  first (mapExc path) $ slawPath1 spo 0 s $ T.splitOn "/" path
 
 mapExc :: T.Text -> (Int, Int, String) -> PlasmaException
 mapExc path (pos, len, msg) =
@@ -83,16 +95,16 @@ mapExc path (pos, len, msg) =
     ln2 = T.unpack path
     ln3 = replicate pos ' ' ++ replicate len '^'
 
-slawPath1 :: ProteinMode
+slawPath1 :: SlawPathOpts
           -> Int
           -> Slaw
           -> [T.Text]
           -> Either (Int, Int, String) Slaw
 slawPath1 _  _    s []       = Right s
-slawPath1 pm !pos s (k:rest) =
+slawPath1 spo !pos s (k:rest) =
   let kLen = T.length k
-  in case fetchSlaw pm s k of
-       Just s' -> slawPath1 pm (pos + kLen + 1) s' rest
+  in case fetchSlaw spo s k of
+       Just s' -> slawPath1 spo (pos + kLen + 1) s' rest
        Nothing -> Left (pos, kLen, concat [ "Could not find "
                                           , show k
                                           , " in "
@@ -100,17 +112,17 @@ slawPath1 pm !pos s (k:rest) =
                                           , ":"
                                           ])
 
-fetchSlaw :: ProteinMode -> Slaw -> T.Text -> Maybe Slaw
-fetchSlaw pm (SlawProtein des ing rude) =
-  case (pm, ing) of
+fetchSlaw :: SlawPathOpts -> Slaw -> T.Text -> Maybe Slaw
+fetchSlaw spo (SlawProtein des ing rude) =
+  case (spoProteinMode spo, ing) of
     (PmFullyVisible,       _) -> fetchProtein des ing rude
-    (PmUseIngests, Just ing') -> fetchSlaw    pm  ing'
+    (PmUseIngests, Just ing') -> fetchSlaw    spo  ing'
     _                         -> const        Nothing
-fetchSlaw _  (SlawList    lst         ) = fetchList    lst
-fetchSlaw _  (SlawMap     pairs       ) = fetchMap     pairs
-fetchSlaw _  (SlawCons    car cdr     ) = fetchCons    car cdr
-fetchSlaw _  (SlawNumeric nf  nd      ) = fetchNumeric nf nd
-fetchSlaw _  _                          = const        Nothing
+fetchSlaw _   (SlawList    lst         ) = fetchList    lst
+fetchSlaw spo (SlawMap     pairs       ) = fetchMap     spo pairs
+fetchSlaw _   (SlawCons    car cdr     ) = fetchCons    car cdr
+fetchSlaw _   (SlawNumeric nf  nd      ) = fetchNumeric nf nd
+fetchSlaw _   _                          = const        Nothing
 
 findMatch :: [([T.Text], Slaw)] -> T.Text -> Maybe Slaw
 findMatch pairs = findMatch' pairs . T.toLower
@@ -149,15 +161,20 @@ fetchList ss k = do
              else idx
   listToMaybe $ if idx' < 0 then [] else drop idx' ss
 
-fetchMap :: [(Slaw, Slaw)] -> T.Text -> Maybe Slaw
-fetchMap pairs k = fmap snd $ find (fm1 utf8 num) pairs
-  where utf8 = toUtf8 k
+fetchMap :: SlawPathOpts -> [(Slaw, Slaw)] -> T.Text -> Maybe Slaw
+fetchMap spo pairs k = fmap snd $ find (fm1 ci key num) pairs
+  where key  = if ci then T.toCaseFold k else k
         num  = readMaybe $ T.unpack k
+        ci   = spoCaseInsensitive spo
 
-fm1 :: Utf8Str -> Maybe Integer -> (Slaw, Slaw) -> Bool
-fm1 utf8a _   (SlawString  utf8b, _) = utf8a == utf8b
-fm1 _     num (SlawNumeric _  nd, _) = fm1num num nd
-fm1 _     _   _                      = False
+fm1 :: Bool -> T.Text -> Maybe Integer -> (Slaw, Slaw) -> Bool
+fm1 ci    key   _   (SlawString  utf8,  _) = key == du8l ci utf8
+fm1 _     _     num (SlawNumeric _  nd, _) = fm1num num nd
+fm1 _     _     _   _                      = False
+
+du8l :: Bool -> Utf8Str -> T.Text
+du8l False =                fromUtf8
+du8l True  = T.toCaseFold . fromUtf8
 
 fm1num :: Maybe Integer -> NumericData -> Bool
 fm1num Nothing    _  = False
