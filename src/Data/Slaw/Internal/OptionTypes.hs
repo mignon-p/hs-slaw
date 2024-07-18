@@ -7,6 +7,7 @@ module Data.Slaw.Internal.OptionTypes
   ) where
 
 import Control.DeepSeq
+import qualified Data.ByteString.Short    as SBS
 import Data.Default.Class
 import Data.Hashable
 -- import Data.Int
@@ -17,6 +18,8 @@ import Foreign.Storable
 import GHC.Generics (Generic)
 import Numeric.Natural
 
+import Data.Slaw.Internal.EnumStrings
+import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.SlawConvert
 import Data.Slaw.Internal.SlawType
@@ -35,6 +38,21 @@ instance Default PreferredByteOrder where
 instance Nameable PreferredByteOrder where
   typeName _ =   "PreferredByteOrder"
 
+instance FromSlaw PreferredByteOrder where
+  fromSlaw = enumFromSlaw pboStrs
+
+instance ToSlaw PreferredByteOrder where
+  toSlaw = enumToSlaw pboStrs
+
+pboStrs :: EnumStrings PreferredByteOrder
+pboStrs = makeEnumStrings
+  [ ("native n",                            BoNative      )
+  , ("little-endian littleendian little l", BoLittleEndian)
+  , ("big-endian    bigendian    big    b", BoBigEndian   )
+  ]
+
+--
+
 data AutoFlush = AutoFlushNever
                | AutoFlushAlways
                | AutoFlushIfNotSeekable
@@ -46,6 +64,8 @@ instance Default AutoFlush where
 
 instance Nameable AutoFlush where
   typeName _ =   "AutoFlush"
+
+--
 
 data StrNumNone = StringValue  !T.Text
                 | NumericValue !Natural
@@ -85,3 +105,21 @@ preferNumeric con n =
   in if n >= lo && n <= hi
      then SlawNumeric def $ con $ S.singleton $ fromInteger n
      else toSlaw n
+
+enumFromSlaw :: Nameable a
+             => EnumStrings a
+             -> Slaw
+             -> Either PlasmaException a
+enumFromSlaw es (SlawString lbs) =
+  case stringToEnum es lbs of
+    Just x  -> Right x
+    Nothing ->
+      let expected = getEnumStrings es
+      in Left $ invalidArgument1 lbs (expected :: [SBS.ShortByteString])
+enumFromSlaw _  s                = handleOthers s
+
+enumToSlaw :: (Show a, Enum a) => EnumStrings a -> a -> Slaw
+enumToSlaw es x =
+  case enumToString es x of
+    Just lbs -> SlawString lbs
+    Nothing  -> (SlawString . toUtf8 . show) x -- shouldn't happen
