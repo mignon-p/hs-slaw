@@ -13,6 +13,7 @@ import qualified Data.Text                as T
 import GHC.Generics (Generic)
 import Numeric.Natural
 
+import Data.Slaw.Internal.Nameable
 -- import Data.Slaw.Internal.SlawConvert
 -- import Data.Slaw.Internal.SlawType
 -- import Data.Slaw.Internal.Util
@@ -26,6 +27,9 @@ data PreferredByteOrder = BoNative
 instance Default PreferredByteOrder where
   def = BoNative
 
+instance Nameable PreferredByteOrder where
+  typeName _ =   "PreferredByteOrder"
+
 data AutoFlush = AutoFlushNever
                | AutoFlushAlways
                | AutoFlushIfNotSeekable
@@ -35,6 +39,9 @@ data AutoFlush = AutoFlushNever
 instance Default AutoFlush where
   def = AutoFlushIfNotSeekable
 
+instance Nameable AutoFlush where
+  typeName _ =   "AutoFlush"
+
 data StrNumNone = StringValue  !T.Text
                 | NumericValue !Natural
                 | NoValue
@@ -42,3 +49,6 @@ data StrNumNone = StringValue  !T.Text
 
 instance Default StrNumNone where
   def = NoValue
+
+instance Nameable StrNumNone where
+  typeName _ =   "StrNumNone"
