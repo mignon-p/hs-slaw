@@ -11,6 +11,7 @@ module Data.Slaw.Internal.Exception
   -- , typeMismatch'
   , typeMismatchPfx
   , rangeErrorPfx
+  , invalidArgumentPfx
   , etFromMsg
   , because
   , because1
@@ -18,6 +19,8 @@ module Data.Slaw.Internal.Exception
   , rangeError0
   , rangeError
   , rangeError'
+  , invalidArgument
+  , invalidArgument1
   , notFoundErr
   , stdIndent
   ) where
@@ -120,6 +123,8 @@ instance Default PlasmaException where
 
 data PlasmaExceptionType = EtCorruptSlaw
                          | EtTypeMismatch
+                         | EtRangeError
+                         | EtInvalidArgument
                          | EtNotFound
                          | EtSlawIO
                          | EtPools
@@ -152,12 +157,16 @@ typeMismatchPfx = "type mismatch: "
 rangeErrorPfx :: String
 rangeErrorPfx = "range error: "
 
+invalidArgumentPfx :: String
+invalidArgumentPfx = "invalid argument: "
+
 -- This is a hack.  Guess the exception type based on the message.
 etFromMsg :: String -> PlasmaExceptionType
 etFromMsg msg
-  | typeMismatchPfx `isPrefixOf` msg = EtTypeMismatch
-  | rangeErrorPfx   `isPrefixOf` msg = EtTypeMismatch
-  | otherwise                        = EtCorruptSlaw
+  | typeMismatchPfx    `isPrefixOf` msg = EtTypeMismatch
+  | rangeErrorPfx      `isPrefixOf` msg = EtRangeError
+  | invalidArgumentPfx `isPrefixOf` msg = EtInvalidArgument
+  | otherwise                           = EtCorruptSlaw
 
 because :: String -> [PlasmaException] -> Either PlasmaException a
 because msg = Left . because1 msg
@@ -172,7 +181,7 @@ cantCoerce :: String -> String -> String
 cantCoerce desc other = concat ["Can't coerce ", desc, " to ", other]
 
 rangeError0 :: String -> PlasmaException
-rangeError0 msg = def { peType      = EtTypeMismatch
+rangeError0 msg = def { peType      = EtRangeError
                       , peMessage   = rangeErrorPfx ++ msg
                       }
 
@@ -199,6 +208,21 @@ rangeError fromType fromValue toType lo hi = rangeError0 msg
 rangeError' :: (String, String, String, String, String)
             -> PlasmaException
 rangeError' = uncurry5 rangeError
+
+invalidArgument :: String -> PlasmaException
+invalidArgument msg = def { peType      = EtInvalidArgument
+                          , peMessage   = invalidArgumentPfx ++ msg
+                          }
+
+invalidArgument1 :: (Show a, Show b)
+                 => a
+                 -> [b]
+                 -> PlasmaException
+invalidArgument1 got expected = invalidArgument msg
+  where msg = concat $ [ "got "
+                       , show got
+                       , " but expected one of "
+                       ] ++ intersperse ", " (map show expected)
 
 notFoundErr :: String -> PlasmaException
 notFoundErr msg = def { peType      = EtNotFound
