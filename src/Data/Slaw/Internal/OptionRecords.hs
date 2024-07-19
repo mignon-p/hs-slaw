@@ -24,9 +24,15 @@ import Numeric.Natural
 import Data.Slaw.Internal.OptionTypes
 -- import Data.Slaw.Internal.SlawConvert
 -- import Data.Slaw.Internal.SlawPath
--- import Data.Slaw.Internal.SlawType
+import Data.Slaw.Internal.SlawType
 -- import Data.Slaw.Internal.String
 -- import Data.Slaw.Internal.Util
+
+#define FIELD(qzName, qzField) opt qzName qzField \
+  (\qzRec qzVal -> qzRec { qzField = qzVal })
+
+#define CFELD(qzName, qzField, qzTo, qzFrom) opt1 qzName qzField \
+  (\qzRec qzVal -> qzRec { qzField = qzVal }) qzTo qzFrom
 
 data WriteYamlOptions = WriteYamlOptions
   { wyoTagNumbers       :: !Bool
@@ -46,6 +52,22 @@ instance Default WriteYamlOptions where
         , wyoMaxArrayElements = Nothing
         , wyoAutoFlush        = def
         }
+
+writeYamlOptions :: Options WriteYamlOptions
+writeYamlOptions =
+  [ FIELD("tag_numbers",        wyoTagNumbers)
+  , FIELD("directives",         wyoDirectives)
+  , FIELD("ordered_maps",       wyoOrderedMaps)
+  , FIELD("comment",            wyoComment)
+  , CFELD("max-array-elements", wyoMaxArrayElements, tm64, fm64)
+  , FIELD("auto-flush",         wyoAutoFlush)
+  ]
+
+tm64 :: Maybe Natural -> Slaw
+tm64 = undefined
+
+fm64 :: Slaw -> Maybe (Maybe Natural)
+fm64 = undefined
 
 data WriteBinaryOptions = WriteBinaryOptions
   { wboByteOrder :: !PreferredByteOrder
