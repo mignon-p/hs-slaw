@@ -5,8 +5,11 @@ module Data.Slaw.Internal.OptionTypes
   , AutoFlush(..)
   , StrNumNone(..)
   --
+  , preferNumeric
   , Option
+  , Options
   , opt
+  , opt1
   , recordFromMap
   , recordToMap
   ) where
@@ -156,34 +159,44 @@ data Option r = Option
   , optSet  :: r -> Slaw -> r
   }
 
+type Options r = [Option r]
+
 opt :: (FromSlaw t, ToSlaw t)
     => T.Text
     -> (r -> t)
     -> (r -> t -> r)
     -> Option r
-opt name getter setter =
+opt name getter setter = opt1 name getter setter š ŝm
+
+opt1 :: T.Text
+     -> (r -> t)
+     -> (r -> t -> r)
+     -> (t -> Slaw)
+     -> (Slaw -> Maybe t)
+     -> Option r
+opt1 name getter setter tSlaw fSlaw =
   Option { optName = name
-         , optGet  = toSlaw . getter
+         , optGet  = tSlaw . getter
          , optSet  = f
          }
-  where f x s = case fromSlaw s of
-                  Left  _ -> x
-                  Right v -> x `setter` v
+  where f x s = case fSlaw s of
+                  Nothing -> x
+                  Just v  -> x `setter` v
 
 recordFromMap :: Default r
-              => [Option r]
+              => Options r
               -> Slaw
               -> r
 recordFromMap opts = rfm1 def opts . coerceToMap
 
-rfm1 :: r -> [Option r] -> Slaw -> r
+rfm1 :: r -> Options r -> Slaw -> r
 rfm1 x []       _ = x
 rfm1 x (o:rest) s =
   case s !? optName o of
     Nothing -> rfm1           x    rest s
     Just v  -> rfm1 (optSet o x v) rest s
 
-recordToMap :: [Option r]
+recordToMap :: Options r
             -> r
             -> Slaw
 recordToMap opts x = SlawMap $ map (rtm1 x) opts
