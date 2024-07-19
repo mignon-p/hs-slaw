@@ -47,8 +47,8 @@ instance ToSlaw PreferredByteOrder where
 pboStrs :: EnumStrings PreferredByteOrder
 pboStrs = makeEnumStrings
   [ ("native n",                            BoNative      )
-  , ("little-endian littleendian little l", BoLittleEndian)
-  , ("big-endian    bigendian    big    b", BoBigEndian   )
+  , ("little-endian LittleEndian little l", BoLittleEndian)
+  , ("big-endian    BigEndian    big    b", BoBigEndian   )
   ]
 
 --
@@ -64,6 +64,23 @@ instance Default AutoFlush where
 
 instance Nameable AutoFlush where
   typeName _ =   "AutoFlush"
+
+instance FromSlaw AutoFlush where
+  fromSlaw s =
+    case fromSlaw s of
+      Right False -> return AutoFlushNever
+      Right True  -> return AutoFlushAlways
+      Left  _     -> enumFromSlaw afStrs s
+
+instance ToSlaw AutoFlush where
+  toSlaw = enumToSlaw afStrs
+
+afStrs :: EnumStrings AutoFlush
+afStrs = makeEnumStrings
+  [ ("never  n",                        AutoFlushNever)
+  , ("always a",                        AutoFlushAlways)
+  , ("if-not-seekable IfNotSeekable i", AutoFlushIfNotSeekable)
+  ]
 
 --
 
