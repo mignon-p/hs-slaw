@@ -4,6 +4,11 @@ module Data.Slaw.Internal.OptionTypes
   ( PreferredByteOrder(..)
   , AutoFlush(..)
   , StrNumNone(..)
+  --
+  , Option
+  , opt
+  , recordFromMap
+  , recordToMap
   ) where
 
 import Control.DeepSeq
@@ -11,6 +16,7 @@ import qualified Data.ByteString.Short    as SBS
 import Data.Default.Class
 import Data.Hashable
 -- import Data.Int
+import Data.Maybe
 import qualified Data.Text                as T
 import qualified Data.Vector.Storable     as S
 -- import Data.Word
@@ -22,6 +28,7 @@ import Data.Slaw.Internal.EnumStrings
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.SlawConvert
+import Data.Slaw.Internal.SlawPath
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
 -- import Data.Slaw.Internal.Util
@@ -140,3 +147,55 @@ enumToSlaw es x =
   case enumToString es x of
     Just lbs -> SlawString lbs
     Nothing  -> (SlawString . toUtf8 . show) x -- shouldn't happen
+
+--
+
+data Option r = Option
+  { optName :: T.Text
+  , optGet  :: r -> Slaw
+  , optSet  :: r -> Slaw -> r
+  }
+
+opt :: (FromSlaw t, ToSlaw t)
+    => T.Text
+    -> (r -> t)
+    -> (r -> t -> r)
+    -> Option r
+opt name getter setter =
+  Option { optName = name
+         , optGet  = toSlaw . getter
+         , optSet  = f
+         }
+  where f x s = case fromSlaw s of
+                  Left  _ -> x
+                  Right v -> x `setter` v
+
+recordFromMap :: Default r
+              => [Option r]
+              -> Slaw
+              -> r
+recordFromMap opts = rfm1 def opts . coerceToMap
+
+rfm1 :: r -> [Option r] -> Slaw -> r
+rfm1 x []       _ = x
+rfm1 x (o:rest) s =
+  case s !? optName o of
+    Nothing -> rfm1           x    rest s
+    Just v  -> rfm1 (optSet o x v) rest s
+
+recordToMap :: [Option r]
+            -> r
+            -> Slaw
+recordToMap opts x = SlawMap $ map (rtm1 x) opts
+
+rtm1 :: r -> Option r -> (Slaw, Slaw)
+rtm1 x o = (toSlaw (optName o), optGet o x)
+
+coerceToMap :: Slaw -> Slaw
+coerceToMap (SlawProtein _ (Just ing) _) = coerceToMap ing
+coerceToMap (SlawProtein _ Nothing    _) = SlawMap []
+coerceToMap SlawNil                      = SlawMap []
+coerceToMap (SlawList xs)                = SlawMap $ mapMaybe f xs
+  where f (SlawCons k v) = Just (k, v)
+        f _              = Nothing
+coerceToMap other                        = other
