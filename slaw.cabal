@@ -81,6 +81,7 @@ library
                      , Data.Slaw.Internal.SlawPath
                      , Data.Slaw.Internal.SemanticSlaw
                      , Data.Slaw.Internal.OptionTypes
+                     , Data.Slaw.Internal.OptionRecords
                      , Data.Slaw.Internal.FileClass
                      , Data.Slaw.Internal.SlawIO
 
