@@ -111,7 +111,7 @@ instance FromSlaw StrNumNone where
     n <- fromSlaw s
     if n < 0
       then return NoValue
-      else NumericValue <$> fromSlaw (fromInteger n)
+      else return $ NumericValue $ fromInteger n
   fromSlaw SlawNil              = return NoValue
   fromSlaw s                    = handleOthers s
 
