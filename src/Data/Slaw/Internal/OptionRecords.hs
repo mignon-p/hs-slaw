@@ -20,9 +20,9 @@ import Numeric.Natural
 
 -- import Data.Slaw.Internal.EnumStrings
 -- import Data.Slaw.Internal.Exception
--- import Data.Slaw.Internal.Nameable
+import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.OptionTypes
--- import Data.Slaw.Internal.SlawConvert
+import Data.Slaw.Internal.SlawConvert
 -- import Data.Slaw.Internal.SlawPath
 import Data.Slaw.Internal.SlawType
 -- import Data.Slaw.Internal.String
@@ -53,6 +53,15 @@ instance Default WriteYamlOptions where
         , wyoAutoFlush        = def
         }
 
+instance Nameable WriteYamlOptions where
+  typeName _ = "WriteYamlOptions"
+
+instance FromSlaw WriteYamlOptions where
+  fromSlaw = Right . recordFromMap writeYamlOptions
+
+instance ToSlaw WriteYamlOptions where
+  toSlaw = recordToMap writeYamlOptions
+
 writeYamlOptions :: Options WriteYamlOptions
 writeYamlOptions =
   [ FIELD("tag_numbers",        wyoTagNumbers)
@@ -64,10 +73,16 @@ writeYamlOptions =
   ]
 
 tm64 :: Maybe Natural -> Slaw
-tm64 = undefined
+tm64 Nothing  = preferNumeric NumInt64 (-1)
+tm64 (Just n) = preferNumeric NumInt64 $ toInteger n
 
 fm64 :: Slaw -> Maybe (Maybe Natural)
-fm64 = undefined
+fm64 SlawNil = return Nothing
+fm64 s       = do
+  n <- ŝm s
+  if n < 0
+    then return Nothing
+    else return $ Just $ fromInteger n
 
 data WriteBinaryOptions = WriteBinaryOptions
   { wboByteOrder :: !PreferredByteOrder
@@ -79,3 +94,18 @@ instance Default WriteBinaryOptions where
         { wboByteOrder = def
         , wboAutoFlush = def
         }
+
+instance Nameable WriteBinaryOptions where
+  typeName _ = "WriteBinaryOptions"
+
+instance FromSlaw WriteBinaryOptions where
+  fromSlaw = Right . recordFromMap writeBinaryOptions
+
+instance ToSlaw WriteBinaryOptions where
+  toSlaw = recordToMap writeBinaryOptions
+
+writeBinaryOptions :: Options WriteBinaryOptions
+writeBinaryOptions =
+  [ FIELD("byte-order", wboByteOrder)
+  , FIELD("auto-flush", wboAutoFlush)
+  ]
