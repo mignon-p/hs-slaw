@@ -4,6 +4,7 @@ module Data.Slaw.Internal.OptionTypes
   ( PreferredByteOrder(..)
   , AutoFlush(..)
   , StrNumNone(..)
+  , FileFormat(..)
   --
   , preferNumeric
   , Option
@@ -11,7 +12,9 @@ module Data.Slaw.Internal.OptionTypes
   , opt
   , opt1
   , recordFromMap
+  , recordFromMap0
   , recordToMap
+  , recordToPairs
   ) where
 
 import Control.DeepSeq
@@ -122,6 +125,30 @@ instance ToSlaw StrNumNone where
 
 --
 
+data FileFormat = BinaryFile | YamlFile
+                deriving (Eq, Ord, Show, Read, Bounded, Enum,
+                          Generic, NFData, Hashable)
+
+instance Default FileFormat where
+  def = BinaryFile
+
+instance Nameable FileFormat where
+  typeName _ = "FileFormat"
+
+instance FromSlaw FileFormat where
+  fromSlaw = enumFromSlaw ffStrs
+
+instance ToSlaw FileFormat where
+  toSlaw = enumToSlaw ffStrs
+
+ffStrs :: EnumStrings FileFormat
+ffStrs = makeEnumStrings
+  [ ("binary bin b", BinaryFile)
+  , ("yaml  text y", YamlFile)
+  ]
+
+--
+
 preferNumeric :: forall a. (Integral a, Bounded a, Storable a)
               => (S.Vector a -> NumericData)
               -> Integer
@@ -187,7 +214,13 @@ recordFromMap :: Default r
               => Options r
               -> Slaw
               -> r
-recordFromMap opts = rfm1 def opts . coerceToMap
+recordFromMap opts = recordFromMap0 opts def
+
+recordFromMap0 :: Options r
+               -> r
+               -> Slaw
+               -> r
+recordFromMap0 opts dflt = rfm1 dflt opts . coerceToMap
 
 rfm1 :: r -> Options r -> Slaw -> r
 rfm1 x []       _ = x
@@ -199,7 +232,12 @@ rfm1 x (o:rest) s =
 recordToMap :: Options r
             -> r
             -> Slaw
-recordToMap opts x = SlawMap $ map (rtm1 x) opts
+recordToMap opts = SlawMap . recordToPairs opts
+
+recordToPairs :: Options r
+             -> r
+             -> [(Slaw, Slaw)]
+recordToPairs opts x = map (rtm1 x) opts
 
 rtm1 :: r -> Option r -> (Slaw, Slaw)
 rtm1 x o = (toSlaw (optName o), optGet o x)
