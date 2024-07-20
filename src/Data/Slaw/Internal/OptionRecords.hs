@@ -3,6 +3,7 @@
 module Data.Slaw.Internal.OptionRecords
   ( WriteYamlOptions(..)
   , WriteBinaryOptions(..)
+  , WriteFileOptions(..)
   ) where
 
 import Control.DeepSeq
@@ -34,6 +35,8 @@ import Data.Slaw.Internal.SlawType
 #define CFELD(qzName, qzField, qzTo, qzFrom) opt1 qzName qzField \
   (\qzRec qzVal -> qzRec { qzField = qzVal }) qzTo qzFrom
 
+--
+
 data WriteYamlOptions = WriteYamlOptions
   { wyoTagNumbers       :: !Bool
   , wyoDirectives       :: !Bool
@@ -60,7 +63,10 @@ instance FromSlaw WriteYamlOptions where
   fromSlaw = Right . recordFromMap writeYamlOptions
 
 instance ToSlaw WriteYamlOptions where
-  toSlaw = recordToMap writeYamlOptions
+  toSlaw wyo = SlawMap (p1 ++ p2)
+    where
+      p1 = recordToPairs writeFileOptions $ WriteFileOptions YamlFile
+      p2 = recordToPairs writeYamlOptions wyo
 
 writeYamlOptions :: Options WriteYamlOptions
 writeYamlOptions =
@@ -84,6 +90,8 @@ fm64 s       = do
     then return Nothing
     else return $ Just $ fromInteger n
 
+--
+
 data WriteBinaryOptions = WriteBinaryOptions
   { wboByteOrder :: !PreferredByteOrder
   , wboAutoFlush :: !AutoFlush
@@ -102,10 +110,36 @@ instance FromSlaw WriteBinaryOptions where
   fromSlaw = Right . recordFromMap writeBinaryOptions
 
 instance ToSlaw WriteBinaryOptions where
-  toSlaw = recordToMap writeBinaryOptions
+  toSlaw wbo = SlawMap (p1 ++ p2)
+    where
+      p1 = recordToPairs writeFileOptions $ WriteFileOptions BinaryFile
+      p2 = recordToPairs writeBinaryOptions wbo
 
 writeBinaryOptions :: Options WriteBinaryOptions
 writeBinaryOptions =
   [ FIELD("byte-order", wboByteOrder)
   , FIELD("auto-flush", wboAutoFlush)
+  ]
+
+--
+
+data WriteFileOptions = WriteFileOptions
+  { wfoFileFormat :: !FileFormat
+  } deriving (Eq, Ord, Show, Read, Generic, NFData, Hashable)
+
+instance Default WriteFileOptions where
+  def = WriteFileOptions def
+
+instance Nameable WriteFileOptions where
+  typeName _ = "WriteFileOptions"
+
+instance FromSlaw WriteFileOptions where
+  fromSlaw = Right . recordFromMap writeFileOptions
+
+instance ToSlaw WriteFileOptions where
+  toSlaw = recordToMap writeFileOptions
+
+writeFileOptions :: Options WriteFileOptions
+writeFileOptions =
+  [ FIELD("format", wfoFileFormat)
   ]
