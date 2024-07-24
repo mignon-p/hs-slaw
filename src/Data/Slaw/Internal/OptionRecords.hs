@@ -4,6 +4,7 @@ module Data.Slaw.Internal.OptionRecords
   ( WriteYamlOptions(..)
   , WriteBinaryOptions(..)
   , WriteFileOptions(..)
+  , PoolCreateOptions(..)
   ) where
 
 import Control.DeepSeq
@@ -18,6 +19,7 @@ import Data.Hashable
 -- import Foreign.Storable
 import GHC.Generics (Generic)
 import Numeric.Natural
+import System.Info (os)
 
 -- import Data.Slaw.Internal.EnumStrings
 -- import Data.Slaw.Internal.Exception
@@ -143,3 +145,70 @@ writeFileOptions :: Options WriteFileOptions
 writeFileOptions =
   [ FIELD("format", wfoFileFormat)
   ]
+
+--
+
+data PoolCreateOptions = PoolCreateOptions
+  { pcoResizable    :: !Bool
+  , pcoSingleFile   :: !Bool
+  , pcoSize         :: !Natural
+  , pcoTocCapacity  :: !Natural
+  , pcoStopWhenFull :: !Bool
+  , pcoFrozen       :: !Bool
+  , pcoAutoDispose  :: !Bool
+  , pcoSync         :: !Bool
+  , pcoFlock        :: !Bool
+  , pcoChecksum     :: !Bool
+  , pcoMode         :: !StrNumNone
+  , pcoOwner        :: !StrNumNone
+  , pcoGroup        :: !StrNumNone
+  }
+
+instance Default PoolCreateOptions where
+  def = PoolCreateOptions
+        { pcoResizable    = True
+        , pcoSingleFile   = False
+        , pcoSize         = defPoolSize
+        , pcoTocCapacity  = 0
+        , pcoStopWhenFull = False
+        , pcoFrozen       = False
+        , pcoAutoDispose  = False
+        , pcoSync         = False
+        , pcoFlock        = defFlock
+        , pcoChecksum     = False
+        , pcoMode         = NoValue
+        , pcoOwner        = NoValue
+        , pcoGroup        = NoValue
+        }
+    where
+      defPoolSize = 1024 * 1024    -- one megabyte
+      defFlock    = os == "darwin"
+
+instance Nameable PoolCreateOptions where
+  typeName _ = "PoolCreateOptions"
+
+instance FromSlaw PoolCreateOptions where
+  fromSlaw = Right . recordFromMap poolCreateOptions
+
+instance ToSlaw PoolCreateOptions where
+  toSlaw = recordToMap poolCreateOptions
+
+poolCreateOptions :: Options PoolCreateOptions
+poolCreateOptions =
+  [ FIELD("resizable",      pcoResizable   )
+  , FIELD("single-file",    pcoSingleFile  )
+  , CFELD("size",           pcoSize        , tu64, ŝm)
+  , CFELD("toc-capacity",   pcoTocCapacity , tu64, ŝm)
+  , FIELD("stop-when-full", pcoStopWhenFull)
+  , FIELD("frozen",         pcoFrozen      )
+  , FIELD("auto-dispose",   pcoAutoDispose )
+  , FIELD("sync",           pcoSync        )
+  , FIELD("flock",          pcoFlock       )
+  , FIELD("checksum",       pcoChecksum    )
+  , FIELD("mode",           pcoMode        )
+  , FIELD("owner",          pcoOwner       )
+  , FIELD("group",          pcoGroup       )
+  ]
+
+tu64 :: Natural -> Slaw
+tu64 = preferNumeric NumInt64 . toInteger
