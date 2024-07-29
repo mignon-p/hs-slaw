@@ -23,6 +23,8 @@ import Data.Slaw.Internal.Bitfield
 import Data.Slaw.Internal.BitfieldDefs
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.FileClass
+import Data.Slaw.Internal.OptionRecords
+-- import Data.Slaw.Internal.OptionTypes
 import Data.Slaw.Internal.SlawConvert
 import Data.Slaw.Internal.SlawDecode
 -- import Data.Slaw.Internal.SlawEncode
@@ -71,7 +73,7 @@ data SInput = SInput
 
 data SOutput = SOutput
   { soutName   :: String
-  , soutOrder  :: !ByteOrder
+  , soutOpts   :: !WriteBinaryOptions
   , soutHandle :: !Handle
   , soutClose  :: !Bool
   }
@@ -193,21 +195,21 @@ openBinarySlawOutput :: (HasCallStack, FileClass a, ToSlaw b)
                      -> IO SlawOutputStream
 openBinarySlawOutput file opts = withFrozenCallStack $ do
   let opts' = toSlaw opts
+      wbo   = ŝm     opts' ?> def
       nam   = fcName file
-  bo <- getByteOrder opts'
   (h, shouldClose) <- fcOpenWrite file
-  out <- makeSOutput nam (h, shouldClose) bo
+  out <- makeSOutput nam (h, shouldClose) wbo
   return $ SlawOutputStream { soName = nam
                             , soWrite = writeSOutput out
                             , soFlush = flushSOutput out
                             , soClose = closeSOutput out
                             }
 
-makeSOutput :: String -> (Handle, Bool) -> ByteOrder -> IO SOutput
+makeSOutput :: String
+            -> (Handle, Bool)
+            -> WriteBinaryOptions
+            -> IO SOutput
 makeSOutput = undefined
-
-getByteOrder :: HasCallStack => Slaw -> IO ByteOrder
-getByteOrder = undefined
 
 writeSOutput :: SOutput -> Slaw -> IO ()
 writeSOutput = undefined
