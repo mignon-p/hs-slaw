@@ -3,7 +3,7 @@
 module Data.Slaw.Internal.OptionRecords
   ( WriteYamlOptions(..)
   , WriteBinaryOptions(..)
-  , WriteFileOptions(..)
+  , getFileFormat
   , PoolCreateOptions(..)
   ) where
 
@@ -67,7 +67,7 @@ instance FromSlaw WriteYamlOptions where
 instance ToSlaw WriteYamlOptions where
   toSlaw wyo = SlawMap (p1 ++ p2)
     where
-      p1 = recordToPairs writeFileOptions $ WriteFileOptions YamlFile
+      p1 = recordToPairs writeFileOptions $ mkWfo YamlFile
       p2 = recordToPairs writeYamlOptions wyo
 
 writeYamlOptions :: Options WriteYamlOptions
@@ -114,7 +114,7 @@ instance FromSlaw WriteBinaryOptions where
 instance ToSlaw WriteBinaryOptions where
   toSlaw wbo = SlawMap (p1 ++ p2)
     where
-      p1 = recordToPairs writeFileOptions $ WriteFileOptions BinaryFile
+      p1 = recordToPairs writeFileOptions $ mkWfo BinaryFile
       p2 = recordToPairs writeBinaryOptions wbo
 
 writeBinaryOptions :: Options WriteBinaryOptions
@@ -125,12 +125,12 @@ writeBinaryOptions =
 
 --
 
-data WriteFileOptions = WriteFileOptions
-  { wfoFileFormat :: !FileFormat
+newtype WriteFileOptions = WriteFileOptions
+  { wfoFileFormat :: Maybe FileFormat
   } deriving (Eq, Ord, Show, Read, Generic, NFData, Hashable)
 
 instance Default WriteFileOptions where
-  def = WriteFileOptions def
+  def = WriteFileOptions Nothing
 
 instance Nameable WriteFileOptions where
   typeName _ = "WriteFileOptions"
@@ -145,6 +145,12 @@ writeFileOptions :: Options WriteFileOptions
 writeFileOptions =
   [ FIELD("format", wfoFileFormat)
   ]
+
+mkWfo :: FileFormat -> WriteFileOptions
+mkWfo = WriteFileOptions . Just
+
+getFileFormat :: Slaw -> Maybe FileFormat
+getFileFormat s = ŝm s >>= wfoFileFormat
 
 --
 
