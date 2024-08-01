@@ -2,10 +2,13 @@ module Data.Slaw.Internal.Bitfield
   ( Bitfield(..)
   , getBf
   , setBf
+  , makeBf
   , getBf'
   , setBf'
+  , makeBf'
   , getBfBool
   , setBfBool
+  , makeBfBool
   , apply
   ) where
 
@@ -39,6 +42,14 @@ getBf' bf = fromIntegral . getBf bf
 setBf' :: (Bits a, Integral a, Integral b) => Bitfield -> b -> a -> a
 setBf' bf x = setBf bf (fromIntegral x)
 
+{-# INLINE makeBf #-}
+makeBf :: (Bits a, Integral a) => Bitfield -> a -> a
+makeBf bf !x = setBf bf x 0
+
+{-# INLINE makeBf' #-}
+makeBf' :: (Bits a, Integral a, Integral b) => Bitfield -> b -> a
+makeBf' bf !x = setBf bf (fromIntegral x) 0
+
 {-# INLINE getBfBool #-}
 getBfBool :: Bits a => Bitfield -> a -> Bool
 getBfBool (Bitfield pos _) !val = val `testBit` pos
@@ -47,6 +58,11 @@ getBfBool (Bitfield pos _) !val = val `testBit` pos
 setBfBool :: Bits a => Bitfield -> Bool -> a -> a
 setBfBool (Bitfield pos _) True  !val = val `setBit`   pos
 setBfBool (Bitfield pos _) False !val = val `clearBit` pos
+
+{-# INLINE makeBfBool #-}
+makeBfBool :: Bits a => Bitfield -> Bool -> a
+makeBfBool (Bitfield pos _) True  = bit pos
+makeBfBool _                False = zeroBits
 
 {-# INLINE mkMask #-}
 mkMask :: (Bits a, Integral a) => Int -> a
