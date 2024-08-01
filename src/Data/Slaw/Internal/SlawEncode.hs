@@ -5,6 +5,7 @@ module Data.Slaw.Internal.SlawEncode
   -- , nativeByteOrder   -- re-export
   -- , oppositeByteOrder -- re-export
     encodeSlaw
+  , encodeSlaw'
   , Nib(..)
   , Sym(..)
   , Oct

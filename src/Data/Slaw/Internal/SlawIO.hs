@@ -28,7 +28,7 @@ import Data.Slaw.Internal.OptionRecords
 import Data.Slaw.Internal.OptionTypes
 import Data.Slaw.Internal.SlawConvert
 import Data.Slaw.Internal.SlawDecode
--- import Data.Slaw.Internal.SlawEncode
+import Data.Slaw.Internal.SlawEncode
 -- import Data.Slaw.Internal.SlawPath
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.Util
@@ -244,10 +244,22 @@ makeSOutput nam (h, shouldClose) wbo = do
                    }
 
 writeSOutput :: SOutput -> Slaw -> IO ()
-writeSOutput = undefined
+writeSOutput sout s = do
+  let bo   = soutOrder   sout
+      af   = soutFlush   sout
+      h    = soutHandle  sout
+      bld  = encodeSlaw' bo s
+  R.hPutBuilder h bld
+  if af
+    then hFlush h
+    else return ()
 
 flushSOutput :: SOutput -> IO ()
-flushSOutput = undefined
+flushSOutput = hFlush . soutHandle
 
 closeSOutput :: SOutput -> IO ()
-closeSOutput = undefined
+closeSOutput sout =
+  let h = soutHandle sout
+  in if soutClose sout
+     then hClose h
+     else hFlush h
