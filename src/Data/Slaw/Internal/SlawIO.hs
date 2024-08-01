@@ -12,6 +12,7 @@ module Data.Slaw.Internal.SlawIO
 import Control.Exception
 import Control.Monad
 import qualified Data.ByteString         as B
+import qualified Data.ByteString.Builder as R
 import qualified Data.ByteString.Lazy    as L
 import Data.Default.Class
 import Data.Word
@@ -24,7 +25,7 @@ import Data.Slaw.Internal.BitfieldDefs
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.FileClass
 import Data.Slaw.Internal.OptionRecords
--- import Data.Slaw.Internal.OptionTypes
+import Data.Slaw.Internal.OptionTypes
 import Data.Slaw.Internal.SlawConvert
 import Data.Slaw.Internal.SlawDecode
 -- import Data.Slaw.Internal.SlawEncode
@@ -205,11 +206,28 @@ openBinarySlawOutput file opts = withFrozenCallStack $ do
                             , soClose = closeSOutput out
                             }
 
-makeSOutput :: String
+getBo' :: PreferredByteOrder -> ByteOrder
+getBo' BoNative       = nativeByteOrder
+getBo' BoLittleEndian = LittleEndian
+getBo' BoBigEndian    = BigEndian
+
+getBo :: WriteBinaryOptions -> ByteOrder
+getBo = getBo' . wboByteOrder
+
+makeSOutput :: HasCallStack
+            => String
             -> (Handle, Bool)
             -> WriteBinaryOptions
             -> IO SOutput
-makeSOutput = undefined
+makeSOutput nam (h, shouldClose) wbo = do
+  let bo = getBo wbo
+      o  = sum [ makeBf'    bfMagic     fileMagic
+               , makeBf'    bfVersion   currentSlawVersion
+               , makeBf'    bfType      binaryFileTypeSlaw
+               , makeBfBool bfBigEndian (bo == BigEndian)
+               ]
+      bld = R.int64BE o
+  undefined nam h shouldClose bld
 
 writeSOutput :: SOutput -> Slaw -> IO ()
 writeSOutput = undefined
