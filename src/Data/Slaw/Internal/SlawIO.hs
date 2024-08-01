@@ -74,7 +74,8 @@ data SInput = SInput
 
 data SOutput = SOutput
   { soutName   :: String
-  , soutOpts   :: !WriteBinaryOptions
+  , soutOrder  :: !ByteOrder
+  , soutFlush  :: !Bool
   , soutHandle :: !Handle
   , soutClose  :: !Bool
   }
@@ -190,11 +191,11 @@ readSInput1 inp cs off octLen = do
 closeSInput :: SInput -> IO ()
 closeSInput = closeFileReader . sinReader
 
-openBinarySlawOutput :: (HasCallStack, FileClass a, ToSlaw b)
+openBinarySlawOutput :: (FileClass a, ToSlaw b)
                      => a
                      -> b -- options map/protein
                      -> IO SlawOutputStream
-openBinarySlawOutput file opts = withFrozenCallStack $ do
+openBinarySlawOutput file opts = do
   let opts' = toSlaw opts
       wbo   = ŝm     opts' ?> def
       nam   = fcName file
@@ -214,8 +215,7 @@ getBo' BoBigEndian    = BigEndian
 getBo :: WriteBinaryOptions -> ByteOrder
 getBo = getBo' . wboByteOrder
 
-makeSOutput :: HasCallStack
-            => String
+makeSOutput :: String
             -> (Handle, Bool)
             -> WriteBinaryOptions
             -> IO SOutput
@@ -226,8 +226,22 @@ makeSOutput nam (h, shouldClose) wbo = do
                , makeBf'    bfType      binaryFileTypeSlaw
                , makeBfBool bfBigEndian (bo == BigEndian)
                ]
-      bld = R.int64BE o
-  undefined nam h shouldClose bld
+      bld = R.word64BE o
+  autoFlush <- case wboAutoFlush wbo of
+                 AutoFlushNever  -> return False
+                 AutoFlushAlways -> return True
+                 AutoFlushIfNotSeekable -> do
+                   eth <- tryIO $ hTell h
+                   case eth of
+                     Left  _ -> return True
+                     Right _ -> return False
+  R.hPutBuilder h bld
+  return $ SOutput { soutName   = nam
+                   , soutOrder  = getBo wbo
+                   , soutFlush  = autoFlush
+                   , soutHandle = h
+                   , soutClose  = shouldClose
+                   }
 
 writeSOutput :: SOutput -> Slaw -> IO ()
 writeSOutput = undefined
