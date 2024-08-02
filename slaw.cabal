@@ -57,6 +57,7 @@ custom-setup
 library
   -- Modules exported by the library.
   exposed-modules:     Data.Slaw
+                     , Data.Slaw.IO
                      , Data.Slaw.Path
                      , Data.Slaw.Semantic
 

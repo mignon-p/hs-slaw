@@ -1,0 +1,20 @@
+module Data.Slaw.IO
+  ( SlawInputStream
+  , openBinarySlawInput
+  , siName
+  , siRead
+  , siClose
+  , SlawOutputStream
+  , openBinarySlawOutput
+  , soName
+  , soWrite
+  , soFlush
+  , soClose
+  , WriteBinaryOptions(..)
+  , PreferredByteOrder(..)
+  , AutoFlush(..)
+  ) where
+
+import Data.Slaw.Internal.OptionRecords
+import Data.Slaw.Internal.OptionTypes
+import Data.Slaw.Internal.SlawIO
