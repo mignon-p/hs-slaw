@@ -13,8 +13,11 @@ module Data.Slaw.IO
   , WriteBinaryOptions(..)
   , PreferredByteOrder(..)
   , AutoFlush(..)
+  , FileClass
+  , NoClose(..)
   ) where
 
+import Data.Slaw.Internal.FileClass
 import Data.Slaw.Internal.OptionRecords
 import Data.Slaw.Internal.OptionTypes
 import Data.Slaw.Internal.SlawIO
