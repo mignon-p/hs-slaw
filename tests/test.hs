@@ -1,3 +1,4 @@
+import Control.Monad
 import qualified Data.ByteString.Lazy     as L
 import Data.Complex
 import Data.Default.Class
@@ -17,12 +18,12 @@ import Test.Tasty.HUnit
 import qualified Test.Tasty.QuickCheck    as QC
 
 import Data.Slaw
--- import Data.Slaw.IO
+import Data.Slaw.IO
 import Data.Slaw.Path
 import Data.Slaw.Semantic
 
 import SlawInstances ()
--- import TestUtil
+import TestUtil
 
 main :: IO ()
 main = do
@@ -67,6 +68,7 @@ unitTests = testGroup "HUnit tests"
   , testCase "slaw-path"                  $ testSlawPath
   , testCase "slaw-convert"               $ testSlawConvert
   , testCase "slaw-semantic"              $ testSlawSemantic
+  , testCase "slaw-io"                    $ testSlawIO
   ]
 
 testErrorSlaw :: ByteOrder -> Assertion
@@ -205,3 +207,14 @@ testSlawSemantic = do
   assertBool "[0]" $ š (5 :: Int8) ==~ š (5 :: Word64)
   assertBool "[1]" $ not $ "foo" ==~  "Foo"
   assertBool "[2]" $       "foo" ==~~ "Foo"
+
+testSlawIO :: Assertion
+testSlawIO = do
+  let pairs = [ (WriteBinaryOptions pbo af, useName)
+              | pbo     <- [minBound..maxBound]
+              , af      <- [minBound..maxBound]
+              , useName <- [minBound..maxBound]
+              ]
+  forM_ pairs $ \(wbo, useName) -> do
+    let slawx = [mySlaw, š wbo, SlawNil, š (5 :: Int64)]
+    roundTripIO slawx wbo useName

@@ -47,5 +47,11 @@ roundTripIO ss wbo useName = do
   len @=? len'
 
   forM_ (zip3 ss ss' [0..]) $ \(s, s', i) -> do
-    let pfx = "slaw #" ++ show (i :: Int) ++ " in file"
+    let pfx = concat [ "slaw #"
+                     , show (i :: Int)
+                     , ", useName = "
+                     , show useName
+                     , ", "
+                     , show wbo
+                     ]
     assertEqual pfx s s'
