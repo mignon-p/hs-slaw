@@ -45,6 +45,7 @@ extra-source-files:  CHANGELOG.md
                    , doc/template.txt
                    , scripts/preprocess-template.pl
                    , test-files/big-endian-protein-version2.slaw
+                   , test-files/example.slaw
                    , test-files/kp_enter.slaw
                    , test-files/little-endian-protein-version2.slaw
 

@@ -111,6 +111,17 @@ vectors =
   , V4 11 12 13 14
   ]
 
+exampleSlawx :: [Slaw]
+exampleSlawx =
+  [ š (5 :: Word64)
+  , š ("stuff" :: String, (-3) :: Int8)
+  , š (V4 0 0 0 (0 :: Float))
+  , mySlaw ! "pair"
+  , slawPath fv mySlaw "descrips"
+  , mySlaw ! "vaults/33/neighbors"
+  ]
+  where fv = def { spoProteinMode = PmFullyVisible }
+
 testSlawPath :: Assertion
 testSlawPath = do
   let sp    = slawPath_m spo   mySlaw
@@ -223,8 +234,18 @@ testSlawIO = do
       be2 = p "big-endian-protein-version2.slaw"
       le2 = p "little-endian-protein-version2.slaw"
       kpe = p "kp_enter.slaw"
+      ex  = p "example.slaw"
   roundTripIOrw le2 le2 BoLittleEndian
   roundTripIOrw be2 be2 BoBigEndian
   roundTripIOrw be2 le2 BoLittleEndian
   roundTripIOrw le2 be2 BoBigEndian
   roundTripIOrw kpe kpe BoLittleEndian
+
+  ss <- readBinarySlawFile ex
+  let nExpected = length exampleSlawx
+      nActual   = length ss
+  nExpected @=? nActual
+
+  forM_ (zip3 exampleSlawx ss [0..]) $ \(s, s', i) -> do
+    let pfx = "slaw #" ++ show (i :: Int)
+    assertEqual pfx s s'
