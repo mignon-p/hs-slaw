@@ -228,13 +228,9 @@ makeSOutput nam (h, shouldClose) wbo = do
                ]
       bld = R.word64BE o
   autoFlush <- case wboAutoFlush wbo of
-                 AutoFlushNever  -> return False
-                 AutoFlushAlways -> return True
-                 AutoFlushIfNotSeekable -> do
-                   eth <- tryIO $ hTell h
-                   case eth of
-                     Left  _ -> return True
-                     Right _ -> return False
+                 AutoFlushNever         -> return False
+                 AutoFlushAlways        -> return True
+                 AutoFlushIfNotSeekable -> not <$> hIsSeekable h
   R.hPutBuilder h bld
   return $ SOutput { soutName   = nam
                    , soutOrder  = getBo wbo
