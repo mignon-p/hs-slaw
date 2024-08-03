@@ -587,7 +587,7 @@ numericSingletonToSlaw :: PlasmaNumeric a
                        -> Slaw
 numericSingletonToSlaw x = SlawNumeric nf' nd
   where (nf, nd) = numericToNd v
-        nf'      = nf { nfArray = True }
+        nf'      = nf { nfArray = False }
         v        = S.singleton x
 
 ndToRat :: forall a. (Nameable a, Integral a, Bits a)
