@@ -217,4 +217,14 @@ testSlawIO = do
               ]
   forM_ pairs $ \(wbo, useName) -> do
     let slawx = [mySlaw, š wbo, SlawNil, š (5 :: Int64)]
-    roundTripIO slawx wbo useName
+    roundTripIOwr slawx wbo useName
+
+  let p   = ("test-files/" ++)
+      be2 = p "big-endian-protein-version2.slaw"
+      le2 = p "little-endian-protein-version2.slaw"
+      kpe = p "kp_enter.slaw"
+  roundTripIOrw le2 le2 BoLittleEndian
+  roundTripIOrw be2 be2 BoBigEndian
+  roundTripIOrw be2 le2 BoLittleEndian
+  roundTripIOrw le2 be2 BoBigEndian
+  roundTripIOrw kpe kpe BoLittleEndian

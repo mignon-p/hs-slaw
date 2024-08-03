@@ -1,8 +1,13 @@
 module TestUtil
-  ( roundTripIO
+  ( roundTripIOwr
+  , roundTripIOrw
   ) where
 
 import Control.Monad
+import qualified Data.ByteString          as B
+-- import qualified Data.ByteString.Lazy     as L
+import Data.Default.Class
+import GHC.Stack
 import System.Directory
 -- import System.Environment
 import System.IO
@@ -26,8 +31,12 @@ readAllSlawx1 revSlawx sis = do
     Nothing  -> return $ reverse revSlawx
     (Just s) -> readAllSlawx1 (s : revSlawx) sis
 
-roundTripIO :: [Slaw] -> WriteBinaryOptions -> Bool -> IO ()
-roundTripIO ss wbo useName = do
+roundTripIOwr :: HasCallStack
+              => [Slaw]
+              -> WriteBinaryOptions
+              -> Bool
+              -> IO ()
+roundTripIOwr ss wbo useName = do
   (fname, h) <- openBinaryTempFile tmpDir "test.slaw"
   sos <- if useName
          then openBinarySlawOutput h wbo
@@ -55,3 +64,36 @@ roundTripIO ss wbo useName = do
                      , show wbo
                      ]
     assertEqual pfx s s'
+
+roundTripIOrw :: HasCallStack
+              => FilePath
+              -> FilePath
+              -> PreferredByteOrder
+              -> IO ()
+roundTripIOrw orig expected pbo = do
+  sis <- openBinarySlawInput orig ()
+  ss  <- readAllSlawx sis
+  siClose sis
+
+  let wbo = def { wboByteOrder = pbo }
+  (fname, h) <- openBinaryTempFile   tmpDir "test.slaw"
+  sos        <- openBinarySlawOutput h      wbo
+  mapM_      (soWrite sos) ss
+  soClose    sos
+
+  bsExpected <- B.readFile expected
+  bsActual   <- B.readFile fname
+  removeFile fname
+
+  let lenExpected = B.length bsExpected
+      lenActual   = B.length bsActual
+  lenExpected @=? lenActual
+
+  let expW8 = B.unpack bsExpected
+      actW8 = B.unpack bsActual
+  forM_ (zip3 expW8 actW8 [0..]) $ \(e8, a8, i) -> do
+    let pfx = concat [ expected
+                     , ":#"
+                     , show (i :: Int)
+                     ]
+    assertEqual pfx e8 a8
