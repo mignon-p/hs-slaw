@@ -9,16 +9,20 @@ import qualified Data.Text                as T
 import qualified Data.Vector              as V
 import qualified Data.Vector.Storable     as S
 import Data.Word
+-- import System.Directory
 import System.Environment
+-- import System.IO
 import Test.Tasty
 import Test.Tasty.HUnit
 import qualified Test.Tasty.QuickCheck    as QC
 
 import Data.Slaw
+-- import Data.Slaw.IO
 import Data.Slaw.Path
 import Data.Slaw.Semantic
 
 import SlawInstances ()
+-- import TestUtil
 
 main :: IO ()
 main = do
