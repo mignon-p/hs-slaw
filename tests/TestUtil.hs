@@ -53,16 +53,11 @@ roundTripIOwr ss wbo useName = do
 
   let len  = length ss
       len' = length ss'
-  len @=? len'
+      pfx1 = concat [", useName = ", show useName, ", ", show wbo]
+  assertEqual ("length" ++ pfx1) len len'
 
   forM_ (zip3 ss ss' [0..]) $ \(s, s', i) -> do
-    let pfx = concat [ "slaw #"
-                     , show (i :: Int)
-                     , ", useName = "
-                     , show useName
-                     , ", "
-                     , show wbo
-                     ]
+    let pfx = concat ["slaw #", show (i :: Int), pfx1]
     assertEqual pfx s s'
 
 roundTripIOrw :: HasCallStack
@@ -87,7 +82,7 @@ roundTripIOrw orig expected pbo = do
 
   let lenExpected = B.length bsExpected
       lenActual   = B.length bsActual
-  lenExpected @=? lenActual
+  assertEqual (expected ++ ":length") lenExpected lenActual
 
   let expW8 = B.unpack bsExpected
       actW8 = B.unpack bsActual
