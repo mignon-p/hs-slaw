@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes                 #-}
+
 import Control.Monad
 import qualified Data.ByteString.Lazy     as L
 import Data.Complex
@@ -228,18 +230,18 @@ testSlawIO = do
               ]
   forM_ pairs $ \(wbo, useName) -> do
     let slawx = [mySlaw, š wbo, SlawNil, š (5 :: Int64)]
-    roundTripIOwr slawx wbo useName
+    roundTripIOwr assertEqual slawx wbo useName
 
   let p   = ("test-files/" ++)
       be2 = p "big-endian-protein-version2.slaw"
       le2 = p "little-endian-protein-version2.slaw"
       kpe = p "kp_enter.slaw"
       ex  = p "example.slaw"
-  roundTripIOrw le2 le2 BoLittleEndian
-  roundTripIOrw be2 be2 BoBigEndian
-  roundTripIOrw be2 le2 BoLittleEndian
-  roundTripIOrw le2 be2 BoBigEndian
-  roundTripIOrw kpe kpe BoLittleEndian
+  roundTripIOrw assertEqual le2 le2 BoLittleEndian
+  roundTripIOrw assertEqual be2 be2 BoBigEndian
+  roundTripIOrw assertEqual be2 le2 BoLittleEndian
+  roundTripIOrw assertEqual le2 be2 BoBigEndian
+  roundTripIOrw assertEqual kpe kpe BoLittleEndian
 
   ss <- readBinarySlawFile ex ()
   let nExpected = length exampleSlawx

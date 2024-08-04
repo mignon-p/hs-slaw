@@ -1,5 +1,8 @@
+{-# LANGUAGE RankNTypes                 #-}
+
 module TestUtil
-  ( roundTripIOwr
+  ( AssEqFunc
+  , roundTripIOwr
   , roundTripIOrw
   ) where
 
@@ -13,10 +16,12 @@ import System.Directory
 import System.IO
 import System.IO.Unsafe
 -- import Test.Tasty
-import Test.Tasty.HUnit
+-- import Test.Tasty.HUnit
 
 import Data.Slaw
 import Data.Slaw.IO
+
+type AssEqFunc = forall a. (HasCallStack, Eq a, Show a) => String -> a -> a -> IO ()
 
 tmpDir :: FilePath
 tmpDir = unsafePerformIO getTemporaryDirectory
@@ -32,11 +37,12 @@ readAllSlawx1 revSlawx sis = do
     (Just s) -> readAllSlawx1 (s : revSlawx) sis
 
 roundTripIOwr :: HasCallStack
-              => [Slaw]
+              => AssEqFunc
+              -> [Slaw]
               -> WriteBinaryOptions
               -> Bool
               -> IO ()
-roundTripIOwr ss wbo useName = do
+roundTripIOwr assEq ss wbo useName = do
   (fname, h) <- openBinaryTempFile tmpDir "test.slaw"
   sos <- if useName
          then openBinarySlawOutput h wbo
@@ -54,18 +60,19 @@ roundTripIOwr ss wbo useName = do
   let len  = length ss
       len' = length ss'
       pfx1 = concat [", useName = ", show useName, ", ", show wbo]
-  assertEqual ("length" ++ pfx1) len len'
+  assEq ("length" ++ pfx1) len len'
 
   forM_ (zip3 ss ss' [0..]) $ \(s, s', i) -> do
     let pfx = concat ["slaw #", show (i :: Int), pfx1]
-    assertEqual pfx s s'
+    assEq pfx s s'
 
 roundTripIOrw :: HasCallStack
-              => FilePath
+              => AssEqFunc
+              -> FilePath
               -> FilePath
               -> PreferredByteOrder
               -> IO ()
-roundTripIOrw orig expected pbo = do
+roundTripIOrw assEq orig expected pbo = do
   sis <- openBinarySlawInput orig ()
   ss  <- readAllSlawx sis
   siClose sis
@@ -82,7 +89,7 @@ roundTripIOrw orig expected pbo = do
 
   let lenExpected = B.length bsExpected
       lenActual   = B.length bsActual
-  assertEqual (expected ++ ":length") lenExpected lenActual
+  assEq (expected ++ ":length") lenExpected lenActual
 
   let expW8 = B.unpack bsExpected
       actW8 = B.unpack bsActual
@@ -91,4 +98,4 @@ roundTripIOrw orig expected pbo = do
                      , ":#"
                      , show (i :: Int)
                      ]
-    assertEqual pfx e8 a8
+    assEq pfx e8 a8
