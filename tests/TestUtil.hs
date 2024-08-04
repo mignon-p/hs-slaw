@@ -4,6 +4,9 @@
 module TestUtil
   ( AssEqFunc
   , IoFunc
+  , PropIO
+  , fpHU
+  , fpQC
   , roundTripIOwr
   , roundTripIOrw
   ) where
@@ -18,13 +21,28 @@ import System.Directory
 import System.IO
 import System.IO.Unsafe
 -- import Test.Tasty
--- import Test.Tasty.HUnit
+import Test.Tasty.HUnit
+-- import qualified Test.QuickCheck          as QC
+import qualified Test.QuickCheck.Monadic  as QC
 
 import Data.Slaw
 import Data.Slaw.IO
 
 type AssEqFunc m = forall a. (HasCallStack, Eq a, Show a) => String -> a -> a -> m ()
-type IoFunc m = forall a. IO a -> m a
+type IoFunc    m = forall a. IO a -> m a
+type FuncPair  m = (AssEqFunc m, IoFunc m)
+type PropIO      = QC.PropertyM IO
+
+fpHU :: FuncPair IO
+fpHU = (assertEqual, id)
+
+fpQC :: FuncPair PropIO
+fpQC = (qcAssEq, QC.run)
+
+qcAssEq :: AssEqFunc PropIO
+qcAssEq msg x y = do
+  let msg' = msg ++ ": " ++ show x ++ " ≠ " ++ show y
+  QC.assertWith (x == y) msg'
 
 tmpDir :: FilePath
 tmpDir = unsafePerformIO getTemporaryDirectory
@@ -40,7 +58,7 @@ readAllSlawx1 revSlawx sis = do
     (Just s) -> readAllSlawx1 (s : revSlawx) sis
 
 roundTripIOwr :: (HasCallStack, Monad m)
-              => (AssEqFunc m, IoFunc m)
+              => FuncPair m
               -> [Slaw]
               -> WriteBinaryOptions
               -> Bool
@@ -72,7 +90,7 @@ roundTripIOwr (assEq, io) ss wbo useName = do
     assEq pfx s s'
 
 roundTripIOrw :: (HasCallStack, Monad m)
-              => (AssEqFunc m, IoFunc m)
+              => FuncPair m
               -> FilePath
               -> FilePath
               -> PreferredByteOrder
