@@ -1,7 +1,9 @@
+{-# LANGUAGE ImpredicativeTypes         #-}
 {-# LANGUAGE RankNTypes                 #-}
 
 module TestUtil
   ( AssEqFunc
+  , IoFunc
   , roundTripIOwr
   , roundTripIOrw
   ) where
@@ -21,7 +23,8 @@ import System.IO.Unsafe
 import Data.Slaw
 import Data.Slaw.IO
 
-type AssEqFunc = forall a. (HasCallStack, Eq a, Show a) => String -> a -> a -> IO ()
+type AssEqFunc m = forall a. (HasCallStack, Eq a, Show a) => String -> a -> a -> m ()
+type IoFunc m = forall a. IO a -> m a
 
 tmpDir :: FilePath
 tmpDir = unsafePerformIO getTemporaryDirectory
@@ -36,26 +39,28 @@ readAllSlawx1 revSlawx sis = do
     Nothing  -> return $ reverse revSlawx
     (Just s) -> readAllSlawx1 (s : revSlawx) sis
 
-roundTripIOwr :: HasCallStack
-              => AssEqFunc
+roundTripIOwr :: (HasCallStack, Monad m)
+              => (AssEqFunc m, IoFunc m)
               -> [Slaw]
               -> WriteBinaryOptions
               -> Bool
-              -> IO ()
-roundTripIOwr assEq ss wbo useName = do
-  (fname, h) <- openBinaryTempFile tmpDir "test.slaw"
-  sos <- if useName
-         then openBinarySlawOutput h wbo
-         else openBinarySlawOutput (NoClose h) wbo
-  mapM_ (soWrite sos) ss
-  soClose sos
+              -> m ()
+roundTripIOwr (assEq, io) ss wbo useName = do
+  (fname, h) <- io $ openBinaryTempFile tmpDir "test.slaw"
+  sos <- io $ if useName
+              then openBinarySlawOutput h wbo
+              else openBinarySlawOutput (NoClose h) wbo
+  io $ do
+    mapM_ (soWrite sos) ss
+    soClose sos
 
-  sis <- if useName
-         then openBinarySlawInput fname ()
-         else hSeek h AbsoluteSeek 0 >> openBinarySlawInput h ()
-  ss' <- readAllSlawx sis
-  siClose sis
-  removeFile fname
+  sis <- io $ if useName
+              then openBinarySlawInput fname ()
+              else hSeek h AbsoluteSeek 0 >> openBinarySlawInput h ()
+  ss' <- io $ readAllSlawx sis
+  io $ do
+    siClose sis
+    removeFile fname
 
   let len  = length ss
       len' = length ss'
@@ -66,26 +71,27 @@ roundTripIOwr assEq ss wbo useName = do
     let pfx = concat ["slaw #", show (i :: Int), pfx1]
     assEq pfx s s'
 
-roundTripIOrw :: HasCallStack
-              => AssEqFunc
+roundTripIOrw :: (HasCallStack, Monad m)
+              => (AssEqFunc m, IoFunc m)
               -> FilePath
               -> FilePath
               -> PreferredByteOrder
-              -> IO ()
-roundTripIOrw assEq orig expected pbo = do
-  sis <- openBinarySlawInput orig ()
-  ss  <- readAllSlawx sis
-  siClose sis
+              -> m ()
+roundTripIOrw (assEq, io) orig expected pbo = do
+  sis <- io $ openBinarySlawInput orig ()
+  ss  <- io $ readAllSlawx sis
+  io $ siClose sis
 
   let wbo = def { wboByteOrder = pbo }
-  (fname, h) <- openBinaryTempFile   tmpDir "test.slaw"
-  sos        <- openBinarySlawOutput h      wbo
-  mapM_      (soWrite sos) ss
-  soClose    sos
+  (fname, h) <- io $ openBinaryTempFile   tmpDir "test.slaw"
+  sos        <- io $ openBinarySlawOutput h      wbo
+  io $ do
+    mapM_      (soWrite sos) ss
+    soClose    sos
 
-  bsExpected <- B.readFile expected
-  bsActual   <- B.readFile fname
-  removeFile fname
+  bsExpected <- io $ B.readFile expected
+  bsActual   <- io $ B.readFile fname
+  io $ removeFile fname
 
   let lenExpected = B.length bsExpected
       lenActual   = B.length bsActual

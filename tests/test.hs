@@ -1,3 +1,4 @@
+{-# LANGUAGE ImpredicativeTypes         #-}
 {-# LANGUAGE RankNTypes                 #-}
 
 import Control.Monad
@@ -223,6 +224,9 @@ testSlawSemantic = do
 
 testSlawIO :: Assertion
 testSlawIO = do
+  let f :: (AssEqFunc IO, IoFunc IO)
+      f =  (assertEqual,  id)
+
   let pairs = [ (WriteBinaryOptions pbo af, useName)
               | pbo     <- [minBound..maxBound]
               , af      <- [minBound..maxBound]
@@ -230,18 +234,18 @@ testSlawIO = do
               ]
   forM_ pairs $ \(wbo, useName) -> do
     let slawx = [mySlaw, š wbo, SlawNil, š (5 :: Int64)]
-    roundTripIOwr assertEqual slawx wbo useName
+    roundTripIOwr f slawx wbo useName
 
   let p   = ("test-files/" ++)
       be2 = p "big-endian-protein-version2.slaw"
       le2 = p "little-endian-protein-version2.slaw"
       kpe = p "kp_enter.slaw"
       ex  = p "example.slaw"
-  roundTripIOrw assertEqual le2 le2 BoLittleEndian
-  roundTripIOrw assertEqual be2 be2 BoBigEndian
-  roundTripIOrw assertEqual be2 le2 BoLittleEndian
-  roundTripIOrw assertEqual le2 be2 BoBigEndian
-  roundTripIOrw assertEqual kpe kpe BoLittleEndian
+  roundTripIOrw f le2 le2 BoLittleEndian
+  roundTripIOrw f be2 be2 BoBigEndian
+  roundTripIOrw f be2 le2 BoLittleEndian
+  roundTripIOrw f le2 be2 BoBigEndian
+  roundTripIOrw f kpe kpe BoLittleEndian
 
   ss <- readBinarySlawFile ex ()
   let nExpected = length exampleSlawx
