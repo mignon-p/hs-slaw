@@ -241,7 +241,7 @@ testSlawIO = do
   roundTripIOrw le2 be2 BoBigEndian
   roundTripIOrw kpe kpe BoLittleEndian
 
-  ss <- readBinarySlawFile ex
+  ss <- readBinarySlawFile ex ()
   let nExpected = length exampleSlawx
       nActual   = length ss
   nExpected @=? nActual

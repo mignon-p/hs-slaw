@@ -1,7 +1,6 @@
 module TestUtil
   ( roundTripIOwr
   , roundTripIOrw
-  , readBinarySlawFile
   ) where
 
 import Control.Monad
@@ -93,10 +92,3 @@ roundTripIOrw orig expected pbo = do
                      , show (i :: Int)
                      ]
     assertEqual pfx e8 a8
-
-readBinarySlawFile :: FilePath -> IO [Slaw]
-readBinarySlawFile fname = do
-  sis <- openBinarySlawInput fname ()
-  ss  <- readAllSlawx sis
-  siClose sis
-  return ss

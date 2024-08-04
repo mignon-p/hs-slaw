@@ -4,12 +4,14 @@ module Data.Slaw.IO
   , siName
   , siRead
   , siClose
+  , readBinarySlawFile
   , SlawOutputStream
   , openBinarySlawOutput
   , soName
   , soWrite
   , soFlush
   , soClose
+  , writeBinarySlawFile
   , WriteBinaryOptions(..)
   , PreferredByteOrder(..)
   , bo2pbo

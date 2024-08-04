@@ -3,7 +3,9 @@ module Data.Slaw.Internal.SlawIO
   , siRead
   , SlawOutputStream(..)
   , openBinarySlawInput
+  , readBinarySlawFile
   , openBinarySlawOutput
+  , writeBinarySlawFile
   , fileMagic
   , binaryFileTypeSlaw
   , currentSlawVersion
@@ -191,6 +193,28 @@ readSInput1 inp cs off octLen = do
 closeSInput :: SInput -> IO ()
 closeSInput = closeFileReader . sinReader
 
+readBinarySlawFile :: (HasCallStack, FileClass a, ToSlaw b)
+                   => a
+                   -> b -- options map/protein (currently none)
+                   -> IO [Slaw]
+readBinarySlawFile fname opts = withFrozenCallStack $ do
+  sis <- openBinarySlawInput fname opts
+  ss  <- readAllSlawx sis
+  siClose sis
+  return ss
+
+readAllSlawx :: SlawInputStream -> IO [Slaw]
+readAllSlawx = readAllSlawx1 []
+
+readAllSlawx1 :: [Slaw] -> SlawInputStream -> IO [Slaw]
+readAllSlawx1 revSlawx sis = do
+  mslaw <- siRead sis
+  case mslaw of
+    Nothing  -> return $ reverse revSlawx
+    (Just s) -> readAllSlawx1 (s : revSlawx) sis
+
+--
+
 openBinarySlawOutput :: (FileClass a, ToSlaw b)
                      => a
                      -> b -- options map/protein
@@ -254,3 +278,13 @@ closeSOutput sout =
   in if soutClose sout
      then hClose h
      else hFlush h
+
+writeBinarySlawFile :: (FileClass a, ToSlaw b)
+                    => a
+                    -> b -- options map/protein
+                    -> [Slaw]
+                    -> IO ()
+writeBinarySlawFile fname opts ss = do
+  sos <- openBinarySlawOutput fname opts
+  mapM_ (soWrite sos) ss
+  soClose sos
