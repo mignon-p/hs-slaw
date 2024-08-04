@@ -2,6 +2,8 @@
 
 module Data.Slaw.Internal.OptionTypes
   ( PreferredByteOrder(..)
+  , bo2pbo
+  , pbo2bo
   , AutoFlush(..)
   , StrNumNone(..)
   , FileFormat(..)
@@ -37,7 +39,7 @@ import Data.Slaw.Internal.SlawConvert
 import Data.Slaw.Internal.SlawPath
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
--- import Data.Slaw.Internal.Util
+import Data.Slaw.Internal.Util
 
 data PreferredByteOrder = BoNative
                         | BoLittleEndian
@@ -63,6 +65,15 @@ pboStrs = makeEnumStrings
   , ("little-endian LittleEndian little l", BoLittleEndian)
   , ("big-endian    BigEndian    big    b", BoBigEndian   )
   ]
+
+bo2pbo :: ByteOrder -> PreferredByteOrder
+bo2pbo BigEndian    = BoBigEndian
+bo2pbo LittleEndian = BoLittleEndian
+
+pbo2bo :: PreferredByteOrder -> ByteOrder
+pbo2bo BoBigEndian    = BigEndian
+pbo2bo BoLittleEndian = LittleEndian
+pbo2bo BoNative       = nativeByteOrder
 
 --
 

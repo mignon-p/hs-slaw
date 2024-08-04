@@ -12,6 +12,8 @@ module Data.Slaw.IO
   , soClose
   , WriteBinaryOptions(..)
   , PreferredByteOrder(..)
+  , bo2pbo
+  , pbo2bo
   , AutoFlush(..)
   , FileClass
   , NoClose(..)

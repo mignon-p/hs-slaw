@@ -207,13 +207,8 @@ openBinarySlawOutput file opts = do
                             , soClose = closeSOutput out
                             }
 
-getBo' :: PreferredByteOrder -> ByteOrder
-getBo' BoNative       = nativeByteOrder
-getBo' BoLittleEndian = LittleEndian
-getBo' BoBigEndian    = BigEndian
-
 getBo :: WriteBinaryOptions -> ByteOrder
-getBo = getBo' . wboByteOrder
+getBo = pbo2bo . wboByteOrder
 
 makeSOutput :: String
             -> (Handle, Bool)
