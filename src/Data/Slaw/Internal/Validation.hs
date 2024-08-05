@@ -6,6 +6,7 @@ module Data.Slaw.Internal.Validation
 
 import Control.DeepSeq
 -- import Control.Exception
+import Data.Bits
 -- import qualified Data.ByteString.Lazy as L
 -- import Data.Default.Class
 import Data.Hashable
@@ -13,6 +14,7 @@ import GHC.Generics (Generic)
 
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Helpers
+import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
 
@@ -22,6 +24,13 @@ data ValidationFlag = VfCSlaw | VfUtf8 | VfDesIng
 
 type ValidationFlags = [ValidationFlag]
 type ValRet          = Either PlasmaException ()
+
+-- FIXME: use bitfield definition instead
+symbolBits :: Int
+symbolBits = 56
+
+maxSymbol :: Symbol
+maxSymbol = bit symbolBits - 1
 
 vs :: ValidationFlags -> Slaw -> ValRet
 vs f     (SlawProtein d i _  ) = vsProtein f d i
@@ -67,7 +76,21 @@ vsp1 vf vt (Just s) what expected predicate =
   else vs vf s
 
 vsSymbol :: Symbol -> ValRet
-vsSymbol = undefined
+vsSymbol n
+  | n <= (fromIntegral . fromEnum) SymError =
+      valErr $ concat [ symNum
+                      , " is reserved for "
+                      , (drop 3 . show) (sym :: Sym)
+                      ]
+  | n > maxSymbol                           =
+      valErr $ concat [ symNum
+                      , " does not fit in "
+                      , show symbolBits
+                      , " bits"
+                      ]
+  | otherwise                               = return ()
+  where sym    = (toEnum . fromIntegral) n
+        symNum = "symbol " ++ show n
 
 vsString :: Utf8Str -> ValRet
 vsString = undefined
