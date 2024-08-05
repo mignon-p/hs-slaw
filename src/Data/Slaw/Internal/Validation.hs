@@ -12,6 +12,7 @@ import Data.Hashable
 import GHC.Generics (Generic)
 
 import Data.Slaw.Internal.Exception
+import Data.Slaw.Internal.Helpers
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
 
@@ -23,7 +24,7 @@ type ValidationFlags = [ValidationFlag]
 type ValRet          = Either PlasmaException ()
 
 vs :: ValidationFlags -> Slaw -> ValRet
-vs f     (SlawProtein d i r  ) = vsProtein f d i r
+vs f     (SlawProtein d i _  ) = vsProtein f d i
 vs _     (SlawBool    _      ) = return ()
 vs _      SlawNil              = return ()
 vs f     (SlawList    ss     ) = mapM_ (vs     f) ss
@@ -41,9 +42,29 @@ vs f     (SlawString  utf8   )
 vsProtein :: ValidationFlags
           -> Maybe Slaw
           -> Maybe Slaw
-          -> RudeData
           -> ValRet
-vsProtein = undefined
+vsProtein vf des ing = do
+  let validateTypes = VfDesIng `elem` vf
+  vsp1 vf validateTypes des "descrips" "list" isList
+  vsp1 vf validateTypes ing "ingests"  "map"  isMap
+
+vsp1 :: ValidationFlags
+     -> Bool
+     -> Maybe Slaw
+     -> String
+     -> String
+     -> (Slaw -> Bool)
+     -> ValRet
+vsp1 _  _  Nothing  _    _        _    = return ()
+vsp1 vf vt (Just s) what expected predicate =
+  if vt && not (predicate s)
+  then valErr $ concat [ what
+                       , " is "
+                       , describeSlaw s
+                       , ", but expected "
+                       , expected
+                       ]
+  else vs vf s
 
 vsSymbol :: Symbol -> ValRet
 vsSymbol = undefined
@@ -61,7 +82,10 @@ vsError :: String -> ErrLocation -> ValRet
 vsError = undefined
 
 cslawErr :: String -> ValRet
-cslawErr = undefined
+cslawErr feature = valErr $ feature ++ " not supported by c-plasma"
+
+valErr :: String -> ValRet
+valErr = undefined
 
 validateSlaw :: ValidationFlags -> Slaw -> Either PlasmaException ()
 validateSlaw = vs
