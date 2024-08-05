@@ -83,6 +83,7 @@ library
                      , Data.Slaw.Internal.NumericConvert
                      , Data.Slaw.Internal.SlawConvert
                      , Data.Slaw.Internal.Helpers
+                     , Data.Slaw.Internal.Validation
                      , Data.Slaw.Internal.SlawPath
                      , Data.Slaw.Internal.SemanticSlaw
                      , Data.Slaw.Internal.OptionTypes
