@@ -19,6 +19,7 @@ import System.Environment
 import Test.Tasty
 import Test.Tasty.HUnit
 import qualified Test.Tasty.QuickCheck    as QC
+import qualified Test.QuickCheck.Monadic  as QC
 
 import Data.Slaw
 import Data.Slaw.IO
@@ -61,6 +62,8 @@ qcProps = testGroup "(checked by QuickCheck)"
       \x -> abs (x :: Integer) QC.=== ŝ (abs (š x))
   , QC.testProperty "Slaw signum" $
       \x -> signum (x :: Integer) QC.=== ŝ (signum (š x))
+  , QC.testProperty "round-trip IO (big endian)"    $ rtIoProp BigEndian
+  , QC.testProperty "round-trip IO (little endian)" $ rtIoProp LittleEndian
   ]
 
 unitTests :: TestTree
@@ -73,6 +76,11 @@ unitTests = testGroup "HUnit tests"
   , testCase "slaw-semantic"              $ testSlawSemantic
   , testCase "slaw-io"                    $ testSlawIO
   ]
+
+rtIoProp :: ByteOrder -> Slaw -> QC.Property
+rtIoProp bo s = QC.monadicIO $ do
+  let wbo = def { wboByteOrder = bo2pbo bo }
+  roundTripIOwr fpQC [s] wbo False
 
 testErrorSlaw :: ByteOrder -> Assertion
 testErrorSlaw bo = do
