@@ -47,16 +47,6 @@ qcAssEq msg x y = do
 tmpDir :: FilePath
 tmpDir = unsafePerformIO getTemporaryDirectory
 
-readAllSlawx :: SlawInputStream -> IO [Slaw]
-readAllSlawx = readAllSlawx1 []
-
-readAllSlawx1 :: [Slaw] -> SlawInputStream -> IO [Slaw]
-readAllSlawx1 revSlawx sis = do
-  mslaw <- siRead sis
-  case mslaw of
-    Nothing  -> return $ reverse revSlawx
-    (Just s) -> readAllSlawx1 (s : revSlawx) sis
-
 roundTripIOwr :: (HasCallStack, Monad m)
               => FuncPair m
               -> [Slaw]
@@ -65,20 +55,14 @@ roundTripIOwr :: (HasCallStack, Monad m)
               -> m ()
 roundTripIOwr (assEq, io) ss wbo useName = do
   (fname, h) <- io $ openBinaryTempFile tmpDir "test.slaw"
-  sos <- io $ if useName
-              then openBinarySlawOutput h wbo
-              else openBinarySlawOutput (NoClose h) wbo
-  io $ do
-    mapM_ (soWrite sos) ss
-    soClose sos
+  io $ if useName
+       then writeBinarySlawFile          h  wbo ss
+       else writeBinarySlawFile (NoClose h) wbo ss
 
-  sis <- io $ if useName
-              then openBinarySlawInput fname ()
-              else hSeek h AbsoluteSeek 0 >> openBinarySlawInput h ()
-  ss' <- io $ readAllSlawx sis
-  io $ do
-    siClose sis
-    removeFile fname
+  ss' <- io $ if useName
+              then readBinarySlawFile fname ()
+              else hSeek h AbsoluteSeek 0 >> readBinarySlawFile h ()
+  io $ removeFile fname
 
   let len  = length ss
       len' = length ss'
@@ -96,16 +80,11 @@ roundTripIOrw :: (HasCallStack, Monad m)
               -> ByteOrder
               -> m ()
 roundTripIOrw (assEq, io) orig expected bo = do
-  sis <- io $ openBinarySlawInput orig ()
-  ss  <- io $ readAllSlawx sis
-  io $ siClose sis
+  ss  <- io $ readBinarySlawFile orig ()
 
   let wbo = def { wboByteOrder = bo2pbo bo }
   (fname, h) <- io $ openBinaryTempFile   tmpDir "test.slaw"
-  sos        <- io $ openBinarySlawOutput h      wbo
-  io $ do
-    mapM_      (soWrite sos) ss
-    soClose    sos
+  io $ writeBinarySlawFile h wbo ss
 
   bsExpected <- io $ B.readFile expected
   bsActual   <- io $ B.readFile fname
