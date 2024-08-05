@@ -26,7 +26,6 @@ module Data.Slaw.Internal.Helpers
   , isNumeric
   , isError
     -- misc
-  , qw
   , protein
   ) where
 
@@ -49,7 +48,7 @@ import Data.Slaw.Internal.HalfOrphans ()
 import Data.Slaw.Internal.NumericConvert
 import Data.Slaw.Internal.SlawConvert
 import Data.Slaw.Internal.SlawType
-import Data.Slaw.Internal.String
+-- import Data.Slaw.Internal.String
 
                               -- classes --
 
@@ -186,11 +185,6 @@ isSTR _             = False
 isProtein :: Slaw -> Bool
 isProtein (SlawProtein _ _ _) = True
 isProtein _                   = False
-
-                  -- Splitting a string on whitespace --
-
-qw :: String -> Slaw
-qw = SlawList . map (SlawString . toUtf8) . words
 
                          -- Creating a Protein --
 
