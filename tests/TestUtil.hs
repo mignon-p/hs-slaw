@@ -93,14 +93,14 @@ roundTripIOrw :: (HasCallStack, Monad m)
               => FuncPair m
               -> FilePath
               -> FilePath
-              -> PreferredByteOrder
+              -> ByteOrder
               -> m ()
-roundTripIOrw (assEq, io) orig expected pbo = do
+roundTripIOrw (assEq, io) orig expected bo = do
   sis <- io $ openBinarySlawInput orig ()
   ss  <- io $ readAllSlawx sis
   io $ siClose sis
 
-  let wbo = def { wboByteOrder = pbo }
+  let wbo = def { wboByteOrder = bo2pbo bo }
   (fname, h) <- io $ openBinaryTempFile   tmpDir "test.slaw"
   sos        <- io $ openBinarySlawOutput h      wbo
   io $ do

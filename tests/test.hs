@@ -45,7 +45,7 @@ setIfNotSet var val = do
     _          -> setEnv var val
 
 qcProps :: TestTree
-qcProps = testGroup "(checked by QuickCheck)"
+qcProps = testGroup "QuickCheck tests"
   [ QC.testProperty "round-trip (big endian)" $
       \slaw -> slaw QC.=== decodeSlaw BigEndian (encodeSlaw BigEndian slaw)
   , QC.testProperty "round-trip (little endian)" $
@@ -246,11 +246,11 @@ testSlawIO = do
       le2 = p "little-endian-protein-version2.slaw"
       kpe = p "kp_enter.slaw"
       ex  = p "example.slaw"
-  roundTripIOrw fpHU le2 le2 BoLittleEndian
-  roundTripIOrw fpHU be2 be2 BoBigEndian
-  roundTripIOrw fpHU be2 le2 BoLittleEndian
-  roundTripIOrw fpHU le2 be2 BoBigEndian
-  roundTripIOrw fpHU kpe kpe BoLittleEndian
+  roundTripIOrw fpHU le2 le2 LittleEndian
+  roundTripIOrw fpHU be2 be2 BigEndian
+  roundTripIOrw fpHU be2 le2 LittleEndian
+  roundTripIOrw fpHU le2 be2 BigEndian
+  roundTripIOrw fpHU kpe kpe LittleEndian
 
   ss <- readBinarySlawFile ex ()
   let nExpected = length exampleSlawx
