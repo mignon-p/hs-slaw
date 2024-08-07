@@ -8,7 +8,7 @@ import Control.DeepSeq
 -- import Control.Exception
 import Data.Bits
 -- import qualified Data.ByteString.Lazy as L
--- import Data.Default.Class
+import Data.Default.Class
 import Data.Hashable
 import GHC.Generics (Generic)
 
@@ -96,13 +96,19 @@ vsString :: Utf8Str -> ValRet
 vsString = undefined
 
 vsPair :: ValidationFlags -> (Slaw, Slaw) -> ValRet
-vsPair = undefined
+vsPair vf (car, cdr) = do
+  vs vf car
+  vs vf cdr
 
 vsNumeric :: ValidationFlags -> NumericFormat -> NumericData -> ValRet
 vsNumeric = undefined
 
 vsError :: String -> ErrLocation -> ValRet
-vsError = undefined
+vsError msg loc =
+  Left $ def { peType     = etFromMsg msg
+             , peMessage  = msg
+             , peLocation = Just loc
+             }
 
 cslawErr :: String -> ValRet
 cslawErr feature = valErr $ feature ++ " not supported by c-plasma"
