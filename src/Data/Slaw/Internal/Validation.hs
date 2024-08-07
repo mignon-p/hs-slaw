@@ -5,11 +5,16 @@ module Data.Slaw.Internal.Validation
   ) where
 
 import Control.DeepSeq
--- import Control.Exception
+import Control.Exception
 import Data.Bits
--- import qualified Data.ByteString.Lazy as L
+-- import qualified Data.ByteString.Lazy     as L
 import Data.Default.Class
 import Data.Hashable
+-- import qualified Data.Text                as T
+-- import qualified Data.Text.Encoding       as T
+-- import qualified Data.Text.Encoding.Error as T
+-- import qualified Data.Text.Lazy           as LT
+import qualified Data.Text.Lazy.Encoding  as LT
 import GHC.Generics (Generic)
 
 import Data.Slaw.Internal.Exception
@@ -93,7 +98,10 @@ vsSymbol n
         symNum = "symbol " ++ show n
 
 vsString :: Utf8Str -> ValRet
-vsString = undefined
+vsString utf8 =
+  case LT.decodeUtf8' utf8 of
+    Left ue -> valErr $ "invalid UTF-8: " ++ displayException ue
+    Right _ -> return ()
 
 vsPair :: ValidationFlags -> (Slaw, Slaw) -> ValRet
 vsPair vf (car, cdr) = do
