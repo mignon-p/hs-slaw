@@ -21,6 +21,7 @@ module Data.Slaw.Internal.Exception
   , rangeError'
   , invalidArgument
   , invalidArgument1
+  , validationError
   , notFoundErr
   , stdIndent
   ) where
@@ -125,6 +126,7 @@ data PlasmaExceptionType = EtCorruptSlaw
                          | EtTypeMismatch
                          | EtRangeError
                          | EtInvalidArgument
+                         | EtValidationError
                          | EtNotFound
                          | EtSlawIO
                          | EtPools
@@ -160,12 +162,16 @@ rangeErrorPfx = "range error: "
 invalidArgumentPfx :: String
 invalidArgumentPfx = "invalid argument: "
 
+validationErrorPfx :: String
+validationErrorPfx = "validation error: "
+
 -- This is a hack.  Guess the exception type based on the message.
 etFromMsg :: String -> PlasmaExceptionType
 etFromMsg msg
   | typeMismatchPfx    `isPrefixOf` msg = EtTypeMismatch
   | rangeErrorPfx      `isPrefixOf` msg = EtRangeError
   | invalidArgumentPfx `isPrefixOf` msg = EtInvalidArgument
+  | validationErrorPfx `isPrefixOf` msg = EtValidationError
   | otherwise                           = EtCorruptSlaw
 
 because :: String -> [PlasmaException] -> Either PlasmaException a
@@ -223,6 +229,11 @@ invalidArgument1 got expected = invalidArgument msg
                        , show got
                        , " but expected one of "
                        ] ++ intersperse ", " (map show expected)
+
+validationError :: String -> PlasmaException
+validationError msg = def { peType      = EtValidationError
+                          , peMessage   = validationErrorPfx ++ msg
+                          }
 
 notFoundErr :: String -> PlasmaException
 notFoundErr msg = def { peType      = EtNotFound

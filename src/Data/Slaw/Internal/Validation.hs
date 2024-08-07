@@ -114,7 +114,7 @@ cslawErr :: String -> ValRet
 cslawErr feature = valErr $ feature ++ " not supported by c-plasma"
 
 valErr :: String -> ValRet
-valErr = undefined
+valErr = Left . validationError
 
 validateSlaw :: ValidationFlags -> Slaw -> Either PlasmaException ()
 validateSlaw = vs
