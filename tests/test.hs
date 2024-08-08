@@ -28,6 +28,7 @@ import Data.Slaw.IO
 import Data.Slaw.Path
 import Data.Slaw.Semantic
 
+import Comprehensive
 import SlawInstances ()
 import TestUtil
 
@@ -310,6 +311,8 @@ testSlawIO = do
       le2 = p "little-endian-protein-version2.slaw"
       kpe = p "kp_enter.slaw"
       ex  = p "example.slaw"
+      cle = p "comprehensive-LittleEndian.slaw"
+      cbe = p "comprehensive-BigEndian.slaw"
   roundTripIOrw fpHU le2 le2 LittleEndian
   roundTripIOrw fpHU be2 be2 BigEndian
   roundTripIOrw fpHU be2 le2 LittleEndian
@@ -318,3 +321,10 @@ testSlawIO = do
 
   checkSlawRead  ex exampleSlawx
   checkSlawWrite ex exampleSlawx LittleEndian
+
+  let cProt = [comprehensiveProtein]
+
+  checkSlawRead  cle cProt
+  checkSlawWrite cle cProt LittleEndian
+  checkSlawRead  cbe cProt
+  checkSlawWrite cbe cProt BigEndian
