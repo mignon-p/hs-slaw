@@ -108,6 +108,7 @@ vsPair vf (car, cdr) = do
   vs vf car
   vs vf cdr
 
+-- TODO: check that NumericData has a valid number of elements
 vsNumeric :: ValidationFlags -> NumericFormat -> NumericData -> ValRet
 vsNumeric vf nf nd = do
   when (not $ isNumericFormatLegal nf) $ do

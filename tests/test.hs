@@ -5,6 +5,7 @@ import Control.Monad
 import qualified Data.ByteString.Lazy     as L
 import Data.Complex
 import Data.Default.Class
+import Data.Either
 import Data.Int
 import qualified Data.IntMap.Strict       as IM
 -- import Data.List
@@ -13,6 +14,7 @@ import qualified Data.Text                as T
 import qualified Data.Vector              as V
 import qualified Data.Vector.Storable     as S
 import Data.Word
+import Numeric.Half
 -- import System.Directory
 import System.Environment
 -- import System.IO
@@ -62,6 +64,8 @@ qcProps = testGroup "QuickCheck tests"
       \x -> abs (x :: Integer) QC.=== ŝ (abs (š x))
   , QC.testProperty "Slaw signum" $
       \x -> signum (x :: Integer) QC.=== ŝ (signum (š x))
+  , QC.testProperty "Slaw validation" $
+      \x -> Right () QC.=== validateSlaw [] x
   , QC.testProperty "round-trip IO (big endian)"    $ rtIoProp BigEndian
   , QC.testProperty "round-trip IO (little endian)" $ rtIoProp LittleEndian
   ]
@@ -73,6 +77,7 @@ unitTests = testGroup "HUnit tests"
   , testCase "slaw-path"                  $ testSlawPath
   , testCase "slaw-convert"               $ testSlawConvert
   , testCase "slaw-semantic"              $ testSlawSemantic
+  , testCase "slaw-validation"            $ testSlawValidation
   , testCase "slaw-io"                    $ testSlawIO
   ]
 
@@ -225,6 +230,43 @@ testSlawSemantic = do
   assertBool "[0]" $ š (5 :: Int8) ==~ š (5 :: Word64)
   assertBool "[1]" $ not $ "foo" ==~  "Foo"
   assertBool "[2]" $       "foo" ==~~ "Foo"
+
+valSlaw :: [ValidationFlag] -> Slaw -> Bool
+valSlaw vf = isRight . validateSlaw vf
+
+testSlawValidation :: Assertion
+testSlawValidation = do
+  let halfArray = š $ S.fromList [0.0, 1.0, (pi :: Half)]
+      badUtf8   = SlawString $ L.pack [0x40, 0xff, 0x20]
+      badDesIng = SlawProtein (Just halfArray) (Just badUtf8) mempty
+      goodSym   = SlawSymbol 37619
+      badSym1   = SlawSymbol 0                  -- reserved
+      badSym2   = SlawSymbol 0xde881fb33b78164e -- too large
+      badNf     = def { nfComplex = True, nfVector = Vt5mv }
+      emptyNd   = NumDouble $ S.fromList []
+      badNum    = SlawNumeric badNf emptyNd
+
+  True  @=? valSlaw []         halfArray
+  False @=? valSlaw [VfCSlaw]  halfArray
+  True  @=? valSlaw [VfUtf8]   halfArray
+  True  @=? valSlaw [VfDesIng] halfArray
+
+  True  @=? valSlaw []         badUtf8
+  True  @=? valSlaw [VfCSlaw]  badUtf8
+  False @=? valSlaw [VfUtf8]   badUtf8
+  True  @=? valSlaw [VfDesIng] badUtf8
+
+  True  @=? valSlaw []         badDesIng
+  False @=? valSlaw [VfCSlaw]  badDesIng
+  False @=? valSlaw [VfUtf8]   badDesIng
+  False @=? valSlaw [VfDesIng] badDesIng
+
+  True  @=? valSlaw []         goodSym
+  False @=? valSlaw [VfCSlaw]  goodSym
+  False @=? valSlaw []         badSym1
+  False @=? valSlaw []         badSym2
+
+  False @=? valSlaw []         badNum
 
 testSlawIO :: Assertion
 testSlawIO = do
