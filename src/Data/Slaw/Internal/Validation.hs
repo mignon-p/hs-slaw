@@ -1,6 +1,5 @@
 module Data.Slaw.Internal.Validation
   ( ValidationFlag(..)
-  , ValidationFlags
   , validateSlaw
   ) where
 
@@ -133,5 +132,5 @@ cslawErr feature = valErr $ feature ++ " not supported by c-plasma"
 valErr :: String -> ValRet
 valErr = Left . validationError
 
-validateSlaw :: ValidationFlags -> Slaw -> Either PlasmaException ()
+validateSlaw :: [ValidationFlag] -> Slaw -> Either PlasmaException ()
 validateSlaw = vs

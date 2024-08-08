@@ -25,6 +25,9 @@ module Data.Slaw
   , decodeProtein
     -- ** Encoding
   , encodeSlaw
+    -- ** Validation
+  , ValidationFlag(..)
+  , validateSlaw
     -- * Typedefs
   , Symbol
   , RudeData
@@ -87,4 +90,5 @@ import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
+import Data.Slaw.Internal.Validation
 import Data.Slaw.Internal.VectorTypes
