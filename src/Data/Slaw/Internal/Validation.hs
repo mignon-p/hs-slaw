@@ -6,6 +6,7 @@ module Data.Slaw.Internal.Validation
 
 import Control.DeepSeq
 import Control.Exception
+import Control.Monad
 import Data.Bits
 -- import qualified Data.ByteString.Lazy     as L
 import Data.Default.Class
@@ -109,7 +110,15 @@ vsPair vf (car, cdr) = do
   vs vf cdr
 
 vsNumeric :: ValidationFlags -> NumericFormat -> NumericData -> ValRet
-vsNumeric = undefined
+vsNumeric vf nf nd = do
+  when (not $ isNumericFormatLegal nf) $ do
+    valErr $ concat ("invalid numeric format: "
+                     : describeNumericFormat nf)
+  when (VfCSlaw `elem` vf) $ vsnC nd
+
+vsnC :: NumericData -> ValRet
+vsnC (NumHalf _) = cslawErr "16-bit floating point"
+vsnC _           = return ()
 
 vsError :: String -> ErrLocation -> ValRet
 vsError msg loc =
