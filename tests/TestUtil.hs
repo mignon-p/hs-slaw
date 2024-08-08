@@ -9,6 +9,8 @@ module TestUtil
   , fpQC
   , roundTripIOwr
   , roundTripIOrw
+  , checkSlawRead
+  , checkSlawWrite
   ) where
 
 import Control.Monad
@@ -102,3 +104,24 @@ roundTripIOrw (assEq, io) orig expected bo = do
                      , show (i :: Int)
                      ]
     assEq pfx e8 a8
+
+checkSlawRead :: HasCallStack
+              => FilePath
+              -> [Slaw]
+              -> IO ()
+checkSlawRead fname ss = do
+  ss' <- readBinarySlawFile fname ()
+  let nExpected = length ss
+      nActual   = length ss'
+  assertEqual (fname ++ ":length") nExpected nActual
+
+  forM_ (zip3 ss ss' [0..]) $ \(s, s', i) -> do
+    let pfx = fname ++ ":slaw #" ++ show (i :: Int)
+    assertEqual pfx s s'
+
+checkSlawWrite :: HasCallStack
+               => FilePath
+               -> [Slaw]
+               -> ByteOrder
+               -> IO ()
+checkSlawWrite = undefined

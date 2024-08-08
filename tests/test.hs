@@ -316,11 +316,4 @@ testSlawIO = do
   roundTripIOrw fpHU le2 be2 BigEndian
   roundTripIOrw fpHU kpe kpe LittleEndian
 
-  ss <- readBinarySlawFile ex ()
-  let nExpected = length exampleSlawx
-      nActual   = length ss
-  nExpected @=? nActual
-
-  forM_ (zip3 exampleSlawx ss [0..]) $ \(s, s', i) -> do
-    let pfx = "slaw #" ++ show (i :: Int)
-    assertEqual pfx s s'
+  checkSlawRead ex exampleSlawx
