@@ -145,7 +145,8 @@ test-suite test
 
   main-is:             test.hs
 
-  other-modules:       SlawInstances
+  other-modules:       Comprehensive
+                     , SlawInstances
                      , TestUtil
 
   default-extensions:  BangPatterns
