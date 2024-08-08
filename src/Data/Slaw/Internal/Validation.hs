@@ -4,7 +4,7 @@ module Data.Slaw.Internal.Validation
   ) where
 
 import Control.DeepSeq
-import Control.Exception
+-- import Control.Exception
 import Control.Monad
 import Data.Bits
 -- import qualified Data.ByteString.Lazy     as L
@@ -100,8 +100,8 @@ vsSymbol n
 vsString :: Utf8Str -> ValRet
 vsString utf8 =
   case LT.decodeUtf8' utf8 of
-    Left ue -> valErr $ "invalid UTF-8: " ++ displayException ue
-    Right _ -> return ()
+    Left ue -> Left $ unicodeError1 ue
+    Right _ -> Right ()
 
 vsPair :: ValidationFlags -> (Slaw, Slaw) -> ValRet
 vsPair vf (car, cdr) = do

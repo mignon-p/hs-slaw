@@ -22,6 +22,8 @@ module Data.Slaw.Internal.Exception
   , invalidArgument
   , invalidArgument1
   , validationError
+  , unicodeError
+  , unicodeError1
   , notFoundErr
   , stdIndent
   ) where
@@ -32,6 +34,7 @@ import Data.Default.Class
 import Data.Hashable
 import Data.Int
 import Data.List
+import qualified Data.Text.Encoding.Error as T
 import Data.Word
 import GHC.Generics (Generic)
 import GHC.Stack
@@ -127,6 +130,7 @@ data PlasmaExceptionType = EtCorruptSlaw
                          | EtRangeError
                          | EtInvalidArgument
                          | EtValidationError
+                         | EtUnicodeError
                          | EtNotFound
                          | EtSlawIO
                          | EtPools
@@ -165,6 +169,9 @@ invalidArgumentPfx = "invalid argument: "
 validationErrorPfx :: String
 validationErrorPfx = "validation error: "
 
+unicodeErrorPfx :: String
+unicodeErrorPfx = "invalid UTF-8: "
+
 -- This is a hack.  Guess the exception type based on the message.
 etFromMsg :: String -> PlasmaExceptionType
 etFromMsg msg
@@ -172,6 +179,7 @@ etFromMsg msg
   | rangeErrorPfx      `isPrefixOf` msg = EtRangeError
   | invalidArgumentPfx `isPrefixOf` msg = EtInvalidArgument
   | validationErrorPfx `isPrefixOf` msg = EtValidationError
+  | unicodeErrorPfx    `isPrefixOf` msg = EtUnicodeError
   | otherwise                           = EtCorruptSlaw
 
 because :: String -> [PlasmaException] -> Either PlasmaException a
@@ -234,6 +242,14 @@ validationError :: String -> PlasmaException
 validationError msg = def { peType      = EtValidationError
                           , peMessage   = validationErrorPfx ++ msg
                           }
+
+unicodeError :: String -> PlasmaException
+unicodeError msg = def { peType      = EtUnicodeError
+                       , peMessage   = unicodeErrorPfx ++ msg
+                       }
+
+unicodeError1 :: T.UnicodeException -> PlasmaException
+unicodeError1 = unicodeError . displayException
 
 notFoundErr :: String -> PlasmaException
 notFoundErr msg = def { peType      = EtNotFound
