@@ -295,6 +295,11 @@ testSlawValidation = do
   False @=? valSlaw []         badNum3
   False @=? valSlaw []         badNum4
 
+  True  @=? valSlaw []         comprehensiveProtein
+  True  @=? valSlaw [VfCSlaw]  comprehensiveProtein
+  True  @=? valSlaw [VfUtf8]   comprehensiveProtein
+  False @=? valSlaw [VfDesIng] comprehensiveProtein
+
 testSlawIO :: Assertion
 testSlawIO = do
   let pairs = [ (WriteBinaryOptions pbo af, useName)
