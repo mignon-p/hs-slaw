@@ -108,13 +108,29 @@ vsPair vf (car, cdr) = do
   vs vf car
   vs vf cdr
 
--- TODO: check that NumericData has a valid number of elements
 vsNumeric :: ValidationFlags -> NumericFormat -> NumericData -> ValRet
 vsNumeric vf nf nd = do
   when (not $ isNumericFormatLegal nf) $ do
     valErr $ concat ("invalid numeric format: "
                      : describeNumericFormat nf)
   when (VfCSlaw `elem` vf) $ vsnC nd
+  let (q, r) = nElems `divMod` bsize
+      nElems = lengthNumericData nd
+      bsize  = numericFormatSize nf
+  when (r /= 0) $ do
+    valErr $ concat [ "in "
+                    , describeNumeric nf nd
+                    , ", length "
+                    , show nElems
+                    , " is not divisible by "
+                    , show bsize
+                    ]
+  when (not (nfArray nf) && q /= 1) $ do
+    valErr $ concat [ describeNumeric nf nd
+                    , " has "
+                    , show q
+                    , " elements, but is not an array"
+                    ]
 
 vsnC :: NumericData -> ValRet
 vsnC (NumHalf _) = cslawErr "16-bit floating point"

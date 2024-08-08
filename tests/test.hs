@@ -14,7 +14,7 @@ import qualified Data.Text                as T
 import qualified Data.Vector              as V
 import qualified Data.Vector.Storable     as S
 import Data.Word
-import Numeric.Half
+-- import Numeric.Half
 -- import System.Directory
 import System.Environment
 -- import System.IO
@@ -236,20 +236,41 @@ valSlaw vf = isRight . validateSlaw vf
 
 testSlawValidation :: Assertion
 testSlawValidation = do
-  let halfArray = š $ S.fromList [0.0, 1.0, (pi :: Half)]
+  let halfNd    = NumHalf $ S.fromList [0.0, 1.0, pi]
+      halfNum   = SlawNumeric arrNf halfNd
       badUtf8   = SlawString $ L.pack [0x40, 0xff, 0x20]
-      badDesIng = SlawProtein (Just halfArray) (Just badUtf8) mempty
+      badDesIng = SlawProtein (Just halfNum) (Just badUtf8) mempty
       goodSym   = SlawSymbol 37619
       badSym1   = SlawSymbol 0                  -- reserved
       badSym2   = SlawSymbol 0xde881fb33b78164e -- too large
-      badNf     = def { nfComplex = True, nfVector = Vt5mv }
+      badNf     = NumericFormat { nfArray   = True
+                                , nfComplex = True
+                                , nfVector  = Vt5mv
+                                }
+      singNf    = NumericFormat { nfArray   = False
+                                , nfComplex = False
+                                , nfVector  = VtScalar
+                                }
+      arrNf     = NumericFormat { nfArray   = True
+                                , nfComplex = False
+                                , nfVector  = VtScalar
+                                }
+      cplxNf    = NumericFormat { nfArray   = True
+                                , nfComplex = True
+                                , nfVector  = VtScalar
+                                }
       emptyNd   = NumDouble $ S.fromList []
-      badNum    = SlawNumeric badNf emptyNd
+      emptyNum1 = SlawNumeric arrNf  emptyNd
+      emptyNum2 = SlawNumeric cplxNf emptyNd
+      badNum1   = SlawNumeric badNf  emptyNd
+      badNum2   = SlawNumeric singNf halfNd
+      badNum3   = SlawNumeric singNf emptyNd
+      badNum4   = SlawNumeric cplxNf halfNd
 
-  True  @=? valSlaw []         halfArray
-  False @=? valSlaw [VfCSlaw]  halfArray
-  True  @=? valSlaw [VfUtf8]   halfArray
-  True  @=? valSlaw [VfDesIng] halfArray
+  True  @=? valSlaw []         halfNum
+  False @=? valSlaw [VfCSlaw]  halfNum
+  True  @=? valSlaw [VfUtf8]   halfNum
+  True  @=? valSlaw [VfDesIng] halfNum
 
   True  @=? valSlaw []         badUtf8
   True  @=? valSlaw [VfCSlaw]  badUtf8
@@ -266,7 +287,12 @@ testSlawValidation = do
   False @=? valSlaw []         badSym1
   False @=? valSlaw []         badSym2
 
-  False @=? valSlaw []         badNum
+  True  @=? valSlaw []         emptyNum1
+  True  @=? valSlaw []         emptyNum2
+  False @=? valSlaw []         badNum1
+  False @=? valSlaw []         badNum2
+  False @=? valSlaw []         badNum3
+  False @=? valSlaw []         badNum4
 
 testSlawIO :: Assertion
 testSlawIO = do
