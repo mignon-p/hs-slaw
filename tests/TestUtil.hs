@@ -124,4 +124,21 @@ checkSlawWrite :: HasCallStack
                -> [Slaw]
                -> ByteOrder
                -> IO ()
-checkSlawWrite = undefined
+checkSlawWrite fname ss bo = do
+  let wbo = def { wboByteOrder = bo2pbo bo }
+  (tmpName, h) <- openBinaryTempFile tmpDir "test.slaw"
+  writeBinarySlawFile h wbo ss
+
+  bsExpected <- B.readFile fname
+  bsActual   <- B.readFile tmpName
+  removeFile tmpName
+
+  let lenExpected = B.length bsExpected
+      lenActual   = B.length bsActual
+  assertEqual (fname ++ ":length") lenExpected lenActual
+
+  let expW8 = B.unpack bsExpected
+      actW8 = B.unpack bsActual
+  forM_ (zip3 expW8 actW8 [0..]) $ \(e8, a8, i) -> do
+    let pfx = fname ++ ":#" ++ show (i :: Int)
+    assertEqual pfx e8 a8

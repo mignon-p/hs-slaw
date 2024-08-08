@@ -316,4 +316,5 @@ testSlawIO = do
   roundTripIOrw fpHU le2 be2 BigEndian
   roundTripIOrw fpHU kpe kpe LittleEndian
 
-  checkSlawRead ex exampleSlawx
+  checkSlawRead  ex exampleSlawx
+  checkSlawWrite ex exampleSlawx LittleEndian
