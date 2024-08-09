@@ -168,7 +168,6 @@ sub doTypeTemplate {
         my $typexx = sprintf ("%-6s", $type);
         my $name   = $type;
         $name      =~ s/Word/Unt/;
-        my $namexx = sprintf ("%-6s", $name);
         my $vtype  = $type;
         $vtype     =~ s/^V(\d)$/Vt$1/;
         my $uniq   = sprintf ("%04d", $uniqueCounter++);
@@ -181,9 +180,11 @@ sub doTypeTemplate {
         if (exists $floatingSize{$type}) {
             $signed = "Float";
             $bits   = $floatingSize{$type};
+            $name   = "Float$bits";
         }
         my $lsigned  = lc ($signed);
         my $signedxx = sprintf ("%-8s", $signed);
+        my $namexx   = sprintf ("%-6s", $name);
 
         my $begLine = $beginLine + 1;
         lineDirective ($begLine);

@@ -392,11 +392,11 @@ fitsInFloat x = abs x <= 0x1_00_00_00
 
 typeFromRange :: NumRange -> NumericType
 --FOR floating
-typeFromRange RangeTYPEXX = TypTYPE
+typeFromRange RangeTYPEXX = TypNAME
 --END
 typeFromRange (RangeInt lo hi) =
   case find (checkRange lo hi) ranges of
-    Nothing       -> TypDouble
+    Nothing       -> TypFloat64
     Just (_, typ) -> typ
 
 checkRange :: Integer
@@ -456,7 +456,7 @@ integerToNum :: Integer -> Maybe NumericData
 integerToNum n =
   case listToNum [ElemInt n] of
 --FOR floating
-    NumTYPEXX _ -> Nothing
+    NumNAMEXX _ -> Nothing
 --END
     nd          -> Just nd
 
@@ -578,9 +578,9 @@ argToSlaw (OpArgInt    i) =
     Just nd -> SlawNumeric def nd
     Nothing -> (SlawString . toUtf8 . show) i
 argToSlaw (OpArgDouble d) =
-  SlawNumeric def $ NumDouble $ S.singleton d
+  SlawNumeric def $ NumFloat64 $ S.singleton d
 argToSlaw (OpArgComplex (re :+ im)) =
-  SlawNumeric nfCplx $ NumDouble $ S.fromList [re, im]
+  SlawNumeric nfCplx $ NumFloat64 $ S.fromList [re, im]
   where nfCplx = def { nfComplex = True }
 
 numOp :: (forall a. (Num a) => a -> a -> a)

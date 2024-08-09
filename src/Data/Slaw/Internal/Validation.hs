@@ -133,8 +133,8 @@ vsNumeric vf nf nd = do
                     ]
 
 vsnC :: NumericData -> ValRet
-vsnC (NumHalf _) = cslawErr "16-bit floating point"
-vsnC _           = return ()
+vsnC (NumFloat16 _) = cslawErr "16-bit floating point"
+vsnC _              = return ()
 
 vsError :: String -> ErrLocation -> ValRet
 vsError msg loc =

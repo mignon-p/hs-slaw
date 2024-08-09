@@ -237,7 +237,7 @@ valSlaw vf = isRight . validateSlaw vf
 
 testSlawValidation :: Assertion
 testSlawValidation = do
-  let halfNd    = NumHalf $ S.fromList [0.0, 1.0, pi]
+  let halfNd    = NumFloat16 $ S.fromList [0.0, 1.0, pi]
       halfNum   = SlawNumeric arrNf halfNd
       badUtf8   = SlawString $ L.pack [0x40, 0xff, 0x20]
       badDesIng = SlawProtein (Just halfNum) (Just badUtf8) mempty
@@ -260,7 +260,7 @@ testSlawValidation = do
                                 , nfComplex = True
                                 , nfVector  = VtScalar
                                 }
-      emptyNd   = NumDouble $ S.fromList []
+      emptyNd   = NumFloat64 $ S.fromList []
       emptyNum1 = SlawNumeric arrNf  emptyNd
       emptyNum2 = SlawNumeric cplxNf emptyNd
       badNum1   = SlawNumeric badNf  emptyNd
