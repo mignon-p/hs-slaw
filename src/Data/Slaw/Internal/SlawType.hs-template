@@ -151,8 +151,8 @@ describeNumericData (NumNAMEXXX _) = "BITS-bit SIGNED integer"
 describeNumericData (NumNAMEXXX _) = "BITS-bit floating point"
 --END
 
-describeNumericFormat :: NumericFormat -> [String]
-describeNumericFormat nf = concat [d1, d2, d3]
+describeNumericFormat1 :: NumericFormat -> [String]
+describeNumericFormat1 nf = concat [d1, d2, d3]
   where d1 = if nfArray nf then ["array of"] else []
         d2 = describeVectorType $ nfVector nf
         d3 = if nfComplex nf then ["complex"] else []
@@ -169,8 +169,8 @@ describeVectorType Vt5mv = ["5-multivector of"]
 
 describeNumeric :: NumericFormat -> NumericData -> String
 describeNumeric nf nd = intercalate " " (nfl ++ [nds])
-  where nfl = describeNumericFormat nf
-        nds = describeNumericData   nd
+  where nfl = describeNumericFormat1 nf
+        nds = describeNumericData    nd
 
 describeSlaw :: Slaw -> String
 describeSlaw (SlawProtein _ _ _) = "protein"
@@ -184,15 +184,16 @@ describeSlaw (SlawCons    _ _  ) = "cons"
 describeSlaw (SlawNumeric nf nd) = describeNumeric nf nd
 describeSlaw (SlawError   _ _  ) = "error"
 
-dnf :: NumericFormat -> String
-dnf nf = case describeNumericFormat nf of
-           [] -> "scalar"
-           xs -> let str      = intercalate " " xs
-                     len      = length str
-                     sfx      = " of"
-                     sfxLen   = length sfx
-                     (s1, s2) = splitAt (len - sfxLen) str
-                 in if sfx == s2 then s1 else str
+describeNumericFormat :: NumericFormat -> String
+describeNumericFormat nf =
+  case describeNumericFormat1 nf of
+    [] -> "scalar"
+    xs -> let str      = intercalate " " xs
+              len      = length str
+              sfx      = " of"
+              sfxLen   = length sfx
+              (s1, s2) = splitAt (len - sfxLen) str
+          in if sfx == s2 then s1 else str
 
 isNil :: Slaw -> Bool
 isNil SlawNil = True
@@ -248,10 +249,10 @@ getNumeric :: NumericFormat -> Slaw -> Either ErrPair NumericData
 getNumeric nf0 (SlawNumeric nf  nd ) =
   if nfComplex nf0 == nfComplex nf && nfVector nf0 == nfVector nf
   then Right nd
-  else Left $ dnf nf0 `cantCat` dnf nf
+  else Left $ describeNumericFormat nf0 `cantCat` describeNumericFormat nf
 getNumeric _   (SlawError   msg loc) = Left (msg, loc)
 getNumeric nf0  s                    =
-  Left $ dnf nf0 `cantCat` describeSlaw s
+  Left $ describeNumericFormat nf0 `cantCat` describeSlaw s
 
 getProtein :: Slaw -> Either ErrPair (Maybe Slaw, Maybe Slaw, RudeData)
 getProtein (SlawProtein des ing rude) = Right (des, ing, rude)

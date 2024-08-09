@@ -111,8 +111,7 @@ vsPair vf (car, cdr) = do
 vsNumeric :: ValidationFlags -> NumericFormat -> NumericData -> ValRet
 vsNumeric vf nf nd = do
   when (not $ isNumericFormatLegal nf) $ do
-    valErr $ concat ("invalid numeric format: "
-                     : describeNumericFormat nf)
+    valErr $ "invalid numeric format: " ++ describeNumericFormat nf
   when (VfCSlaw `elem` vf) $ vsnC nd
   let (q, r) = nElems `divMod` bsize
       nElems = lengthNumericData nd

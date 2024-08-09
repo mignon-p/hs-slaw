@@ -43,6 +43,9 @@ module Data.Slaw
   , isNumericFormatLegal
   , vectorSize
   , numericFormatSize
+  , describeNumeric
+  , describeNumericFormat
+  , describeNumericData
     -- ** Operations on NumericData
   , mapNumericData
   , mapNumericData2
