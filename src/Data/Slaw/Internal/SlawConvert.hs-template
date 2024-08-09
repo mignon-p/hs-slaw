@@ -192,7 +192,7 @@ numericArrayToList nf nd = if isArray then Just (nf', nds) else Nothing
 
 chunkNumericData :: Int -> NumericData -> [NumericData]
 --FOR sizedInt, floating
-chunkNumericData n (NumNAMEXX v) = map NumNAMEXX $ chunkArray n v
+chunkNumericData n (NumNAMEXXX v) = map NumNAMEXXX $ chunkArray n v
 --END
 
 chunkArray :: Storable a
@@ -219,7 +219,7 @@ numToStr :: (FromSlaw a, TextClass a)
          -> NumericData
          -> Either PlasmaException a
 --FOR sizedInt, floating
-numToStr s (NumNAMEXX v) = numToStr1 s v
+numToStr s (NumNAMEXXX v) = numToStr1 s v
 --END
 
 numToStr1 :: (FromSlaw a, TextClass a, Storable b, Show b)
@@ -232,9 +232,9 @@ numToStr1 s v
 
 numToInteger :: NumericData -> Maybe Integer
 --FOR sizedInt
-numToInteger (NumNAMEXX v) = numToInteger1 v
+numToInteger (NumNAMEXXX v) = numToInteger1 v
 --FOR floating
-numToInteger (NumNAMEXX _) = Nothing
+numToInteger (NumNAMEXXX _) = Nothing
 --END
 
 numToInteger1 :: (Storable a, Integral a) => S.Vector a -> Maybe Integer
@@ -1104,7 +1104,7 @@ instance FromSlaw TYPEXX where
 --FOR sizedInt, floating
 
 instance ToSlaw TYPEXX where
-  toSlaw = SlawNumeric nfScalar . NumNAMEXX . S.singleton
+  toSlaw = SlawNumeric nfScalar . NumNAMEXXX . S.singleton
 
 --FOR nativeInt
 

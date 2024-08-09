@@ -93,7 +93,7 @@ checkRange' typs _ = checkRange typs range
 
 numTypeName :: NumericData -> String
 --FOR sizedInt, floating
-numTypeName (NumNAMEXX _) = "TYPE"
+numTypeName (NumNAMEXXX _) = "TYPE"
 --END
 
 cnfReal :: CheckNF
@@ -128,8 +128,8 @@ instance PlasmaReal TYPE where
         toType   = "TYPE"
     checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
     case nd of
-      NumNAMEXX v -> return v
-      _           -> do
+      NumNAMEXXX v -> return v
+      _            -> do
         let typePair = (fromType, toType)
         nes <- mapM (checkRange' typePair (0 :: TYPE)) $ numToList nd
         return $ S.fromList $ map intCoerce nes
@@ -158,8 +158,8 @@ instance PlasmaReal TYPE where
     let toType   = "TYPE"
     checkNF cnfReal nf (nf { nfArray = False }, nd, toType)
     case nd of
-      NumNAMEXX v -> return v
-      _           -> do
+      NumNAMEXXX v -> return v
+      _            -> do
         let nes = numToList nd
         return $ S.fromList $ map LTYPECoerce nes
 

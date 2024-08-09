@@ -77,7 +77,7 @@ mapNumericData :: (forall a. (PlasmaReal a) => S.Vector a -> S.Vector a)
                -> NumericData
                -> NumericData
 --FOR sizedInt, floating
-mapNumericData func (NumNAMEXX v) = NumNAMEXX $ func v
+mapNumericData func (NumNAMEXXX v) = NumNAMEXXX $ func v
 --END
 
 mapNumericData2 :: (forall a. ( PlasmaIntegral a
@@ -87,9 +87,9 @@ mapNumericData2 :: (forall a. ( PlasmaIntegral a
                 -> NumericData
                 -> NumericData
 --FOR sizedInt
-mapNumericData2 func _ (NumNAMEXX v) = NumNAMEXX $ func v
+mapNumericData2 func _ (NumNAMEXXX v) = NumNAMEXXX $ func v
 --FOR floating
-mapNumericData2 _ func (NumNAMEXX v) = NumNAMEXX $ func v
+mapNumericData2 _ func (NumNAMEXXX v) = NumNAMEXXX $ func v
 --END
 
                           -- mapNumericData' --
@@ -99,7 +99,7 @@ mapNumericData' :: (forall a. ( PlasmaReal a
                 -> NumericData
                 -> (NumericData, b)
 --FOR sizedInt, floating
-mapNumericData' func (NumNAMEXX v) = first NumNAMEXX $ func v
+mapNumericData' func (NumNAMEXXX v) = first NumNAMEXXX $ func v
 --END
 
 mapNumericData2' :: (forall a. ( PlasmaIntegral a
@@ -109,9 +109,9 @@ mapNumericData2' :: (forall a. ( PlasmaIntegral a
                  -> NumericData
                  -> (NumericData, c)
 --FOR sizedInt
-mapNumericData2' func _ (NumNAMEXX v) = first NumNAMEXX $ func v
+mapNumericData2' func _ (NumNAMEXXX v) = first NumNAMEXXX $ func v
 --FOR floating
-mapNumericData2' _ func (NumNAMEXX v) = first NumNAMEXX $ func v
+mapNumericData2' _ func (NumNAMEXXX v) = first NumNAMEXXX $ func v
 --END
 
                           -- fromNumericData --
@@ -120,7 +120,7 @@ fromNumericData :: (forall a. (PlasmaReal a) => S.Vector a -> b)
                 -> NumericData
                 -> b
 --FOR sizedInt, floating
-fromNumericData func (NumNAMEXX v) = func v
+fromNumericData func (NumNAMEXXX v) = func v
 --END
 
 fromNumericData2 :: (forall a. ( PlasmaIntegral  a
@@ -130,9 +130,9 @@ fromNumericData2 :: (forall a. ( PlasmaIntegral  a
                  -> NumericData
                  -> c
 --FOR sizedInt
-fromNumericData2 func _ (NumNAMEXX v) = func v
+fromNumericData2 func _ (NumNAMEXXX v) = func v
 --FOR floating
-fromNumericData2 _ func (NumNAMEXX v) = func v
+fromNumericData2 _ func (NumNAMEXXX v) = func v
 --END
 
                            -- toNumericData --

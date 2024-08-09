@@ -105,15 +105,15 @@ instance Default NumericFormat where
 
 data NumericData =
 --FOR sizedInt, floating
-  BAR NumNAMEXX (S.Vector TYPE)
+  BAR NumNAMEXXX (S.Vector TYPE)
 --END
   deriving (Eq, Ord, Show, Generic, NFData)
 
 instance Hashable NumericData where
 --FOR sizedInt
-  salt `hashWithSalt` NumNAMEXX v = hh v salt UNIQ `hashRawVector` v
+  salt `hashWithSalt` NumNAMEXXX v = hh v salt UNIQ `hashRawVector` v
 --FOR floating
-  salt `hashWithSalt` NumNAMEXX v = hh v salt UNIQ ## S.toList v
+  salt `hashWithSalt` NumNAMEXXX v = hh v salt UNIQ ## S.toList v
 --END
 
 hh :: Storable a => S.Vector a -> Int -> Int -> Int
@@ -146,9 +146,9 @@ data VectorType = VtScalar
 
 describeNumericData :: NumericData -> String
 --FOR sizedInt
-describeNumericData (NumNAMEXX _) = "BITS-bit SIGNED integer"
+describeNumericData (NumNAMEXXX _) = "BITS-bit SIGNED integer"
 --FOR floating
-describeNumericData (NumNAMEXX _) = "BITS-bit floating point"
+describeNumericData (NumNAMEXXX _) = "BITS-bit floating point"
 --END
 
 describeNumericFormat :: NumericFormat -> [String]
@@ -311,12 +311,12 @@ catNumeric nf nds = SlawNumeric nf' nd
 
 extractNumeric :: ByteOrder -> NumericData -> (NumericType, B.ByteString)
 --FOR sizedInt, floating
-extractNumeric bo (NumNAMEXX v) = (TypNAMEXX, vToBs bo v)
+extractNumeric bo (NumNAMEXXX v) = (TypNAMEXXX, vToBs bo v)
 --END
 
 restoreNumeric :: ByteOrder -> NumericType -> B.ByteString -> NumericData
 --FOR sizedInt, floating
-restoreNumeric bo TypNAMEXX bs = NumNAMEXX (bsToV bo bs)
+restoreNumeric bo TypNAMEXXX bs = NumNAMEXXX (bsToV bo bs)
 --END
 
 data NumElem = ElemInt    !Integer
@@ -333,9 +333,9 @@ data NumRange = RangeInt  { rangeLo :: !Integer, rangeHi :: !Integer }
 
 numToList :: NumericData -> [NumElem]
 --FOR sizedInt
-numToList (NumNAMEXX v) = intToList   v
+numToList (NumNAMEXXX v) = intToList   v
 --FOR floating
-numToList (NumNAMEXX v) = LTYPEToList v
+numToList (NumNAMEXXX v) = LTYPEToList v
 --END
 
 intToList :: (Integral a, Storable a) => S.Vector a -> [NumElem]
@@ -423,9 +423,9 @@ mkRange dummy typ = ((toInteger lo, toInteger hi), typ)
 
 typeToNum :: NumericType -> [NumElem] -> NumericData
 --FOR sizedInt
-typeToNum TypNAMEXX = NumNAMEXX . S.fromList . map intCoerce
+typeToNum TypNAMEXXX = NumNAMEXXX . S.fromList . map intCoerce
 --FOR floating
-typeToNum TypNAMEXX = NumNAMEXX . S.fromList . map LTYPECoerce
+typeToNum TypNAMEXXX = NumNAMEXXX . S.fromList . map LTYPECoerce
 --END
 
 intCoerce :: (Integral a, Storable a) => NumElem -> a
@@ -456,7 +456,7 @@ integerToNum :: Integer -> Maybe NumericData
 integerToNum n =
   case listToNum [ElemInt n] of
 --FOR floating
-    NumNAMEXX _ -> Nothing
+    NumNAMEXXX _ -> Nothing
 --END
     nd          -> Just nd
 
@@ -468,7 +468,7 @@ data NumTyp =
 
 classifyNumeric :: NumericType -> (NumTyp, Int)
 --FOR sizedInt, floating
-classifyNumeric TypNAMEXX = (NumTypSIGNEDXX, BITS `div` 8)
+classifyNumeric TypNAMEXXX = (NumTypSIGNEDXX, BITS `div` 8)
 --END
 
 -- all combinations are legal, EXCEPT that you can't be complex and

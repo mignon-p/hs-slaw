@@ -42,9 +42,9 @@ ndForSize :: Int -> [NumericData]
 ndForSize n =
   [
 --FOR sizedInt
-  COMMA NumNAMEXX $ S.fromList $ map fromInteger  $ take n someIntegers
+  COMMA NumNAMEXXX $ S.fromList $ map fromInteger  $ take n someIntegers
 --FOR Float, Double
-  ,     NumNAMEXX $ S.fromList $ map fromRational $ take n someRationals
+  ,     NumNAMEXXX $ S.fromList $ map fromRational $ take n someRationals
 --END
   ]
 
@@ -77,7 +77,7 @@ numData :: [NumericData]
 numData =
   [
 --FOR sizedInt, Float, Double
-  COMMA NumNAMEXX $ S.fromList $ map fromInteger [1..96]
+  COMMA NumNAMEXXX $ S.fromList $ map fromInteger [1..96]
 --END
   ]
 

@@ -29,7 +29,7 @@ The following strings will be replaced in the body of the "--FOR":
   LTYPE    - same as TYPE, but all lowercase
   TYPEXX   - same as TYPE, but padded with spaces to be 6 characters long
   NAME     - same as TYPE, but "Word" is replaced with "Unt"
-  NAMEXX   - same as NAME, but padded with spaces to be 6 characters long
+  NAMEXXX  - same as NAME, but padded with spaces to be 7 characters long
   VTYPE    - Vt2/Vt3/Vt4 for V2/V3/V4, respectively (only for vectors)
   UNIQ     - a unique four-digit number (it will be the same number no
              matter how many times UNIQ is used in a single iteration

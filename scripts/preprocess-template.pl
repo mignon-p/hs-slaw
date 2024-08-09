@@ -184,7 +184,7 @@ sub doTypeTemplate {
         }
         my $lsigned  = lc ($signed);
         my $signedxx = sprintf ("%-8s", $signed);
-        my $namexx   = sprintf ("%-6s", $name);
+        my $namexxx  = sprintf ("%-7s", $name);
 
         my $begLine = $beginLine + 1;
         lineDirective ($begLine);
@@ -193,7 +193,7 @@ sub doTypeTemplate {
             my $line = $input[$lineNo];
 
             $line =~ s/TYPEXX/$typexx/g;
-            $line =~ s/NAMEXX/$namexx/g;
+            $line =~ s/NAMEXXX/$namexxx/g;
             $line =~ s/LTYPE/$ltype/g;
             $line =~ s/VTYPE/$vtype/g;
             $line =~ s/NAME/$name/g;
