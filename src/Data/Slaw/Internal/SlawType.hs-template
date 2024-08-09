@@ -408,7 +408,8 @@ checkRange lo hi ((lo', hi'), _) = lo >= lo' && hi <= hi'
 ranges :: [((Integer, Integer), NumericType)]
 ranges =
   [
---FOR sizedInt
+-- Order is important here, so spell it out instead of using "sizedInt"
+--FOR Word8, Word16, Word32, Word64, Int8, Int16, Int32, Int64
   COMMA mkRange (0 :: TYPEXX) TypNAME
 --END
   ]

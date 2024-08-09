@@ -349,7 +349,7 @@ testSlawMonoid = do
       nd1  = NumUnt32 a1
       nd2  = NumUnt64 a2
       nd3  = NumUnt32 a3
-      nd12 = NumInt8  a12
+      nd12 = NumUnt8  a12
       nd13 = NumUnt32 a13
       nf   = NumericFormat { nfArray   = True
                            , nfComplex = False
