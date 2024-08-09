@@ -79,6 +79,7 @@ unitTests = testGroup "HUnit tests"
   , testCase "slaw-convert"               $ testSlawConvert
   , testCase "slaw-semantic"              $ testSlawSemantic
   , testCase "slaw-validation"            $ testSlawValidation
+  , testCase "slaw-monoid"                $ testSlawMonoid
   , testCase "slaw-io"                    $ testSlawIO
   ]
 
@@ -299,6 +300,70 @@ testSlawValidation = do
   True  @=? valSlaw [VfCSlaw]  comprehensiveProtein
   True  @=? valSlaw [VfUtf8]   comprehensiveProtein
   False @=? valSlaw [VfDesIng] comprehensiveProtein
+
+testSlawMonoid :: Assertion
+testSlawMonoid = do
+  -- test mconcat with slaw lists
+  let lst1 = replicate 3 ","
+      lst2 = replicate 2 ","
+      lst3 = ["chameleon"] :: [String]
+      s1   = š lst1
+      s2   = š lst2
+      s3   = š lst3
+      lst  = concat  [lst1, lst2, lst3]
+      slaw = mconcat [s1,   s2,   s3  ]
+
+  Just lst @=? ŝm slaw
+
+  -- test mconcat with slaw strings
+  let strs = ["déjà", " ", "vu"] :: [String]
+      slx  = map š strs
+      str  = concat strs
+      slw  = mconcat slx
+
+  š str @=? slw
+
+  -- test mconcat with slaw maps
+  let m1  = M.fromList [ ("foo", 1)
+                       , ("bar", 2)
+                       ]
+      m2  = M.fromList [ ("bar", 3)
+                       , ("baz", 4)
+                       ]
+      m3  = M.fromList [ ("foo", 1)
+                       , ("bar", 3)
+                       , ("baz", 4)
+                       ]
+      sm1 = š (m1 :: M.Map T.Text Int16)
+      sm2 = š (m2 :: M.Map String Int32)
+      sm3 = sm1 <> sm2
+
+  Just (m3 :: M.Map T.Text Int) @=? ŝm sm3
+
+  -- test mconcat with numeric slaw
+  let a1   = S.fromList [ 1, 2,  3,  4 ]
+      a2   = S.fromList [ 5, 6,  7,  8 ]
+      a3   = S.fromList [ 9, 10, 11, 12]
+      a12  = S.fromList [ 1, 2, 3, 4, 5, 6, 7, 8]
+      a13  = a1 <> a3
+      nd1  = NumUnt32 a1
+      nd2  = NumUnt64 a2
+      nd3  = NumUnt32 a3
+      nd12 = NumInt8  a12
+      nd13 = NumUnt32 a13
+      nf   = NumericFormat { nfArray   = True
+                           , nfComplex = False
+                           , nfVector  = VtScalar
+                           }
+      sn1  = SlawNumeric nf nd1
+      sn2  = SlawNumeric nf nd2
+      sn3  = SlawNumeric nf nd3
+      sn12 = SlawNumeric nf nd12
+      sn13 = SlawNumeric nf nd13
+
+  sn13        @=? sn1 <> sn3
+  sn12        @=? sn1 <> sn2
+  sn12 <> sn3 @=? mconcat [sn1, sn2, sn3]
 
 testSlawIO :: Assertion
 testSlawIO = do
