@@ -4,7 +4,7 @@
 
 module Data.Slaw.Internal.Helpers
   ( PlasmaIntegral
-  , PlasmaFloat
+  , PlasmaFloat(..)
   , mapNumericData
   , mapNumericData2
   , mapNumericData'
@@ -49,6 +49,7 @@ import Data.Slaw.Internal.NumericConvert
 import Data.Slaw.Internal.SlawConvert
 import Data.Slaw.Internal.SlawType
 -- import Data.Slaw.Internal.String
+import Data.Slaw.Internal.Util
 
                               -- classes --
 
@@ -65,10 +66,55 @@ instance PlasmaIntegral TYPE
 
 class ( PlasmaReal a
       , RealFloat  a
-      ) => PlasmaFloat a
+      ) => PlasmaFloat a where
+--FOR floating
+  toNAMEXXX   :: a -> TYPE
+--END
 
 --FOR floating
-instance PlasmaFloat TYPE
+  fromNAMEXXX :: TYPEXX -> a
+--END
+
+instance PlasmaFloat Half where
+  toFloat16   = id
+  toFloat32   = fromHalf
+  toFloat64   = float2Double . fromHalf
+
+  fromFloat16 = id
+  fromFloat32 = toHalf
+  fromFloat64 = toHalf . double2Float
+
+--FOR floating
+  {-# INLINE toNAMEXXX   #-}
+  {-# INLINE fromNAMEXXX #-}
+--END
+
+instance PlasmaFloat Float where
+  toFloat16   = toHalf
+  toFloat32   = id
+  toFloat64   = float2Double
+
+  fromFloat16 = fromHalf
+  fromFloat32 = id
+  fromFloat64 = double2Float
+
+--FOR floating
+  {-# INLINE toNAMEXXX   #-}
+  {-# INLINE fromNAMEXXX #-}
+--END
+
+instance PlasmaFloat Double where
+  toFloat16   = toHalf . double2Float
+  toFloat32   = double2Float
+  toFloat64   = id
+
+  fromFloat16 = float2Double . fromHalf
+  fromFloat32 = float2Double
+  fromFloat64 = id
+
+--FOR floating
+  {-# INLINE toNAMEXXX   #-}
+  {-# INLINE fromNAMEXXX #-}
 --END
 
                            -- mapNumericData --
