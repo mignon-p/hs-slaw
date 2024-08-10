@@ -186,14 +186,17 @@ decodeProtein lbs = withFrozenCallStack $
   where bo = nativeByteOrder
 
 decodeProtein1 :: Input -> Either ErrPair (Slaw, Input)
-decodeProtein1 inp = do
+decodeProtein1 inp = setProteinEndian inp >>= decodeSlaw1
+
+setProteinEndian :: Input -> Either ErrPair Input
+setProteinEndian inp = do
   byte0  <- inp !? 0
   byte7  <- inp !? 7
   bo     <- case (getNib8 byte0, getNib8 byte7) of
               (NibSwappedProtein, NibProtein) -> return LittleEndian
               (NibProtein, NibSwappedProtein) -> return BigEndian
               _                               -> proteinErr inp
-  decodeSlaw1 $ inp { iBo = bo }
+  return $ inp { iBo = bo }
 
 proteinErr :: Input -> Either ErrPair a
 proteinErr inp =
