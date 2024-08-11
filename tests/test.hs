@@ -14,6 +14,7 @@ import qualified Data.Text                as T
 import qualified Data.Vector              as V
 import qualified Data.Vector.Storable     as S
 import Data.Word
+import Foreign.Storable
 -- import Numeric.Half
 -- import System.Directory
 import System.Environment
@@ -306,6 +307,29 @@ testSlawValidation = do
   True  @=? valSlaw [VfUtf8]   comprehensiveProtein
   False @=? valSlaw [VfDesIng] comprehensiveProtein
 
+checkConcat :: ( Storable a, Num a
+               , Storable b, Num b
+               , Storable c, Num c
+               , HasCallStack
+               )
+            => (S.Vector a -> NumericData, [Integer])
+            -> (S.Vector b -> NumericData, [Integer])
+            -> (S.Vector c -> NumericData)
+            -> Assertion
+checkConcat (fx, xs) (fy, ys) fz = do
+  let nf   = NumericFormat { nfArray   = True
+                           , nfComplex = False
+                           , nfVector  = VtScalar
+                           }
+      nd1  = fx $ S.fromList $ map fromInteger xs
+      nd2  = fy $ S.fromList $ map fromInteger ys
+      nd3  = fz $ S.fromList $ map fromInteger $ xs ++ ys
+      sn1  = SlawNumeric nf nd1
+      sn2  = SlawNumeric nf nd2
+      sn3  = SlawNumeric nf nd3
+
+  sn3 @=? sn1 <> sn2
+
 testSlawMonoid :: Assertion
 testSlawMonoid = do
   -- test mconcat with slaw lists
@@ -369,6 +393,19 @@ testSlawMonoid = do
   sn13        @=? sn1 <> sn3
   sn12        @=? sn1 <> sn2
   sn12 <> sn3 @=? mconcat [sn1, sn2, sn3]
+
+  checkConcat (NumFloat16, [1000, 2000, 0, (-1)   ])
+              (NumInt16,   [500,  1500, 8, (-2000)])
+              NumFloat16
+
+  checkConcat (NumFloat16, [1000, 2000, 0,       (-1)      ])
+              (NumFloat32, [500,  1500, 1000000, (-1000000)])
+              NumFloat32
+
+  let tenBillion = 10_000_000_000
+  checkConcat (NumFloat16, [1000, 2000, 0,          (-1)         ])
+              (NumInt64,   [500,  1500, tenBillion, (-tenBillion)])
+              NumFloat64
 
 testSlawIO :: Assertion
 testSlawIO = do
