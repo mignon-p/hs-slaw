@@ -1,3 +1,5 @@
+-- See doc/template.txt for more information about template files.
+
 {-# LANGUAGE ScopedTypeVariables        #-}
 
 module Data.Slaw.Internal.VectorConvert
@@ -23,59 +25,25 @@ import Data.Slaw.Internal.Util
 class Storable a => Swappable a where
   getSwapFunc :: a -> Maybe (Ptr () -> Int -> IO ())
 
-instance Swappable Word8 where
+--FOR Word8, Int8
+instance Swappable TYPEXX where
   getSwapFunc _ = Nothing
 
-instance Swappable Word16 where
-  getSwapFunc _ = Just swapArray16
+--FOR Word16, Word32, Word64, Int16, Int32, Int64, Half, Float, Double
+instance Swappable TYPEXX where
+  getSwapFunc _ = Just swapArrayBITS
 
-instance Swappable Word32 where
-  getSwapFunc _ = Just swapArray32
+--END
 
-instance Swappable Word64 where
-  getSwapFunc _ = Just swapArray64
-
-instance Swappable Int8 where
-  getSwapFunc _ = Nothing
-
-instance Swappable Int16 where
-  getSwapFunc _ = Just swapArray16
-
-instance Swappable Int32 where
-  getSwapFunc _ = Just swapArray32
-
-instance Swappable Int64 where
-  getSwapFunc _ = Just swapArray64
-
-instance Swappable Half where
-  getSwapFunc _ = Just swapArray16
-
-instance Swappable Float where
-  getSwapFunc _ = Just swapArray32
-
-instance Swappable Double where
-  getSwapFunc _ = Just swapArray64
-
-swapArray16 :: Ptr () -> Int -> IO ()
-swapArray16 vptr len = do
-  let p = castPtr vptr :: Ptr Word16
+--FOR Word16, Word32, Word64
+swapArrayBITS :: Ptr () -> Int -> IO ()
+swapArrayBITS vptr len = do
+  let p = castPtr vptr :: Ptr TYPE
   forM_ [0..len-1] $ \i -> do
     x <- peekElemOff p i
-    pokeElemOff p i (byteSwap16 x)
+    pokeElemOff p i (byteSwapBITS x)
 
-swapArray32 :: Ptr () -> Int -> IO ()
-swapArray32 vptr len = do
-  let p = castPtr vptr :: Ptr Word32
-  forM_ [0..len-1] $ \i -> do
-    x <- peekElemOff p i
-    pokeElemOff p i (byteSwap32 x)
-
-swapArray64 :: Ptr () -> Int -> IO ()
-swapArray64 vptr len = do
-  let p = castPtr vptr :: Ptr Word64
-  forM_ [0..len-1] $ \i -> do
-    x <- peekElemOff p i
-    pokeElemOff p i (byteSwap64 x)
+--END
 
 isAligned :: forall a. Storable a => Ptr a -> Bool
 isAligned p = p == p'
