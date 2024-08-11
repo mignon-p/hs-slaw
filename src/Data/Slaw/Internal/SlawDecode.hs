@@ -2,8 +2,13 @@ module Data.Slaw.Internal.SlawDecode
  ( decodeSlaw
  , decodeSlaw'
  , decodeProtein
+ , decodeProtein'
  , decodeOct
  , lengthFromHeader
+ , decodeSlawLength
+ , decodeSlawLength'
+ , decodeProteinLength
+ , decodeProteinLength'
  ) where
 
 -- import Control.DeepSeq
@@ -183,6 +188,11 @@ decodeSlaw1 inp = do
 decodeProtein :: HasCallStack => BinarySlaw -> Slaw
 decodeProtein lbs = withFrozenCallStack $
   handleSlawResult $ decodeProtein1 $ makeInput bo "protein" lbs
+  where bo = nativeByteOrder
+
+decodeProtein' :: ErrLocation -> BinarySlaw -> Slaw
+decodeProtein' el lbs = withFrozenCallStack $
+  handleSlawResult $ decodeProtein1 $ makeInput' bo el lbs
   where bo = nativeByteOrder
 
 decodeProtein1 :: Input -> Either ErrPair (Slaw, Input)
@@ -553,3 +563,47 @@ lengthFromHeader' oHdr = do
   if octLen == 0
     then Left $ ctx ++ "octlen of 0 is not allowed"
     else Right (octLen, (info, ctx, nSpecial))
+
+decodeSlawLength :: HasCallStack
+                 => ByteOrder
+                 -> BinarySlaw
+                 -> Either PlasmaException Word64
+decodeSlawLength bo lbs = withFrozenCallStack $
+  handleLen $ decodeSlawLength1 $ makeInput bo "slaw" lbs
+
+decodeSlawLength' :: ByteOrder
+                  -> ErrLocation
+                  -> BinarySlaw
+                  -> Either PlasmaException Word64
+decodeSlawLength' bo el lbs = withFrozenCallStack $
+  handleLen $ decodeSlawLength1 $ makeInput' bo el lbs
+
+decodeProteinLength :: HasCallStack
+                    => BinarySlaw
+                    -> Either PlasmaException Word64
+decodeProteinLength lbs = withFrozenCallStack $
+  handleLen $ decodeProteinLength1 $ makeInput bo "slaw" lbs
+  where bo = nativeByteOrder
+
+decodeProteinLength' :: ErrLocation
+                     -> BinarySlaw
+                     -> Either PlasmaException Word64
+decodeProteinLength' el lbs = withFrozenCallStack $
+  handleLen $ decodeProteinLength1 $ makeInput' bo el lbs
+  where bo = nativeByteOrder
+
+handleLen :: Either ErrPair a -> Either PlasmaException a
+handleLen = first (uncurry corruptSlaw)
+
+decodeProteinLength1 :: Input -> Either ErrPair Word64
+decodeProteinLength1 inp = setProteinEndian inp >>= decodeSlawLength1
+
+decodeSlawLength1 :: Input -> Either ErrPair Word64
+decodeSlawLength1 inp = do
+  (hdr, _) <- inp // 1
+  let hdrBs = (L.toStrict . iLbs) hdr
+      bo    = iBo hdr
+      oHdr  = decodeOct bo hdrBs
+  case lengthFromHeader oHdr of
+    Left  msg    -> Left  $ addLoc inp msg
+    Right octLen -> Right $ 8 * octLen

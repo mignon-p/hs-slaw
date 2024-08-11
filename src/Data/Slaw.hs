@@ -23,6 +23,8 @@ module Data.Slaw
     -- ** Decoding
   , decodeSlaw
   , decodeProtein
+  , decodeSlawLength
+  , decodeProteinLength
     -- ** Encoding
   , encodeSlaw
     -- ** Validation
