@@ -53,6 +53,11 @@ qcProps = testGroup "QuickCheck tests"
       \slaw -> slaw QC.=== decodeSlaw BigEndian (encodeSlaw BigEndian slaw)
   , QC.testProperty "round-trip (little endian)" $
       \slaw -> slaw QC.=== decodeSlaw LittleEndian (encodeSlaw LittleEndian slaw)
+  , QC.testProperty "decodeSlawLength" $
+      \(slaw, bo) ->
+        let enc      = encodeSlaw bo slaw
+            expected = Right $ fromIntegral $ L.length $ enc
+        in expected QC.=== decodeSlawLength bo enc
   , QC.testProperty "Slaw addition" $
       \(x, y) -> (x :: Integer) + (y :: Integer) QC.=== ŝ (š x + š y)
   , QC.testProperty "Slaw subtraction" $

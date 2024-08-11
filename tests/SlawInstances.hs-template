@@ -208,3 +208,6 @@ instance Arbitrary Slaw where
   shrink (SlawMap pairs)     = shrSlawMap pairs
   shrink (SlawNumeric nf nd) = shrSlawNum nf nd
   shrink _ = []
+
+instance Arbitrary ByteOrder where
+  arbitrary = chooseEnum (minBound, maxBound)
