@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.OptionRecords
-Description :
+Description : Record types that represent slaw option maps
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

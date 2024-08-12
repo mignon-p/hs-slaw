@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.Validation
-Description :
+Description : Validate that a Slaw does not contain errors
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

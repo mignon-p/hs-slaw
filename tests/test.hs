@@ -1,6 +1,6 @@
 {-|
-Module      : 
-Description :
+Module      : Main
+Description : test slaw package
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

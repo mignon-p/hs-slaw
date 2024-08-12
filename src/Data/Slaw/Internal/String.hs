@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.String
-Description :
+Description : Typeclasses for converting Text and ByteStrings
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

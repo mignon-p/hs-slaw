@@ -2,7 +2,7 @@
 
 {-|
 Module      : SlawInstances
-Description :
+Description : Arbitrary instance for Slaw
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

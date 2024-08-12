@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.FileClass
-Description :
+Description : Class to open files by either FilePath or OsPath
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

@@ -2,7 +2,7 @@
 
 {-|
 Module      : Data.Slaw.Internal.Helpers
-Description :
+Description : Some useful functions for dealing with slawx
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

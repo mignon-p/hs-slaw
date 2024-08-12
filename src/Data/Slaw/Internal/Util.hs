@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.Util
-Description :
+Description : Random utility functions that are useful
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

@@ -1,6 +1,6 @@
 {-|
 Module      : TestUtil
-Description :
+Description : Helper functions for testing slaw IO
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

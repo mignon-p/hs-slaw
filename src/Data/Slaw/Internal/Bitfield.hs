@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.Bitfield
-Description :
+Description : Functions for manipulating bitfields
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

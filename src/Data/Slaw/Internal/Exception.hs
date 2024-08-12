@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.Exception
-Description :
+Description : PlasmaException and related types/functions
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

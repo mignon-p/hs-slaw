@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.SlawIO
-Description :
+Description : Read and write binary slaw files
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

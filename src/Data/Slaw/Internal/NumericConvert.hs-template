@@ -2,7 +2,7 @@
 
 {-|
 Module      : Data.Slaw.Internal.NumericConvert
-Description :
+Description : Convert arrays of reals into compound numeric types
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

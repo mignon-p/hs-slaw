@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.SlawEncode
-Description :
+Description : Encode a Slaw into slaw-v2 binary representation
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

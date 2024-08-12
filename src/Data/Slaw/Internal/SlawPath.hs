@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.SlawPath
-Description :
+Description : Extract data from deeply-nested slawx with a query string
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

@@ -3,7 +3,7 @@
 
 {-|
 Module      : Data.Slaw.Internal.VectorTypes
-Description :
+Description : Type for mathematical vectors (2, 3, and 4 dimensions)
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

@@ -2,7 +2,7 @@
 
 {-|
 Module      : Data.Slaw.Internal.SlawConvert
-Description :
+Description : Typeclasses to convert various types to/from slawx
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.HalfOrphans
-Description :
+Description : Orphan instances for Numeric.Half
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

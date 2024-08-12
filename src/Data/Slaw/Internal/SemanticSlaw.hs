@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.SemanticSlaw
-Description :
+Description : Compare slawx semantically, rather than literally
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

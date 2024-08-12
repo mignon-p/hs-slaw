@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.NativeInt
-Description :
+Description : Treating Int as either Int32 or Int64, depending on CPU
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

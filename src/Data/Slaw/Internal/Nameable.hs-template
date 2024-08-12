@@ -2,7 +2,7 @@
 
 {-|
 Module      : Data.Slaw.Internal.Nameable
-Description :
+Description : Typeclass to get the name of a type
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

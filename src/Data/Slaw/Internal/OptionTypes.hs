@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.OptionTypes
-Description :
+Description : Types that represent options
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

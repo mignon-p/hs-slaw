@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.EnumStrings
-Description :
+Description : Functions for converting between enums and strings
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

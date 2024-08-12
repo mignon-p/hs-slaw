@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal.BitfieldDefs
-Description :
+Description : Definitions of specific bitfields for slaw-v2
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org

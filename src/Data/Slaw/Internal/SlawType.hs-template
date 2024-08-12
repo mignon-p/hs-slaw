@@ -2,7 +2,7 @@
 
 {-|
 Module      : Data.Slaw.Internal.SlawType
-Description :
+Description : Slaw and related types/functions
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org
