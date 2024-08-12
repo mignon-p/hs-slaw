@@ -77,7 +77,7 @@ module Data.Slaw
   , Nameable(..)
   , PlasmaReal(..)
   , PlasmaIntegral
-  , PlasmaFloat
+  , PlasmaFloat(..)
   , PlasmaScalar(..)
   , PlasmaNumeric(..)
   , FromSlaw(..)
