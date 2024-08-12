@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw.Internal
-Description :
+Description : For use by Plasma package only
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org
@@ -14,7 +14,6 @@ module Data.Slaw.Internal
   , decodeSlawLength'
   , decodeProteinLength'
     -- * Strings
-  , Utf8Str
   , TextClass(..)
   , ByteStringClass(..)
   , indentLines

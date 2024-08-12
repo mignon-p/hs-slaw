@@ -1,6 +1,6 @@
 {-|
 Module      : Data.Slaw
-Description :
+Description : Primary API for manipulating slawx
 Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org
