@@ -44,7 +44,10 @@ extra-source-files:  CHANGELOG.md
                    , doc/example.el
                    , doc/template.txt
                    , scripts/preprocess-template.pl
+                   , stack.yaml
                    , test-files/big-endian-protein-version2.slaw
+                   , test-files/comprehensive-BigEndian.slaw
+                   , test-files/comprehensive-LittleEndian.slaw
                    , test-files/example.slaw
                    , test-files/kp_enter.slaw
                    , test-files/little-endian-protein-version2.slaw
