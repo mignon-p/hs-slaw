@@ -1,3 +1,12 @@
+{-|
+Module      : Data.Slaw.Internal.FileClass
+Description :
+Copyright   : © Mignon Pelletier, 2024
+License     : MIT
+Maintainer  : code@funwithsoftware.org
+Portability : GHC
+-}
+
 {-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}

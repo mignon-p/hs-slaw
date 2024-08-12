@@ -1,3 +1,12 @@
+{-|
+Module      : Data.Slaw.Internal.Exception
+Description :
+Copyright   : © Mignon Pelletier, 2024
+License     : MIT
+Maintainer  : code@funwithsoftware.org
+Portability : GHC
+-}
+
 module Data.Slaw.Internal.Exception
   ( DataSource(..)
   , displayDataSource

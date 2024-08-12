@@ -1,3 +1,12 @@
+{-|
+Module      : Data.Slaw.Internal.Validation
+Description :
+Copyright   : © Mignon Pelletier, 2024
+License     : MIT
+Maintainer  : code@funwithsoftware.org
+Portability : GHC
+-}
+
 module Data.Slaw.Internal.Validation
   ( ValidationFlag(..)
   , validateSlaw

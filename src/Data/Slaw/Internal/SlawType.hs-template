@@ -1,5 +1,14 @@
 -- See doc/template.txt for more information about template files.
 
+{-|
+Module      : Data.Slaw.Internal.SlawType
+Description :
+Copyright   : © Mignon Pelletier, 2024
+License     : MIT
+Maintainer  : code@funwithsoftware.org
+Portability : GHC
+-}
+
 {-# LANGUAGE RankNTypes                 #-}
 
 module Data.Slaw.Internal.SlawType

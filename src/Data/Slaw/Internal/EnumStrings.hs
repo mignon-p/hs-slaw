@@ -1,3 +1,12 @@
+{-|
+Module      : Data.Slaw.Internal.EnumStrings
+Description :
+Copyright   : © Mignon Pelletier, 2024
+License     : MIT
+Maintainer  : code@funwithsoftware.org
+Portability : GHC
+-}
+
 module Data.Slaw.Internal.EnumStrings
   ( EnumStrings
   , makeEnumStrings

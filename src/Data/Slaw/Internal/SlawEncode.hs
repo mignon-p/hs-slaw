@@ -1,3 +1,12 @@
+{-|
+Module      : Data.Slaw.Internal.SlawEncode
+Description :
+Copyright   : © Mignon Pelletier, 2024
+License     : MIT
+Maintainer  : code@funwithsoftware.org
+Portability : GHC
+-}
+
 {-# LANGUAGE ImplicitParams             #-}
 
 module Data.Slaw.Internal.SlawEncode

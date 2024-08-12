@@ -1,6 +1,15 @@
 -- Geometric vectors (V2, V3, and V4), not to be confused with
 -- Data.Vector, which is an entirely different animal.
 
+{-|
+Module      : Data.Slaw.Internal.VectorTypes
+Description :
+Copyright   : © Mignon Pelletier, 2024
+License     : MIT
+Maintainer  : code@funwithsoftware.org
+Portability : GHC
+-}
+
 module Data.Slaw.Internal.VectorTypes
   ( V2(..)
   , V3(..)

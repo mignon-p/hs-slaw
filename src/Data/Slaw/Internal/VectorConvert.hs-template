@@ -1,5 +1,14 @@
 -- See doc/template.txt for more information about template files.
 
+{-|
+Module      : Data.Slaw.Internal.VectorConvert
+Description :
+Copyright   : © Mignon Pelletier, 2024
+License     : MIT
+Maintainer  : code@funwithsoftware.org
+Portability : GHC
+-}
+
 {-# LANGUAGE ScopedTypeVariables        #-}
 
 module Data.Slaw.Internal.VectorConvert

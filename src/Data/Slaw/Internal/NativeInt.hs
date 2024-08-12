@@ -1,3 +1,12 @@
+{-|
+Module      : Data.Slaw.Internal.NativeInt
+Description :
+Copyright   : © Mignon Pelletier, 2024
+License     : MIT
+Maintainer  : code@funwithsoftware.org
+Portability : GHC
+-}
+
 {-# LANGUAGE CPP                        #-}
 
 module Data.Slaw.Internal.NativeInt
