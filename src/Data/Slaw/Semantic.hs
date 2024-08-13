@@ -25,6 +25,8 @@ same as an empty list.  If the ingests is 'Nothing', it is treated
 the same as an empty map.
 -}
 
+{-# OPTIONS_GHC -Wno-unused-imports     #-}
+
 module Data.Slaw.Semantic
   ( -- * Semantic comparison
     Semantic(..)
@@ -36,4 +38,7 @@ module Data.Slaw.Semantic
   , (==~~)
   ) where
 
+import Data.Hashable (Hashable)
+
+import Data.Slaw (Slaw(..), NumericFormat(..), NumericData(..))
 import Data.Slaw.Internal.SemanticSlaw

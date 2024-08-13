@@ -24,7 +24,7 @@ filesystem.
       either @car@ (which can be abbreviated @a@ or @0@), or
       @cdr@ (which can be abbreviated @d@ or @1@).
 
-    * If the 'Slaw' is a 'Protein', the behavior depends on the
+    * If the 'Slaw' is a 'SlawProtein', the behavior depends on the
       'ProteinMode'.
 
         * If 'ProteinMode' is 'PmUseIngests', then resolution skips
@@ -58,6 +58,8 @@ filesystem.
             * @imaginary@ (abbreviated @i@, @im@, or @1@)
 -}
 
+{-# OPTIONS_GHC -Wno-unused-imports     #-}
+
 module Data.Slaw.Path
   ( -- * Options
     ProteinMode(..)
@@ -73,5 +75,10 @@ module Data.Slaw.Path
   , (?>)
   ) where
 
+import Data.Slaw ( Slaw(..)
+                 , NumericFormat(..)
+                 , NumericData(..)
+                 , VectorType(..)
+                 )
 import Data.Slaw.Internal.SlawPath
 import Data.Slaw.Internal.Util

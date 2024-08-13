@@ -15,13 +15,15 @@ File names are represented by the typeclass 'FileClass', which can
 be any of:
 
     * 'FilePath' (i. e. 'String')
-    * 'System.OsPath.OsPath'
+    * 'OsPath'
     * 'Handle', which is closed when the 'SlawInputStream' or
       'SlawOutputStream' is closed
     * 'NoClose', a @newtype@ which wraps a 'Handle', and leaves the
       handle open when the 'SlawInputStream' or 'SlawOutputStream'
       is closed
 -}
+
+{-# OPTIONS_GHC -Wno-unused-imports     #-}
 
 module Data.Slaw.IO
   ( -- * Reading slawx from a file
@@ -49,6 +51,9 @@ module Data.Slaw.IO
   , FileClass
   , NoClose(..)
   ) where
+
+import System.OsPath (OsPath)
+import System.IO (Handle)
 
 import Data.Slaw.Internal.FileClass
 import Data.Slaw.Internal.OptionRecords
