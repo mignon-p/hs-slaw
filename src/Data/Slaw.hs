@@ -23,6 +23,12 @@ module Data.Slaw
   , isNumeric
   , isError
     -- ** Conversion
+    --
+    -- | These functions convert various Haskell types (which have
+    -- 'ToSlaw' and/or 'FromSlaw' instances) to and from the 'Slaw' type.
+    -- Unicode characters are used to give these very short names.
+    -- @š@ (arrow points towards the @s@) means “to slaw”, while
+    -- @ŝ@ (arrow points away from the @s@) means “from slaw”.
   , š
   , ŝ
   , ŝm
@@ -58,6 +64,8 @@ module Data.Slaw
   , describeNumericFormat
   , describeNumericData
     -- ** Operations on NumericData
+    --
+    -- | These make use of the @RankNTypes@ language extension.
   , mapNumericData
   , mapNumericData2
   , mapNumericData'
@@ -68,6 +76,10 @@ module Data.Slaw
   , sliceNumericData
   , lengthNumericData
     -- ** Vector types
+    --
+    -- | 2-, 3-, and 4-dimensional mathematical vectors, not to be
+    -- confused with "Data.Vector", which is an entirely different
+    -- animal.
   , V2(..)
   , V3(..)
   , V4(..)
