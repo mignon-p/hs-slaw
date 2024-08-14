@@ -7,6 +7,8 @@ Maintainer  : code@funwithsoftware.org
 Portability : GHC
 -}
 
+{-# OPTIONS_HADDOCK not-home            #-}
+
 module Data.Slaw.Internal
   ( -- * Slaw decoding (can specify an ErrLocation)
     decodeSlaw'

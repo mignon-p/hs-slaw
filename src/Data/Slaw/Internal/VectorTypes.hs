@@ -32,6 +32,7 @@ import GHC.Generics (Generic)
 -- import Data.Slaw.Internal.SlawType
 -- import Data.Slaw.Internal.Util
 
+-- | 2-dimensional mathematical vector
 data V2 a = V2 { v2x :: !a
                , v2y :: !a
                } deriving (Eq, Ord, Show, Read, Functor,
@@ -55,6 +56,7 @@ instance Storable a => Storable (V2 a) where
     pokeElemOff ptr' 0 (v2x v)
     pokeElemOff ptr' 1 (v2y v)
 
+-- | 3-dimensional mathematical vector
 data V3 a = V3 { v3x :: !a
                , v3y :: !a
                , v3z :: !a
@@ -81,6 +83,7 @@ instance Storable a => Storable (V3 a) where
     pokeElemOff ptr' 1 (v3y v)
     pokeElemOff ptr' 2 (v3z v)
 
+-- | 4-dimensional mathematical vector
 data V4 a = V4 { v4x :: !a
                , v4y :: !a
                , v4z :: !a

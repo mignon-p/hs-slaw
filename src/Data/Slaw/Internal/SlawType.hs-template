@@ -9,6 +9,7 @@ Maintainer  : code@funwithsoftware.org
 Portability : GHC
 -}
 
+{-# OPTIONS_GHC -Wno-unused-imports     #-}
 {-# LANGUAGE RankNTypes                 #-}
 
 module Data.Slaw.Internal.SlawType
@@ -64,18 +65,21 @@ import GHC.Generics (Generic)
 import GHC.Stack
 import Numeric.Half
 import System.IO.Unsafe (unsafePerformIO)
-import Text.Read
+import Text.Read (readMaybe)
 
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.HalfOrphans ()
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
 import Data.Slaw.Internal.VectorConvert
+import Data.Slaw.Internal.VectorTypes (V2, V3, V4)
 
 type Symbol     = Word64
 type RudeData   = L.ByteString
 type BinarySlaw = L.ByteString
 type ErrPair    = (String, ErrLocation)
+
+-- | A general-purpose, self-describing datatype.
 
 data Slaw = SlawProtein     (Maybe Slaw) (Maybe Slaw) RudeData
           | SlawBool        !Bool
@@ -99,6 +103,13 @@ instance Semigroup Slaw where
 instance IsString Slaw where
   fromString = SlawString . toUtf8
 
+-- | Describes how the real numbers in 'NumericData' should be
+-- grouped together to form compound numerical types.
+--
+-- All possible combinations are legal, /except/ that multivectors
+-- may not be complex.  This requirement can be checked with
+-- the 'isNumericFormatLegal' function.
+
 data NumericFormat = NumericFormat
   { nfArray   :: !Bool
   , nfComplex :: !Bool
@@ -112,9 +123,21 @@ instance Default NumericFormat where
         , nfVector  = VtScalar
         }
 
+-- | Wraps a 'Storable' 'S.Vector' of real numbers.  Multiple
+-- element types are supported:
+--
+-- * 8, 16, 32, and 64-bit unsigned integers
+-- * 8, 16, 32, and 64-bit signed integers
+-- * 16, 32, and 64-bit floating-point numbers
+--
+-- Note that 16-bit floating-point numbers are currently only
+-- supported by the Haskell implementation of slaw, and not by
+-- @libPlasma/c@ or other implementations.
 data NumericData =
---FOR sizedInt, floating
-  BAR NumNAMEXXX (S.Vector TYPE)
+--FOR sizedInt
+  BAR NumNAMEXXX (S.Vector TYPE) -- ^ BITS-bit LSIGNED integers
+--FOR floating
+   |  NumNAMEXXX (S.Vector TYPE) -- ^ BITS-bit floating point numbers
 --END
   deriving (Eq, Ord, Show, Generic, NFData)
 
@@ -142,17 +165,26 @@ data NumericType =
 --END
   deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
 
-data VectorType = VtScalar
-                | Vt2
-                | Vt3
-                | Vt4
-                | Vt2mv
-                | Vt3mv
-                | Vt4mv
-                | Vt5mv
+-- | Used in 'NumericFormat' to indicate whether a number is a
+-- scalar, a vector, or a multivector.
+--
+-- The datatypes 'V2', 'V3', and 'V4' correspond to 'Vt2', 'Vt3',
+-- and 'Vt4'.  This library does not currently provide datatypes
+-- for multivectors, however.
+
+data VectorType = VtScalar -- ^ Not a vector or multivector
+                | Vt2      -- ^ 2-dimensional vector (2 components)
+                | Vt3      -- ^ 3-dimensional vector (3 components)
+                | Vt4      -- ^ 4-dimensional vector (4 components)
+                | Vt2mv    -- ^ 2-dimensional vector (4 components)
+                | Vt3mv    -- ^ 3-dimensional vector (8 components)
+                | Vt4mv    -- ^ 4-dimensional vector (16 components)
+                | Vt5mv    -- ^ 5-dimensional vector (32 components)
                 deriving (Eq, Ord, Show, Read, Bounded, Enum,
                           Generic, NFData, Hashable)
 
+-- | Returns a 'String' which describes the type of a 'NumericData',
+-- such as “16-bit signed integer”.
 describeNumericData :: NumericData -> String
 --FOR sizedInt
 describeNumericData (NumNAMEXXX _) = "BITS-bit SIGNED integer"
@@ -176,11 +208,17 @@ describeVectorType Vt3mv = ["3-multivector of"]
 describeVectorType Vt4mv = ["4-multivector of"]
 describeVectorType Vt5mv = ["5-multivector of"]
 
+-- | Returns a 'String' which describes the type of a
+-- 'NumericFormat' and 'NumericData' together, such as
+-- “2-vector of complex 64-bit floating point”.
 describeNumeric :: NumericFormat -> NumericData -> String
 describeNumeric nf nd = intercalate " " (nfl ++ [nds])
   where nfl = describeNumericFormat1 nf
         nds = describeNumericData    nd
 
+-- | Returns a 'String' which describes the type of a 'Slaw',
+-- such as “protein”, “nil”, “boolean True”, “map”, or
+-- “2-vector of complex 64-bit floating point”.
 describeSlaw :: Slaw -> String
 describeSlaw (SlawProtein _ _ _) = "protein"
 describeSlaw (SlawBool    b    ) = "boolean " ++ show b
@@ -193,6 +231,7 @@ describeSlaw (SlawCons    _ _  ) = "cons"
 describeSlaw (SlawNumeric nf nd) = describeNumeric nf nd
 describeSlaw (SlawError   _ _  ) = "error"
 
+-- | Returns a 'String' which describes the type of a 'NumericFormat'.
 describeNumericFormat :: NumericFormat -> String
 describeNumericFormat nf =
   case describeNumericFormat1 nf of
@@ -482,8 +521,8 @@ classifyNumeric :: NumericType -> (NumTyp, Int)
 classifyNumeric TypNAMEXXX = (NumTypSIGNEDXX, BITS `div` 8)
 --END
 
--- all combinations are legal, EXCEPT that you can't be complex and
--- also a multivector
+-- | All combinations are legal, /except/ that you can't be complex and
+-- also a multivector.
 isNumericFormatLegal :: NumericFormat -> Bool
 isNumericFormatLegal nf = not legal
   where legal = nfComplex nf && nfVector nf >= Vt2mv
