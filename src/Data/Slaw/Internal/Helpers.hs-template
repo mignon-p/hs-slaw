@@ -243,7 +243,10 @@ isProtein _                   = False
 
                          -- Creating a Protein --
 
-protein :: T.Text -> [(T.Text, Slaw)] -> Protein
+-- | Construct a 'Protein'.  Rude data is empty.
+protein :: T.Text -- ^ Split on whitespace into a list of descrips
+        -> [(T.Text, Slaw)] -- ^ Key/value pairs for ingests
+        -> Protein
 protein des ing = def
   { pDescrips = T.words    des
   , pIngests  = M.fromList ing

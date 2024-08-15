@@ -280,9 +280,17 @@ computeBsize nf size = size * cplxSize * vectSize
   where cplxSize = if nfComplex nf then 2 else 1
         vectSize = vectorSize (nfVector nf)
 
+-- | Returns the number of components in the given 'VectorType'.
+-- This ranges from @1@ for 'VtScalar', to @32@ for 'Vt5mv'.
 vectorSize :: VectorType -> Int
 vectorSize vt = "123448@P" #! fromEnum vt
 
+-- | Returns the number of components in the type represented
+-- by 'NumericFormat'.  Ignores 'nfArray'.  (In other words,
+-- for an array, returns the number of components in a single
+-- element of the array.)
+--
+-- This is just 'vectorSize', multiplied by 2 if 'nfComplex' is 'True'.
 numericFormatSize :: NumericFormat -> Int
 numericFormatSize = (`computeBsize` 1)
 

@@ -630,10 +630,12 @@ makeRat num den
 
 ---- types
 
+-- | Represents a /typical/ protein, where the descrips is
+-- a list of strings, and the ingests is a map with string keys.
 data Protein = Protein
   { pDescrips :: [T.Text]
   , pIngests  :: M.Map T.Text Slaw
-  , pRudeData :: L.ByteString
+  , pRudeData :: RudeData
   } deriving (Eq, Ord, Show, Generic, NFData, Hashable)
 
 instance Default Protein where
