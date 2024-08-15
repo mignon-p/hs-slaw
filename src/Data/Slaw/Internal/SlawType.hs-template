@@ -95,26 +95,28 @@ type ErrPair    = (String, ErrLocation)
 
 -- | A general-purpose, self-describing datatype.
 
-data Slaw = SlawProtein     { slawDescrips :: Maybe Slaw
-                            , slawIngests  :: Maybe Slaw
-                            , slawRudeData :: RudeData
-                            }
-          | SlawBool        { slawBool     :: !Bool   }
-          | SlawNil
-          | SlawSymbol      { slawSymbol   :: !Symbol }
-          | SlawString      { slawUtf8     :: Utf8Str }
-          | SlawList        { slawList     :: [Slaw]  }
-          | SlawMap         { slawPairs    :: [(Slaw, Slaw)] }
-          | SlawCons        { slawCar      :: Slaw
-                            , slawCdr      :: Slaw
-                            }
-          | SlawNumeric     { slawNumFmt   :: !NumericFormat
-                            , slawNumData  :: NumericData
-                            }
-          | SlawError       { slawErrMsg   :: String
-                            , slawErrLoc   :: ErrLocation
-                            }
-          deriving (Eq, Ord, Show, Generic, NFData, Hashable)
+data Slaw =
+    SlawProtein { slawDescrips :: Maybe Slaw -- ^ usually a 'SlawList'
+                , slawIngests  :: Maybe Slaw -- ^ usually a 'SlawMap'
+                , slawRudeData :: RudeData   -- ^ arbitrary binary data
+                }
+  | SlawBool    { slawBool     :: !Bool   }
+  | SlawNil
+  | SlawSymbol  { slawSymbol   :: !Symbol }
+  | SlawString  { slawUtf8     :: Utf8Str }
+  | SlawList    { slawList     :: [Slaw]  }
+  | SlawMap     { slawPairs    :: [(Slaw, Slaw)] -- ^ key/value pairs
+                }
+  | SlawCons    { slawCar      :: Slaw
+                , slawCdr      :: Slaw
+                }
+  | SlawNumeric { slawNumFmt   :: !NumericFormat
+                , slawNumData  :: NumericData
+                }
+  | SlawError   { slawErrMsg   :: String
+                , slawErrLoc   :: ErrLocation
+                }
+  deriving (Eq, Ord, Show, Generic, NFData, Hashable)
 
 instance Monoid Slaw where
   mempty = SlawNil
