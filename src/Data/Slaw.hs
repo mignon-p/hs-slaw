@@ -88,6 +88,7 @@ module Data.Slaw
     -- * Exceptions
   , PlasmaException(..)
   , displayPlasmaException
+  , PlasmaExceptionType(..)
   , ErrLocation(..)
   , displayErrLocation
   , DataSource(..)
