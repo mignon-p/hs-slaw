@@ -12,6 +12,7 @@ Portability : GHC
 
 import Control.Monad
 import qualified Data.ByteString.Lazy     as L
+import Data.Char
 import Data.Complex
 import Data.Default.Class
 import Data.Either
@@ -244,9 +245,14 @@ testSlawConvert = do
 
 testSlawSemantic :: Assertion
 testSlawSemantic = do
+  let strC = š $ map chr [0xe9]
+      strD = š $ map chr [0x65, 0x0301]
+
   assertBool "[0]" $ š (5 :: Int8) ==~ š (5 :: Word64)
   assertBool "[1]" $ not $ "foo" ==~  "Foo"
   assertBool "[2]" $       "foo" ==~~ "Foo"
+  assertBool "[3]" $       strC  ==~  strD
+  assertBool "[4]" $       strC  ==~~ strD
 
 valSlaw :: [ValidationFlag] -> Slaw -> Bool
 valSlaw vf = isRight . validateSlaw vf

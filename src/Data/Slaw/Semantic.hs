@@ -20,6 +20,9 @@ of the error message or location.
 'SlawMap' is treated as equal to another 'SlawMap' if the key/value
 pairs are equal, regardless of the order they appear in.
 
+'SlawString' is normalized to @NFKD@ before comparing.  Can
+optionally be case-insensitive, as well.
+
 In 'SlawProtein', if the descrips is 'Nothing', it is treated the
 same as an empty list.  If the ingests is 'Nothing', it is treated
 the same as an empty map.

@@ -26,6 +26,7 @@ import Data.Hashable
 import qualified Data.Map.Strict      as M
 -- import Data.Ratio
 import qualified Data.Text            as T
+import qualified Data.Text.Normalize  as T
 import qualified Data.Vector.Storable as S
 import GHC.Generics (Generic)
 
@@ -40,8 +41,8 @@ infix 4 ==~~
 type TextFunc = Utf8Str -> T.Text
 
 textFunc, textFuncCI :: TextFunc
-textFunc   = fromUtf8
-textFuncCI = T.toCaseFold . fromUtf8
+textFunc   = T.normalize T.NFKD . fromUtf8
+textFuncCI = T.toCaseFold . textFunc
 
 -- | Wraps a 'Slaw', and provides “semantic”, rather than literal,
 -- comparison.
