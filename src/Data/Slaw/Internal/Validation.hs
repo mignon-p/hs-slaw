@@ -49,10 +49,12 @@ symbolBits :: Int
 symbolBits = 56
 
 -- | The maximum value a 'Symbol' is allowed to have.
+-- (@0x00ff_ffff_ffff_ffff@)
 maxSymbol :: Symbol
 maxSymbol = bit symbolBits - 1
 
 -- | The minimum value a 'Symbol' is allowed to have.
+-- (@4@)
 minSymbol :: Symbol
 minSymbol = 1 + (fromIntegral . fromEnum) SymError
 
