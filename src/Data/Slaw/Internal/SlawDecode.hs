@@ -171,10 +171,20 @@ handleSlawResult :: Either ErrPair (Slaw, a) -> Slaw
 handleSlawResult (Left  msg   ) = mkSlawErr msg
 handleSlawResult (Right (s, _)) = s
 
+-- | Decode a 'Slaw' from a bytestring.  The byte order that
+-- was used when encoding must be specified.  In case of a
+-- decoding error, 'SlawError' is returned.
+--
+-- ('SlawError' may either be the result returned directly,
+-- or it may appear anywhere in the nested 'Slaw' data structure,
+-- since decoding is done lazily.  If you need to check whether
+-- an error occurred anywhere, see 'Data.Slaw.validateSlaw'.)
 decodeSlaw :: HasCallStack => ByteOrder -> BinarySlaw -> Slaw
 decodeSlaw bo lbs = withFrozenCallStack $
   handleSlawResult $ decodeSlaw1 $ makeInput bo "slaw" lbs
 
+-- | Like 'decodeSlaw', but an explicit 'ErrLocation' may be
+-- specified.
 decodeSlaw' :: ByteOrder -> ErrLocation -> BinarySlaw -> Slaw
 decodeSlaw' bo el lbs =
   handleSlawResult $ decodeSlaw1 $ makeInput' bo el lbs
@@ -194,11 +204,16 @@ decodeSlaw1 inp = do
     Left msg -> Right (mkSlawErr $ first (ctx ++) msg, leftover)
     Right s  -> Right (s, leftover)
 
+-- | Like 'decodeSlaw', but only works if the slaw is a 'SlawProtein'.
+-- The byte order does not need to be specified, because unlike
+-- other slawx, proteins describe their own endianness.
 decodeProtein :: HasCallStack => BinarySlaw -> Slaw
 decodeProtein lbs = withFrozenCallStack $
   handleSlawResult $ decodeProtein1 $ makeInput bo "protein" lbs
   where bo = nativeByteOrder
 
+-- | Like 'decodeProtein', but an explicit 'ErrLocation' may be
+-- specified.
 decodeProtein' :: ErrLocation -> BinarySlaw -> Slaw
 decodeProtein' el lbs = withFrozenCallStack $
   handleSlawResult $ decodeProtein1 $ makeInput' bo el lbs
@@ -576,6 +591,15 @@ lengthFromHeader' oHdr = do
     then Left $ ctx ++ "octlen of 0 is not allowed"
     else Right (octLen, (info, ctx, nSpecial))
 
+-- | Given the first 8 bytes of a binary slaw, returns the total length
+-- in bytes that the slaw is supposed to be.  This can be used when
+-- reading a binary slaw from a file or network: read the first 8 bytes,
+-- call 'decodeSlawLength', and then read the remaining bytes
+-- (subtracting the 8 that were already read).
+--
+-- Returns a 'PlasmaException' if an error occurs.  (e. g. less than
+-- 8 bytes are provided, or the 8 bytes do not represent the first
+-- 8 bytes of a valid slaw)
 decodeSlawLength :: HasCallStack
                  => ByteOrder
                  -> BinarySlaw
@@ -583,6 +607,8 @@ decodeSlawLength :: HasCallStack
 decodeSlawLength bo lbs = withFrozenCallStack $
   handleLen $ decodeSlawLength1 $ makeInput bo "slaw" lbs
 
+-- | Like 'decodeSlawLength', but an explicit 'ErrLocation' may be
+-- specified.
 decodeSlawLength' :: ByteOrder
                   -> ErrLocation
                   -> BinarySlaw
@@ -590,6 +616,9 @@ decodeSlawLength' :: ByteOrder
 decodeSlawLength' bo el lbs = withFrozenCallStack $
   handleLen $ decodeSlawLength1 $ makeInput' bo el lbs
 
+-- | Like 'decodeSlawLength', but only works if the slaw is a
+-- 'SlawProtein'.  The byte order does not need to be specified,
+-- because unlike other slawx, proteins describe their own endianness.
 decodeProteinLength :: HasCallStack
                     => BinarySlaw
                     -> Either PlasmaException Word64
@@ -597,6 +626,8 @@ decodeProteinLength lbs = withFrozenCallStack $
   handleLen $ decodeProteinLength1 $ makeInput bo "slaw" lbs
   where bo = nativeByteOrder
 
+-- | Like 'decodeProteinLength', but an explicit 'ErrLocation' may be
+-- specified.
 decodeProteinLength' :: ErrLocation
                      -> BinarySlaw
                      -> Either PlasmaException Word64
