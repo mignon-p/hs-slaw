@@ -43,6 +43,8 @@ textFunc, textFuncCI :: TextFunc
 textFunc   = fromUtf8
 textFuncCI = T.toCaseFold . fromUtf8
 
+-- | Wraps a 'Slaw', and provides “semantic”, rather than literal,
+-- comparison.
 newtype Semantic = Semantic1 SemWrap
                    deriving newtype (Eq, Ord, Show, NFData, Hashable)
 
@@ -50,9 +52,12 @@ pattern Semantic :: Slaw -> Semantic
 pattern Semantic x <- Semantic1 (SemWrap { swOrig = x }) where
   Semantic x = Semantic1 (semWrap textFunc x)
 
+-- | Retrieve the original 'Slaw' from a 'Semantic'.
 unSemantic :: Semantic -> Slaw
 unSemantic (Semantic1 sw) = swOrig sw
 
+-- | Like 'Semantic', but the comparison is also case-insensitive
+-- for strings.
 newtype SemanticCI = SemanticCI1 SemWrap
                    deriving newtype (Eq, Ord, Show, NFData, Hashable)
 
@@ -60,6 +65,7 @@ pattern SemanticCI :: Slaw -> SemanticCI
 pattern SemanticCI x <- SemanticCI1 (SemWrap { swOrig = x }) where
   SemanticCI x = SemanticCI1 (semWrap textFuncCI x)
 
+-- | Retrieve the original 'Slaw' from a 'SemanticCI'.
 unSemanticCI :: SemanticCI -> Slaw
 unSemanticCI (SemanticCI1 sw) = swOrig sw
 
@@ -131,9 +137,12 @@ ndToRats :: NumericData -> [Rational]
 ndToRats = fromNumericData (map toRational . S.toList)
 
 {-# INLINABLE (==~) #-}
+-- | Compare two slawx for equality, using “semantic” comparison.
 (==~) :: Slaw -> Slaw -> Bool
 x ==~ y = mkSemSlaw textFunc x == mkSemSlaw textFunc y
 
 {-# INLINABLE (==~~) #-}
+-- | Compare two slawx for equality, using case-insensitive
+-- “semantic” comparison.
 (==~~) :: Slaw -> Slaw -> Bool
 x ==~~ y = mkSemSlaw textFuncCI x == mkSemSlaw textFuncCI y
