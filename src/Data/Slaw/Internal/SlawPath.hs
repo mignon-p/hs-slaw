@@ -42,14 +42,17 @@ import Data.Slaw.Internal.Util
 infixl 9 !
 infixl 9 !?
 
-data ProteinMode = PmUseIngests
-                 | PmFullyVisible
-                 deriving (Eq, Ord, Show, Read, Bounded, Enum,
-                           Generic, NFData, Hashable)
+-- | Specifies how proteins are to be handled, when they
+-- are encountered.
+data ProteinMode =
+    PmUseIngests    -- ^ treat the protein as its ingests
+  | PmFullyVisible  -- ^ descrips, ingests, and rude data are all visible
+  deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
 
+-- | Options for 'slawPath' and related functions.
 data SlawPathOpts = SlawPathOpts
-  { spoProteinMode     :: !ProteinMode
-  , spoCaseInsensitive :: !Bool
+  { spoProteinMode     :: !ProteinMode -- ^ how to handle proteins
+  , spoCaseInsensitive :: !Bool        -- ^ compare strings insensitively?
   } deriving (Eq, Ord, Show, Read, Generic, NFData, Hashable)
 
 instance Default SlawPathOpts where
@@ -57,12 +60,18 @@ instance Default SlawPathOpts where
                      , spoCaseInsensitive = True
                      }
 
+-- | Retrieve a path from a given 'Slaw', using default options.
+-- If path is not found, throws an exception.
+-- Converts the result to any instance of 'FromSlaw'.
 (!) :: (HasCallStack, FromSlaw a) => Slaw -> T.Text -> a
 (!) s path =
   case slawPathCvt s path of
     Left exc -> throw $ exc { peCallstack = Just callStack }
     Right x  -> x
 
+-- | Retrieve a path from a given 'Slaw', using default options.
+-- If path is not found, returns 'Nothing'.
+-- Converts the result to any instance of 'FromSlaw'.
 (!?) :: FromSlaw a => Slaw -> T.Text -> Maybe a
 s !? path = eth2mby $ slawPathCvt s path
 
@@ -72,24 +81,39 @@ slawPathCvt :: FromSlaw a
             -> Either PlasmaException a
 slawPathCvt s path = slawPath0 def s path >>= fromSlaw
 
-slawPath :: HasCallStack => SlawPathOpts -> Slaw -> T.Text -> Slaw
+-- | Retrieve a path from a given 'Slaw'.
+-- If path is not found, throws an exception.
+slawPath :: HasCallStack
+         => SlawPathOpts -- ^ options to use
+         -> Slaw         -- ^ slaw to search in
+         -> T.Text       -- ^ path to retrieve in slaw
+         -> Slaw
 slawPath spo s path =
   case slawPath0 spo s path of
     Left exc -> throw $ exc { peCallstack = Just callStack }
     Right x  -> x
 
-slawPath_m :: SlawPathOpts -> Slaw -> T.Text -> Maybe Slaw
+-- | Retrieve a path from a given 'Slaw'.
+-- If path is not found, returns 'Nothing'.
+slawPath_m :: SlawPathOpts -- ^ options to use
+           -> Slaw         -- ^ slaw to search in
+           -> T.Text       -- ^ path to retrieve in slaw
+           -> Maybe Slaw
 slawPath_m spo s = eth2mby . slawPath0 spo s
 
-slawPath_es :: SlawPathOpts
-            -> Slaw
-            -> T.Text
+-- | Retrieve a path from a given 'Slaw'.
+-- If path is not found, returns a string error message.
+slawPath_es :: SlawPathOpts -- ^ options to use
+            -> Slaw         -- ^ slaw to search in
+            -> T.Text       -- ^ path to retrieve in slaw
             -> Either String Slaw
 slawPath_es spo s = first (displayPlasmaException False) . slawPath0 spo s
 
-slawPath_ee :: SlawPathOpts
-            -> Slaw
-            -> T.Text
+-- | Retrieve a path from a given 'Slaw'.
+-- If path is not found, returns an exception.
+slawPath_ee :: SlawPathOpts -- ^ options to use
+            -> Slaw         -- ^ slaw to search in
+            -> T.Text       -- ^ path to retrieve in slaw
             -> Either PlasmaException Slaw
 slawPath_ee spo s =
   first (\e -> e { peCallstack = Just callStack }) . slawPath0 spo s

@@ -70,6 +70,9 @@ module Data.Slaw.Path
   , slawPath_es
   , slawPath_ee
     -- * Operators
+    --
+    -- | These use the default 'SlawPathOpts'.  ('PmUseIngests',
+    -- and case-insensitive comparison.)
   , (!)
   , (!?)
   , (?>)
