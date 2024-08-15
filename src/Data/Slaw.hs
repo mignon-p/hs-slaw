@@ -46,12 +46,12 @@ module Data.Slaw
   , ValidationFlag(..)
   , validateSlaw
     -- * Typedefs
+  , Utf8Str
+  , BinarySlaw
+  , RudeData
   , Symbol
   , minSymbol
   , maxSymbol
-  , RudeData
-  , BinarySlaw
-  , Utf8Str
     -- * Other types
   , Protein(..)
   , protein

@@ -47,6 +47,7 @@ import Foreign.Storable
 
 import Data.Slaw.Internal.Util
 
+-- | A string, represented as a UTF-8 encoded lazy 'L.ByteString'
 type Utf8Str = L.ByteString
 
 class ( IsString a

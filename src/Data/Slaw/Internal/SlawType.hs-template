@@ -74,9 +74,23 @@ import Data.Slaw.Internal.Util
 import Data.Slaw.Internal.VectorConvert
 import Data.Slaw.Internal.VectorTypes (V2, V3, V4)
 
+-- | A 'Symbol' is an integer between 'Data.Slaw.minSymbol' and
+-- 'Data.Slaw.maxSymbol'.  It can be used to represent
+-- frequently-used values, such as enumerated values, more compactly
+-- than a string.  Interpretation is application-specific.
+--
+-- Symbols are currently only supported by the Haskell implementation,
+-- and not by @libPlasma/c@ or other implementations.
 type Symbol     = Word64
+
+-- | The “rude data” (an arbitrary sequence of bytes) which can
+-- be attached to a 'SlawProtein'.
 type RudeData   = L.ByteString
+
+-- | The binary encoding of a 'Slaw', represented as a
+-- lazy 'L.ByteString'
 type BinarySlaw = L.ByteString
+
 type ErrPair    = (String, ErrLocation)
 
 -- | A general-purpose, self-describing datatype.
