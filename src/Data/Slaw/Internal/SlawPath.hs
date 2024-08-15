@@ -26,6 +26,7 @@ import Data.Hashable
 import Data.List
 import Data.Maybe
 import qualified Data.Text                as T
+import qualified Data.Text.Normalize  as T
 import GHC.Generics (Generic)
 import GHC.Stack
 import Text.Read
@@ -172,7 +173,7 @@ fetchList ss k = do
 
 fetchMap :: SlawPathOpts -> [(Slaw, Slaw)] -> T.Text -> Maybe Slaw
 fetchMap spo pairs k = fmap snd $ find (fm1 ci key num) pairs
-  where key  = if ci then T.toCaseFold k else k
+  where key  = normNcase ci k
         num  = readMaybe $ T.unpack k
         ci   = spoCaseInsensitive spo
 
@@ -182,8 +183,11 @@ fm1 _     _     num (SlawNumeric _  nd, _) = fm1num num nd
 fm1 _     _     _   _                      = False
 
 du8l :: Bool -> Utf8Str -> T.Text
-du8l False =                fromUtf8
-du8l True  = T.toCaseFold . fromUtf8
+du8l ci = normNcase ci . fromUtf8
+
+normNcase :: Bool -> T.Text -> T.Text
+normNcase False =                T.normalize T.NFKD
+normNcase True  = T.toCaseFold . T.normalize T.NFKD
 
 fm1num :: Maybe Integer -> NumericData -> Bool
 fm1num Nothing    _  = False
