@@ -34,9 +34,12 @@ import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
 
-data ValidationFlag = VfCSlaw | VfUtf8 | VfDesIng
-                    deriving (Eq, Ord, Show, Read, Bounded, Enum,
-                              Generic, NFData, Hashable)
+-- | Flags which can be passed to modify the behavior of 'validateSlaw'.
+data ValidationFlag =
+    VfCSlaw -- ^ Fail if slaw uses features not supported by @libPlasma/c@
+  | VfUtf8  -- ^ Fail if 'SlawString' in not valid UTF-8
+  | VfDesIng -- ^ Fail if descrips is not a list, or ingests is not a map
+  deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
 
 type ValidationFlags = [ValidationFlag]
 type ValRet          = Either PlasmaException ()
@@ -164,5 +167,13 @@ cslawErr feature = valErr $ feature ++ " not supported by c-plasma"
 valErr :: String -> ValRet
 valErr = Left . validationError
 
+-- | Validates the following:
+--
+-- * 'SlawError' does not appear
+-- * 'NumericFormat' passes 'isNumericFormatLegal'
+-- * 'Symbol' is between 'minSymbol' and 'maxSymbol', inclusive
+--
+-- If one or more 'ValidationFlag' is specified, will validate
+-- additional properties, as well.
 validateSlaw :: [ValidationFlag] -> Slaw -> Either PlasmaException ()
 validateSlaw = vs
