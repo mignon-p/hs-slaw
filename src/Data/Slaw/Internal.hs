@@ -11,12 +11,8 @@ Portability : GHC
 
 module Data.Slaw.Internal
   ( -- * Slaw decoding (can specify an ErrLocation)
-    decodeSlaw'
-  , decodeProtein'
-  , decodeSlawLength'
-  , decodeProteinLength'
     -- * Strings
-  , TextClass(..)
+    TextClass(..)
   , ByteStringClass(..)
   , indentLines
   , stdIndent
@@ -50,7 +46,7 @@ import Data.Slaw.Internal.FileClass
 import Data.Slaw.Internal.OptionRecords
 import Data.Slaw.Internal.OptionTypes
 -- import Data.Slaw.Internal.SlawConvert
-import Data.Slaw.Internal.SlawDecode
+-- import Data.Slaw.Internal.SlawDecode
 -- import Data.Slaw.Internal.SlawEncode
 -- import Data.Slaw.Internal.SlawIO
 -- import Data.Slaw.Internal.SlawType
