@@ -10,6 +10,8 @@ Portability : GHC
 module Data.Slaw.Internal.Validation
   ( ValidationFlag(..)
   , validateSlaw
+  , minSymbol
+  , maxSymbol
   ) where
 
 import Control.DeepSeq
@@ -43,8 +45,13 @@ type ValRet          = Either PlasmaException ()
 symbolBits :: Int
 symbolBits = 56
 
+-- | The maximum value a 'Symbol' is allowed to have.
 maxSymbol :: Symbol
 maxSymbol = bit symbolBits - 1
+
+-- | The minimum value a 'Symbol' is allowed to have.
+minSymbol :: Symbol
+minSymbol = 1 + (fromIntegral . fromEnum) SymError
 
 vs :: ValidationFlags -> Slaw -> ValRet
 vs f     (SlawProtein d i _  ) = vsProtein f d i
@@ -91,12 +98,12 @@ vsp1 vf vt (Just s) what expected predicate =
 
 vsSymbol :: Symbol -> ValRet
 vsSymbol n
-  | n <= (fromIntegral . fromEnum) SymError =
+  | n < minSymbol =
       valErr $ concat [ symNum
                       , " is reserved for "
                       , (drop 3 . show) (sym :: Sym)
                       ]
-  | n > maxSymbol                           =
+  | n > maxSymbol =
       valErr $ concat [ symNum
                       , " does not fit in "
                       , show symbolBits

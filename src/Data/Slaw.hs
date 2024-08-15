@@ -47,6 +47,8 @@ module Data.Slaw
   , validateSlaw
     -- * Typedefs
   , Symbol
+  , minSymbol
+  , maxSymbol
   , RudeData
   , BinarySlaw
   , Utf8Str
