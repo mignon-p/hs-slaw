@@ -81,16 +81,25 @@ type ErrPair    = (String, ErrLocation)
 
 -- | A general-purpose, self-describing datatype.
 
-data Slaw = SlawProtein     (Maybe Slaw) (Maybe Slaw) RudeData
-          | SlawBool        !Bool
+data Slaw = SlawProtein     { slawDescrips :: Maybe Slaw
+                            , slawIngests  :: Maybe Slaw
+                            , slawRudeData :: RudeData
+                            }
+          | SlawBool        { slawBool     :: !Bool   }
           | SlawNil
-          | SlawSymbol      !Symbol
-          | SlawString      Utf8Str
-          | SlawList        [Slaw]
-          | SlawMap         [(Slaw, Slaw)]
-          | SlawCons        Slaw Slaw
-          | SlawNumeric     !NumericFormat NumericData
-          | SlawError       String         ErrLocation
+          | SlawSymbol      { slawSymbol   :: !Symbol }
+          | SlawString      { slawUtf8     :: Utf8Str }
+          | SlawList        { slawList     :: [Slaw]  }
+          | SlawMap         { slawPairs    :: [(Slaw, Slaw)] }
+          | SlawCons        { slawCar      :: Slaw
+                            , slawCdr      :: Slaw
+                            }
+          | SlawNumeric     { slawNumFmt   :: !NumericFormat
+                            , slawNumData  :: NumericData
+                            }
+          | SlawError       { slawErrMsg   :: String
+                            , slawErrLoc   :: ErrLocation
+                            }
           deriving (Eq, Ord, Show, Generic, NFData, Hashable)
 
 instance Monoid Slaw where
