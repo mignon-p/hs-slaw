@@ -135,8 +135,8 @@ instance IsString Slaw where
 
 data NumericFormat = NumericFormat
   { nfArray   :: !Bool
-  , nfComplex :: !Bool
   , nfVector  :: !VectorType
+  , nfComplex :: !Bool
   } deriving (Eq, Ord, Show, Generic, NFData, Hashable)
 
 instance Default NumericFormat where

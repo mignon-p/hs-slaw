@@ -437,7 +437,10 @@ decNum (isArray, typ) o special inp = do
         isComplex = getComplex  o
         vType     = getVtype    o
         elemSize  = getElemSize o -- size in bytes (1, 2, 4, or 8)
-        nf        = NumericFormat isArray isComplex vType
+        nf        = NumericFormat { nfArray   = isArray
+                                  , nfVector  = vType
+                                  , nfComplex = isComplex
+                                  }
         bsize'    = computeBsize nf elemSize
     when (not $ isNumericFormatLegal nf) $
       Left "multivectors of complex numbers are not allowed"

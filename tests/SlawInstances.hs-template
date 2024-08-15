@@ -43,7 +43,10 @@ numericFormat = do
   isComplex <- arbitrary
   let upperBound = if isComplex then Vt4 else Vt5mv
   vt        <- chooseEnum (VtScalar, upperBound)
-  return $ NumericFormat isArray isComplex vt
+  return $ NumericFormat { nfArray   = isArray
+                         , nfVector  = vt
+                         , nfComplex = isComplex
+                         }
 
 genHalfBitPattern :: Gen Half
 genHalfBitPattern = do
