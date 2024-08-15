@@ -54,7 +54,7 @@ import GHC.Stack
 import Numeric.Half
 import Numeric.Natural
 -- import System.IO.Unsafe (unsafePerformIO)
-import Text.Read
+import Text.Read (readMaybe)
 
 import Data.Slaw.Internal.EnumStrings
 import Data.Slaw.Internal.Exception
@@ -69,12 +69,14 @@ import Data.Slaw.Internal.VectorTypes
 
 ---- FromSlaw and ToSlaw classes
 
+-- | Typeclass for things which can be converted from a 'Slaw'.
 class Nameable a => FromSlaw a where
   fromSlaw :: Slaw -> Either PlasmaException a
 
   listFromSlaw :: Slaw -> Either PlasmaException [a]
   listFromSlaw = defaultListFromSlaw
 
+-- | Typeclass for things which can be converted to a 'Slaw'.
 class ToSlaw a where
   toSlaw :: a -> Slaw
 
@@ -83,12 +85,16 @@ class ToSlaw a where
 
 ---- shorthand functions for converting to/from slaw
 
--- "to slaw" because arrow points towards "s"
+-- | “to slaw” because arrow points towards “s”.
+--
+-- A synonym for 'toSlaw'.
 {-# INLINE š #-}
 š :: ToSlaw a => a -> Slaw
 š = toSlaw
 
--- "from slaw" because arrow points away from "s"
+-- | “from slaw” because arrow points away from “s”.
+--
+-- Throws a 'PlasmaException' if conversion fails.
 {-# INLINABLE ŝ #-}
 ŝ :: (HasCallStack, FromSlaw a) => Slaw -> a
 ŝ s = case fromSlaw s of
@@ -96,24 +102,30 @@ class ToSlaw a where
           throw $ exc { peCallstack = Just callStack }
         Right x  -> x
 
--- "from slaw, maybe"
+-- | “from slaw, maybe”
+--
+-- Returns 'Nothing' if conversion fails.
 {-# INLINABLE ŝm #-}
 ŝm :: FromSlaw a => Slaw -> Maybe a
 ŝm = eth2mby . fromSlaw
 
--- "from slaw, either string"
+-- | “from slaw, either string”
+--
+-- Returns a 'String' error message if conversion fails.
 {-# INLINABLE ŝes #-}
 ŝes :: FromSlaw a => Slaw -> Either String a
 ŝes = first (displayPlasmaException False) . fromSlaw
 
--- "from slaw, either exception"
+-- | “from slaw, either exception”
+--
+-- Returns a 'PlasmaException' if conversion fails.
 {-# INLINE ŝee #-}
 ŝee :: (HasCallStack, FromSlaw a) => Slaw -> Either PlasmaException a
 ŝee = first f . fromSlaw
   where cs  = Just callStack
         f e = e { peCallstack = cs }
 
--- from slaw, with default value
+-- | from slaw, with default value
 {-# INLINABLE (?:) #-}
 (?:) :: FromSlaw a => Slaw -> a -> a
 s ?: dflt = case fromSlaw s of
