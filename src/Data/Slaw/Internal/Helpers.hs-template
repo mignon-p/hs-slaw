@@ -62,6 +62,7 @@ import Data.Slaw.Internal.Util
 
                               -- classes --
 
+-- | A 'PlasmaReal' which is also an 'Integral'.
 class ( PlasmaReal a
       , Integral   a
       , Bounded    a
@@ -73,6 +74,7 @@ class ( PlasmaReal a
 instance PlasmaIntegral TYPE
 --END
 
+-- | A 'PlasmaReal' which is also a 'RealFloat'.
 class ( PlasmaReal a
       , RealFloat  a
       ) => PlasmaFloat a where
@@ -128,6 +130,8 @@ instance PlasmaFloat Double where
 
                            -- mapNumericData --
 
+-- | Maps a polymorphic function onto the 'S.Vector' contained
+-- inside the 'NumericData'.
 mapNumericData :: (forall a. (PlasmaReal a) => S.Vector a -> S.Vector a)
                -> NumericData
                -> NumericData
@@ -135,6 +139,8 @@ mapNumericData :: (forall a. (PlasmaReal a) => S.Vector a -> S.Vector a)
 mapNumericData func (NumNAMEXXX v) = NumNAMEXXX $ func v
 --END
 
+-- | Like 'mapNumericData', but has different functions for
+-- integers and floating-point numbers.
 mapNumericData2 :: (forall a. ( PlasmaIntegral a
                               ) => S.Vector a -> S.Vector a)
                 -> (forall b. ( PlasmaFloat b
@@ -149,6 +155,8 @@ mapNumericData2 _ func (NumNAMEXXX v) = NumNAMEXXX $ func v
 
                           -- mapNumericData' --
 
+-- | Like 'mapNumericData', but can return an additional value
+-- from the supplied function.
 mapNumericData' :: (forall a. ( PlasmaReal a
                               ) => S.Vector a -> (S.Vector a, b))
                 -> NumericData
@@ -157,6 +165,8 @@ mapNumericData' :: (forall a. ( PlasmaReal a
 mapNumericData' func (NumNAMEXXX v) = first NumNAMEXXX $ func v
 --END
 
+-- | Like 'mapNumericData2', but can return an additional value
+-- from the supplied functions.
 mapNumericData2' :: (forall a. ( PlasmaIntegral a
                                ) => S.Vector a -> (S.Vector a, c))
                  -> (forall b. ( PlasmaFloat b
@@ -171,6 +181,8 @@ mapNumericData2' _ func (NumNAMEXXX v) = first NumNAMEXXX $ func v
 
                           -- fromNumericData --
 
+-- | Applies a polymorphic function to the 'S.Vector' inside
+-- a 'NumericData'.
 fromNumericData :: (forall a. (PlasmaReal a) => S.Vector a -> b)
                 -> NumericData
                 -> b
@@ -178,6 +190,8 @@ fromNumericData :: (forall a. (PlasmaReal a) => S.Vector a -> b)
 fromNumericData func (NumNAMEXXX v) = func v
 --END
 
+-- | Like 'fromNumericData', but has different functions for
+-- integers and floating-point numbers.
 fromNumericData2 :: (forall a. ( PlasmaIntegral  a
                                ) => S.Vector a -> c)
                  -> (forall b. ( PlasmaFloat b
@@ -192,12 +206,19 @@ fromNumericData2 _ func (NumNAMEXXX v) = func v
 
                            -- toNumericData --
 
+-- | Converts a 'S.Vector' of any 'PlasmaReal' to
+-- a 'NumericData'.
 toNumericData :: PlasmaReal a => S.Vector a -> NumericData
 toNumericData = snd . realToNd
 
                           -- sliceNumericData --
 
-sliceNumericData :: Int -> Int -> NumericData -> NumericData
+-- | Slices the 'S.Vector' wrapped by the 'NumericData'.
+-- Equivalent to 'S.slice'.
+sliceNumericData :: Int -- ^ starting index
+                 -> Int -- ^ length
+                 -> NumericData
+                 -> NumericData
 sliceNumericData i n = mapNumericData (sliceNumericData' i n)
 
 sliceNumericData' :: Storable a
@@ -214,6 +235,8 @@ sliceNumericData' i n v
 
                          -- lengthNumericData --
 
+-- | Returns the number of elements in the 'S.Vector' which is
+-- wrapped by the 'NumericData'.  Equivalent to 'S.length'.
 lengthNumericData :: NumericData -> Int
 lengthNumericData = fromNumericData S.length
 

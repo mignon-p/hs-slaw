@@ -114,6 +114,9 @@ cnfReal = CheckNF
 
                              -- PlasmaReal --
 
+-- | A fixed-size real number which can be stored in a 'NumericData'.
+-- 'Int' is treated as either 'Int32' or 'Int64', depending on the
+-- bit width of the current platform.  Ditto for 'Word'.
 class ( Real      a
       , Storable  a
       , Show      a
@@ -195,6 +198,8 @@ insertZeros v = S.generate len' f
 
                             -- PlasmaScalar --
 
+-- | A 'PlasmaReal', or a 'Complex' number made out of 'PlasmaReal'
+-- components.
 class ( Storable  a
       , Show      a
       , Read      a
@@ -244,6 +249,8 @@ instance PlasmaScalar TYPE where
 
                             -- PlasmaNumeric --
 
+-- | A 'PlasmaScalar', or a mathematical vector made out of
+-- 'PlasmaScalar' components.
 class ( Storable  a
       , Show      a
       , Read      a

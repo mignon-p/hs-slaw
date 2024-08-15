@@ -49,7 +49,9 @@ import Numeric.Natural
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.VectorTypes
 
+-- | Typeclass to get the name of a type.
 class Nameable a where
+  -- | Returns the name of the type.  Does not evaluate its argument.
   typeName :: a -> String
 
 typeName' :: Nameable a => a -> String

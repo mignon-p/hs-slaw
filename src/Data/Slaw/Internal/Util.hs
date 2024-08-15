@@ -43,17 +43,21 @@ infix  7 ??
 infix  4 ?>
 
 {-# INLINE (##) #-}
+-- | Synonym for 'hashWithSalt'.
 (##) :: Hashable a => Int -> a -> Int
 (##) = hashWithSalt
 
 {-# INLINE (??) #-}
+-- | Synonym for 'compare'.
 (??) :: Ord a => a -> a -> Ordering
 (??) = compare
 
+-- | The byte order used by the platform we are running on.
 nativeByteOrder :: ByteOrder
 nativeByteOrder = targetByteOrder
 
 {-# INLINABLE oppositeByteOrder #-}
+-- | “Flips” the given byte order to the other one.
 oppositeByteOrder :: ByteOrder -> ByteOrder
 oppositeByteOrder BigEndian    = LittleEndian
 oppositeByteOrder LittleEndian = BigEndian
@@ -74,6 +78,9 @@ hi8 :: Word64 -> Word64
 hi8 = (`shiftR` 56)
 
 {-# INLINABLE (?>) #-}
+-- | Returns the second argument if the first argument is 'Nothing'.
+-- This makes it easy to provide a default value for an expression
+-- that returns a 'Maybe'.
 (?>) :: Maybe a -> a -> a
 Just x  ?> _ = x
 Nothing ?> x = x
