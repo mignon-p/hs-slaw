@@ -51,31 +51,40 @@ import GHC.Stack
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
 
-data DataSource = DsFile       { dsName  :: String }
-                | DsPool       { dsName  :: String
-                               , dsIndex :: Maybe Int64
-                               }
-                | DsOther      { dsName  :: String }
-                | DsNone
-                deriving (Eq, Ord, Show, Generic, NFData, Hashable)
+-- | Indicates the file, pool, or other resource in which an error
+-- was found.
+data DataSource =
+    DsFile  { dsName  :: String      -- ^ name of file, pool, etc.
+            }
+  | DsPool  { dsName  :: String      -- ^ name of file, pool, etc.
+            , dsIndex :: Maybe Int64 -- ^ protein index within pool
+            }
+  | DsOther { dsName  :: String      -- ^ name of file, pool, etc.
+            }
+  | DsNone
+  deriving (Eq, Ord, Show, Generic, NFData, Hashable)
 
 instance Default DataSource where
   def = DsNone
 
+-- | Convert a 'DataSource' to a human-readable 'String'.
 displayDataSource :: DataSource -> String
 displayDataSource DsNone                   = "unknown"
 displayDataSource (DsPool name  Nothing  ) = name
 displayDataSource (DsPool name (Just idx)) = name ++ "#" ++ show idx
 displayDataSource x                        = dsName x
 
+-- | Indicates the file, pool, or other resource in which an error
+-- was found, and optionally a byte offset into that resource.
 data ErrLocation = ErrLocation
-  { elSource :: DataSource
-  , elOffset :: Maybe Word64
+  { elSource :: DataSource   -- ^ where erroneous data came from
+  , elOffset :: Maybe Word64 -- ^ optional byte offset within the above
   } deriving (Eq, Ord, Show, Generic, NFData, Hashable)
 
 instance Default ErrLocation where
   def = ErrLocation DsNone Nothing
 
+-- | Convert an 'ErrLocation' to a human-readable 'String'.
 displayErrLocation :: ErrLocation -> String
 displayErrLocation (ErrLocation ds  Nothing  ) = displayDataSource ds
 displayErrLocation (ErrLocation ds (Just off)) =
@@ -89,10 +98,10 @@ displayMaybeErrLocation sep (Just loc)                          =
 
 data PlasmaException = PlasmaException
   { peType      :: !PlasmaExceptionType
-  , peRetort    :: Maybe Int64
+  , peRetort    :: Maybe Int64 -- ^ error code from @libPlasma/c@
   , peMessage   :: String
-  , peCallstack :: Maybe CallStack   -- location of code
-  , peLocation  :: Maybe ErrLocation -- location of data
+  , peCallstack :: Maybe CallStack   -- ^ location of code
+  , peLocation  :: Maybe ErrLocation -- ^ location of data
   } deriving (Show)
 
 instance Ord PlasmaException where
@@ -118,7 +127,10 @@ instance NFData PlasmaException where
 instance Exception PlasmaException where
   displayException = displayPlasmaException True
 
-displayPlasmaException :: Bool -> PlasmaException -> String
+-- | Convert a 'PlasmaException' to a human-readable 'String'.
+displayPlasmaException :: Bool -- ^ Do you want to display the call stack?
+                       -> PlasmaException -- ^ Exception to display
+                       -> String
 displayPlasmaException wantCallStack e =
   let msg = displayMaybeErrLocation ": " (peLocation e) ++ peMessage e
   in case (wantCallStack, peCallstack e) of
