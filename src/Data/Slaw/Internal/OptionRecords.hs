@@ -103,6 +103,9 @@ fm64 s       = do
 
 --
 
+-- | Record which can be passed as the second argument to
+-- 'Data.Slaw.IO.openBinarySlawOutput' or
+-- 'Data.Slaw.IO.writeBinarySlawFile', to specify options.
 data WriteBinaryOptions = WriteBinaryOptions
   { wboByteOrder :: !PreferredByteOrder
   , wboAutoFlush :: !AutoFlush
