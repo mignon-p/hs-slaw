@@ -53,24 +53,29 @@ binaryFileTypeSlaw = 1
 currentSlawVersion :: Word8
 currentSlawVersion = 2
 
+-- | A stream from which slawx can be read.
 data SlawInputStream = SlawInputStream
-  { siName  :: String
+  { siName  :: String -- ^ get the name of the file we are reading from
   , siRead' :: CallStack -> IO (Maybe Slaw)
-  , siClose :: IO ()
+  , siClose :: IO () -- ^ close the stream
   }
 
 instance Show SlawInputStream where
   showsPrec n x = showParen (n > 10) s
     where s = showString "SlawInputStream " . showString (siName x)
 
+-- | Read a 'Slaw' from the stream.  Returns 'Nothing' if
+-- end-of-file has been reached.  If an error occurs, may
+-- throw 'IOException' or 'PlasmaException'.
 siRead :: HasCallStack => SlawInputStream -> IO (Maybe Slaw)
 siRead si = siRead' si callStack
 
+-- | A stream to which slawx can be written.
 data SlawOutputStream = SlawOutputStream
-  { soName  :: String
-  , soWrite :: Slaw -> IO ()
-  , soFlush :: IO ()
-  , soClose :: IO ()
+  { soName  :: String -- ^ get the name of the file we are writing to
+  , soWrite :: Slaw -> IO () -- ^ write a 'Slaw' to the stream
+  , soFlush :: IO () -- ^ flush the stream (write any buffered data)
+  , soClose :: IO () -- ^ close the stream
   }
 
 instance Show SlawOutputStream where
@@ -91,9 +96,15 @@ data SOutput = SOutput
   , soutClose  :: !Bool
   }
 
+-- | Opens a 'SlawInputStream' for reading from a binary slaw file.
+-- If an error occurs, may throw 'IOException' or 'PlasmaException'.
+--
+-- Does not currently take any options, so the second argument is
+-- placeholder which is just ignored.  The easiest thing to do
+-- is just pass in '()'.
 openBinarySlawInput :: (HasCallStack, FileClass a, ToSlaw b)
-                    => a
-                    -> b -- options map/protein (currently none)
+                    => a -- ^ name (or handle) of file to open
+                    -> b -- ^ options map/protein (currently none)
                     -> IO SlawInputStream
 openBinarySlawInput file _ = withFrozenCallStack $ do
   let nam = fcName file
@@ -202,9 +213,13 @@ readSInput1 inp cs off octLen = do
 closeSInput :: SInput -> IO ()
 closeSInput = closeFileReader . sinReader
 
+-- | Convenience function to read all the slawx from a binary
+-- slaw file.  It opens a stream, reads all the slawx from the stream,
+-- and then closes the stream.  The slawx that were read are returned
+-- as a list.
 readBinarySlawFile :: (HasCallStack, FileClass a, ToSlaw b)
-                   => a
-                   -> b -- options map/protein (currently none)
+                   => a -- ^ name (or handle) of file to read
+                   -> b -- ^ options map/protein (currently none)
                    -> IO [Slaw]
 readBinarySlawFile fname opts = withFrozenCallStack $ do
   sis <- openBinarySlawInput fname opts
@@ -224,9 +239,16 @@ readAllSlawx1 revSlawx sis = do
 
 --
 
+-- | Opens a 'SlawOutputStream' for writing to a binary slaw file.
+-- If an error occurs, may throw 'IOException' or 'PlasmaException'.
+--
+-- The second argument is a map or protein which specifies options.
+-- The easiest thing is to pass in 'WriteBinaryOptions' if you want
+-- to specify any non-default options, or just pass '()' to use
+-- the defaults.
 openBinarySlawOutput :: (FileClass a, ToSlaw b)
-                     => a
-                     -> b -- options map/protein
+                     => a -- ^ name (or handle) of file to open
+                     -> b -- ^ options map/protein
                      -> IO SlawOutputStream
 openBinarySlawOutput file opts = do
   let opts' = toSlaw opts
@@ -288,10 +310,13 @@ closeSOutput sout =
      then hClose h
      else hFlush h
 
+-- | Convenience function to write a binary slaw file all at once.
+-- It opens a stream, writes all the slawx to the stream,
+-- and then closes the stream.
 writeBinarySlawFile :: (FileClass a, ToSlaw b)
-                    => a
-                    -> b -- options map/protein
-                    -> [Slaw]
+                    => a -- ^ name (or handle) of file to write
+                    -> b -- ^ options map/protein
+                    -> [Slaw] -- ^ slawx to write to file
                     -> IO ()
 writeBinarySlawFile fname opts ss = do
   sos <- openBinarySlawOutput fname opts

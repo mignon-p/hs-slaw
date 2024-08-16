@@ -82,6 +82,9 @@ instance FileClass Handle where
   fcOpenRead  h = return (h, True)
   fcOpenWrite h = return (h, True)
 
+-- | Wraps a 'Handle' and indicates that the handle should be
+-- left open even when the stream that uses the handle is closed.
+-- This is useful for handles like 'stdin' and 'stdout'.
 newtype NoClose = NoClose { unNoClose :: Handle }
                   deriving newtype (Show, Eq)
 
