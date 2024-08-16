@@ -61,9 +61,6 @@ module Data.Slaw
   , Symbol
   , minSymbol
   , maxSymbol
-    -- * Other types
-  , Protein(..)
-  , protein
     -- * Numeric types
   , NumericFormat(..)
   , NumericData(..)
@@ -77,6 +74,14 @@ module Data.Slaw
     -- ** Operations on NumericData
     --
     -- | These make use of the @RankNTypes@ language extension.
+    --
+    -- 'mapNumericData' and 'fromNumericData' are just special
+    -- cases of 'mapNumericData''.
+    --
+    -- Similarly, 'mapNumericData'' is just a special case of
+    -- 'mapNumericData2'', where both of the functional are the
+    -- same.  Therefore, 'mapNumericData2'' is the most general
+    -- of all of these functions.
   , mapNumericData
   , mapNumericData2
   , mapNumericData'
@@ -94,6 +99,9 @@ module Data.Slaw
   , V2(..)
   , V3(..)
   , V4(..)
+    -- * Proteins
+  , Protein(..)
+  , protein
     -- * Exceptions
   , PlasmaException(..)
   , displayPlasmaException
@@ -108,13 +116,14 @@ module Data.Slaw
   , oppositeByteOrder
     -- * Typeclasses
   , Nameable(..)
+  , FromSlaw(..)
+  , ToSlaw(..)
+    -- ** Numeric classes
   , PlasmaReal(..)
   , PlasmaIntegral
   , PlasmaFloat(..)
   , PlasmaScalar(..)
   , PlasmaNumeric(..)
-  , FromSlaw(..)
-  , ToSlaw(..)
   ) where
 
 import Data.Slaw.Internal.Exception

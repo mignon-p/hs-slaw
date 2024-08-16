@@ -143,9 +143,12 @@ mapNumericData func (NumNAMEXXX v) = NumNAMEXXX $ func v
 -- integers and floating-point numbers.
 mapNumericData2 :: (forall a. ( PlasmaIntegral a
                               ) => S.Vector a -> S.Vector a)
+                   -- ^ mapping function for integers
                 -> (forall b. ( PlasmaFloat b
                               ) => S.Vector b -> S.Vector b)
+                   -- ^ mapping function for floating point
                 -> NumericData
+                   -- ^ data to operate on
                 -> NumericData
 --FOR sizedInt
 mapNumericData2 func _ (NumNAMEXXX v) = NumNAMEXXX $ func v
@@ -169,9 +172,12 @@ mapNumericData' func (NumNAMEXXX v) = first NumNAMEXXX $ func v
 -- from the supplied functions.
 mapNumericData2' :: (forall a. ( PlasmaIntegral a
                                ) => S.Vector a -> (S.Vector a, c))
+                    -- ^ mapping function for integers
                  -> (forall b. ( PlasmaFloat b
                                ) => S.Vector b -> (S.Vector b, c))
+                    -- ^ mapping function for floating point
                  -> NumericData
+                    -- ^ data to operate on
                  -> (NumericData, c)
 --FOR sizedInt
 mapNumericData2' func _ (NumNAMEXXX v) = first NumNAMEXXX $ func v
@@ -194,9 +200,12 @@ fromNumericData func (NumNAMEXXX v) = func v
 -- integers and floating-point numbers.
 fromNumericData2 :: (forall a. ( PlasmaIntegral  a
                                ) => S.Vector a -> c)
+                    -- ^ mapping function for integers
                  -> (forall b. ( PlasmaFloat b
                                ) => S.Vector b -> c)
+                    -- ^ mapping function for floating point
                  -> NumericData
+                    -- ^ data to operate on
                  -> c
 --FOR sizedInt
 fromNumericData2 func _ (NumNAMEXXX v) = func v

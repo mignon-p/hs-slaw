@@ -37,7 +37,7 @@ import Data.Slaw.Internal.String
 -- | Flags which can be passed to modify the behavior of 'validateSlaw'.
 data ValidationFlag =
     VfCSlaw -- ^ Fail if slaw uses features not supported by @libPlasma/c@
-  | VfUtf8  -- ^ Fail if 'SlawString' in not valid UTF-8
+  | VfUtf8  -- ^ Fail if 'SlawString' is not valid UTF-8
   | VfDesIng -- ^ Fail if descrips is not a list, or ingests is not a map
   deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
 
@@ -173,6 +173,7 @@ valErr = Left . validationError
 --
 -- * 'SlawError' does not appear
 -- * 'NumericFormat' passes 'isNumericFormatLegal'
+-- * 'NumericData' has a legal number of elements for the given 'NumericFormat'
 -- * 'Symbol' is between 'minSymbol' and 'maxSymbol', inclusive
 --
 -- If one or more 'ValidationFlag' is specified, will validate
