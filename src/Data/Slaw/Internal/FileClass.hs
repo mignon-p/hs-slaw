@@ -29,6 +29,7 @@ import Control.Monad
 import qualified Data.ByteString           as B
 import qualified Data.ByteString.Lazy      as L
 import Data.IORef
+import Data.List
 import qualified System.File.OsPath        as F
 import System.IO
 import System.IO.MMap
@@ -77,7 +78,7 @@ instance FileClass OsPath where
       Nothing -> Right <$> fcOpenRead name
 
 instance FileClass Handle where
-  fcName        = show
+  fcName        = nameFromHandle
   fcOpenRead  h = return (h, True)
   fcOpenWrite h = return (h, True)
 
@@ -85,7 +86,7 @@ newtype NoClose = NoClose { unNoClose :: Handle }
                   deriving newtype (Show, Eq)
 
 instance FileClass NoClose where
-  fcName      (NoClose h) = show h
+  fcName      (NoClose h) = nameFromHandle h
   fcOpenRead  (NoClose h) = return (h, False)
   fcOpenWrite (NoClose h) = return (h, False)
 
@@ -96,6 +97,22 @@ mmapMaybe name = do
     Right bs
       | not (B.null bs) -> return $ Just bs
     _                   -> return   Nothing
+
+-- We want to extract the filename portion:
+--   "{handle: /dev/null}" -> "/dev/null"
+--   "{handle: <stderr>}"  -> "<stderr>"
+nameFromHandle :: Handle -> String
+nameFromHandle h =
+  let hname    = show h
+      pfx      = "{handle: "
+      sfx      = "}"
+      pfxLen   = length pfx
+      sfxLen   = length sfx
+      hnameLen = length hname
+      nameLen  = hnameLen - (pfxLen + sfxLen)
+  in if pfx `isPrefixOf` hname && sfx `isSuffixOf` hname
+     then take nameLen $ drop pfxLen hname
+     else hname
 
 --
 
