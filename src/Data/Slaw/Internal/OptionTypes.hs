@@ -26,8 +26,10 @@ module Data.Slaw.Internal.OptionTypes
   , recordFromMap
   , recordFromMap0
   , recordToMap
+  , recordToMapWithFmt
   , recordToPairs
   , coerceToMap
+  , kFormat
   ) where
 
 import Control.DeepSeq
@@ -260,6 +262,15 @@ recordToMap :: Options r
             -> Slaw
 recordToMap opts = SlawMap . recordToPairs opts
 
+recordToMapWithFmt :: Options r
+                   -> FileFormat
+                   -> r
+                   -> Slaw
+recordToMapWithFmt opts fmt x = SlawMap (fmtPair : pairs)
+  where
+    fmtPair = (š kFormat, š fmt)
+    pairs = recordToPairs opts x
+
 recordToPairs :: Options r
              -> r
              -> [(Slaw, Slaw)]
@@ -279,3 +290,6 @@ coerceToMap (SlawList xs)                = SlawMap $ mapMaybe f xs
   where f (SlawCons k v) = Just (k, v)
         f _              = Nothing
 coerceToMap other                        = other
+
+kFormat :: T.Text
+kFormat = "format"
