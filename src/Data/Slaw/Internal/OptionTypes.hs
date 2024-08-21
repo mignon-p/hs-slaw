@@ -251,8 +251,8 @@ recordFromMap0 :: Options r
 recordFromMap0 opts dflt = rfm1 dflt opts . coerceToMap
 
 rfm1 :: r -> Options r -> Slaw -> r
-rfm1 x []       _ = x
-rfm1 x (o:rest) s =
+rfm1 !x []       _ = x
+rfm1 !x (o:rest) s =
   case s !? optName o of
     Nothing -> rfm1           x    rest s
     Just v  -> rfm1 (optSet o x v) rest s
