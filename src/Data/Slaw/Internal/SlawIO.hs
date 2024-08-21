@@ -101,7 +101,7 @@ data SOutput = SOutput
 --
 -- Does not currently take any options, so the second argument is
 -- placeholder which is just ignored.  The easiest thing to do
--- is just pass in '()'.
+-- is just pass in @()@.
 openBinarySlawInput :: (HasCallStack, FileClass a, ToSlaw b)
                     => a -- ^ name (or handle) of file to open
                     -> b -- ^ options map/protein (currently none)
@@ -244,7 +244,7 @@ readAllSlawx1 revSlawx sis = do
 --
 -- The second argument is a map or protein which specifies options.
 -- The easiest thing is to pass in 'WriteBinaryOptions' if you want
--- to specify any non-default options, or just pass '()' to use
+-- to specify any non-default options, or just pass @()@ to use
 -- the defaults.
 openBinarySlawOutput :: (FileClass a, ToSlaw b)
                      => a -- ^ name (or handle) of file to open
