@@ -14,7 +14,7 @@ module Data.Slaw.Internal.OptionTypes
   , bo2pbo
   , pbo2bo
   , AutoFlush(..)
-  , StrNumNone(..)
+  , StrOrInt(..)
   , FileFormat(..)
   --
   , preferNumeric
@@ -31,6 +31,7 @@ module Data.Slaw.Internal.OptionTypes
   ) where
 
 import Control.DeepSeq
+import Data.Bifunctor
 import qualified Data.ByteString.Short    as SBS
 import Data.Default.Class
 import Data.Hashable
@@ -41,7 +42,7 @@ import qualified Data.Vector.Storable     as S
 -- import Data.Word
 import Foreign.Storable
 import GHC.Generics (Generic)
-import Numeric.Natural
+-- import Numeric.Natural
 
 import Data.Slaw.Internal.EnumStrings
 import Data.Slaw.Internal.Exception
@@ -119,30 +120,23 @@ afStrs = makeEnumStrings
 
 --
 
-data StrNumNone = StringValue  !T.Text
-                | NumericValue !Natural
-                | NoValue
-                deriving (Eq, Ord, Show, Read, Generic, NFData, Hashable)
+data StrOrInt = StringValue  !T.Text
+              | NumericValue !Integer
+              deriving (Eq, Ord, Show, Read, Generic, NFData, Hashable)
 
-instance Default StrNumNone where
-  def = NoValue
+instance Default StrOrInt where
+  def = NumericValue (-1)
 
-instance Nameable StrNumNone where
-  typeName _ =   "StrNumNone"
+instance Nameable StrOrInt where
+  typeName _ =   "StrOrInt"
 
-instance FromSlaw StrNumNone where
+instance FromSlaw StrOrInt where
   fromSlaw (SlawString    utf8) = (return . StringValue . fromUtf8) utf8
-  fromSlaw s@(SlawNumeric _ _ ) = do
-    n <- fromSlaw s
-    if n < 0
-      then return NoValue
-      else return $ NumericValue $ fromInteger n
-  fromSlaw SlawNil              = return NoValue
+  fromSlaw s@(SlawNumeric _ _ ) = second NumericValue $ fromSlaw s
   fromSlaw s                    = handleOthers s
 
-instance ToSlaw StrNumNone where
-  toSlaw NoValue           = preferNumeric NumInt32 (-1)
-  toSlaw (NumericValue n)  = preferNumeric NumInt32 $ toInteger n
+instance ToSlaw StrOrInt where
+  toSlaw (NumericValue n)  = preferNumeric NumInt32 n
   toSlaw (StringValue txt) = SlawString $ toUtf8 txt
 
 --
