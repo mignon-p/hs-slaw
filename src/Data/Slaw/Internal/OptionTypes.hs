@@ -21,11 +21,13 @@ module Data.Slaw.Internal.OptionTypes
   , Option
   , Options
   , opt
+  , optN
   , opt1
   , recordFromMap
   , recordFromMap0
   , recordToMap
   , recordToPairs
+  , coerceToMap
   ) where
 
 import Control.DeepSeq
@@ -202,7 +204,7 @@ enumToSlaw es x =
 
 data Option r = Option
   { optName :: T.Text
-  , optGet  :: r -> Slaw
+  , optGet  :: r -> Maybe Slaw
   , optSet  :: r -> Slaw -> r
   }
 
@@ -210,25 +212,35 @@ type Options r = [Option r]
 
 opt :: (FromSlaw t, ToSlaw t)
     => T.Text
-    -> (r -> t)
-    -> (r -> t -> r)
+    -> (r -> Maybe t)
+    -> (r -> Maybe t -> r)
     -> Option r
 opt name getter setter = opt1 name getter setter š ŝm
 
+optN :: (Integral a, Bounded a, Storable a)
+     => T.Text
+     -> (r -> Maybe Integer)
+     -> (r -> Maybe Integer -> r)
+     -> (S.Vector a -> NumericData)
+     -> Option r
+optN name getter setter pref = opt1 name getter setter pn ŝm
+  where pn = preferNumeric pref
+
 opt1 :: T.Text
-     -> (r -> t)
-     -> (r -> t -> r)
+     -> (r -> Maybe t)
+     -> (r -> Maybe t -> r)
      -> (t -> Slaw)
      -> (Slaw -> Maybe t)
      -> Option r
 opt1 name getter setter tSlaw fSlaw =
   Option { optName = name
-         , optGet  = tSlaw . getter
-         , optSet  = f
+         , optGet  = fmap tSlaw . getter
+         , optSet  = oset
          }
-  where f x s = case fSlaw s of
-                  Nothing -> x
-                  Just v  -> x `setter` v
+  where
+    oset x s = case fSlaw s of
+                 Nothing -> x
+                 Just v  -> x `setter` (Just v)
 
 recordFromMap :: Default r
               => Options r
@@ -257,10 +269,13 @@ recordToMap opts = SlawMap . recordToPairs opts
 recordToPairs :: Options r
              -> r
              -> [(Slaw, Slaw)]
-recordToPairs opts x = map (rtm1 x) opts
+recordToPairs opts x = mapMaybe (rtm1 x) opts
 
-rtm1 :: r -> Option r -> (Slaw, Slaw)
-rtm1 x o = (toSlaw (optName o), optGet o x)
+rtm1 :: r -> Option r -> Maybe (Slaw, Slaw)
+rtm1 x o =
+  case optGet o x of
+    Nothing -> Nothing
+    Just s  -> Just (toSlaw (optName o), s)
 
 coerceToMap :: Slaw -> Slaw
 coerceToMap (SlawProtein _ (Just ing) _) = coerceToMap ing
