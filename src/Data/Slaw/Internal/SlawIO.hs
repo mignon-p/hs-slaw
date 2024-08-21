@@ -263,7 +263,7 @@ openBinarySlawOutput file opts = do
                             }
 
 getBo :: WriteBinaryOptions -> ByteOrder
-getBo = pbo2bo . wboByteOrder
+getBo wbo = pbo2bo (wboByteOrder wbo ?> BoNative)
 
 makeSOutput :: String
             -> (Handle, Bool)
@@ -277,7 +277,7 @@ makeSOutput nam (h, shouldClose) wbo = do
                , makeBfBool bfBigEndian (bo == BigEndian)
                ]
       bld = R.word64BE o
-  autoFlush <- case wboAutoFlush wbo of
+  autoFlush <- case wboAutoFlush wbo ?> AutoFlushIfNotSeekable of
                  AutoFlushNever         -> return False
                  AutoFlushAlways        -> return True
                  AutoFlushIfNotSeekable -> not <$> hIsSeekable h

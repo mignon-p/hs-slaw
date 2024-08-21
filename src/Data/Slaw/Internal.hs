@@ -31,11 +31,11 @@ module Data.Slaw.Internal
   , closeFileReader
   , getOffset
     -- * Options
-  , StrNumNone(..)
+  , StrOrInt(..)
   , FileFormat(..)
   , WriteYamlOptions(..)
-  , getFileFormat
   , PoolCreateOptions(..)
+  , kFormat
   ) where
 
 import Data.Slaw.Internal.Exception

@@ -101,7 +101,7 @@ unitTests = testGroup "HUnit tests"
 
 rtIoProp :: ByteOrder -> Slaw -> QC.Property
 rtIoProp bo s = QC.monadicIO $ do
-  let wbo = def { wboByteOrder = bo2pbo bo }
+  let wbo = def { wboByteOrder = Just (bo2pbo bo) }
   roundTripIOwr fpQC [s] wbo False
 
 testErrorSlaw :: ByteOrder -> Assertion
@@ -424,7 +424,7 @@ testSlawMonoid = do
 
 testSlawIO :: Assertion
 testSlawIO = do
-  let pairs = [ (WriteBinaryOptions pbo af, useName)
+  let pairs = [ (WriteBinaryOptions (Just pbo) (Just af), useName)
               | pbo     <- [minBound..maxBound]
               , af      <- [minBound..maxBound]
               , useName <- [minBound..maxBound]

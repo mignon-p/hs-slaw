@@ -93,7 +93,7 @@ roundTripIOrw :: (HasCallStack, Monad m)
 roundTripIOrw (assEq, io) orig expected bo = do
   ss  <- io $ readBinarySlawFile orig ()
 
-  let wbo = def { wboByteOrder = bo2pbo bo }
+  let wbo = def { wboByteOrder = Just (bo2pbo bo) }
   (fname, h) <- io $ openBinaryTempFile   tmpDir "test.slaw"
   io $ writeBinarySlawFile h wbo ss
 
@@ -134,7 +134,7 @@ checkSlawWrite :: HasCallStack
                -> ByteOrder
                -> IO ()
 checkSlawWrite fname ss bo = do
-  let wbo = def { wboByteOrder = bo2pbo bo }
+  let wbo = def { wboByteOrder = Just (bo2pbo bo) }
   (tmpName, h) <- openBinaryTempFile tmpDir "test.slaw"
   writeBinarySlawFile h wbo ss
 
