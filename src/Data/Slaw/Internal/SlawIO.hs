@@ -55,9 +55,9 @@ currentSlawVersion = 2
 
 -- | A stream from which slawx can be read.
 data SlawInputStream = SlawInputStream
-  { siName  :: String -- ^ get the name of the file we are reading from
+  { siName  :: String -- ^ Get the name of the file we are reading from.
   , siRead' :: CallStack -> IO (Maybe Slaw)
-  , siClose :: IO () -- ^ close the stream
+  , siClose :: IO () -- ^ Close the stream.
   }
 
 instance Show SlawInputStream where
@@ -72,10 +72,10 @@ siRead si = siRead' si callStack
 
 -- | A stream to which slawx can be written.
 data SlawOutputStream = SlawOutputStream
-  { soName  :: String -- ^ get the name of the file we are writing to
-  , soWrite :: Slaw -> IO () -- ^ write a 'Slaw' to the stream
-  , soFlush :: IO () -- ^ flush the stream (write any buffered data)
-  , soClose :: IO () -- ^ close the stream
+  { soName  :: String -- ^ Get the name of the file we are writing to.
+  , soWrite :: Slaw -> IO () -- ^ Write a 'Slaw' to the stream.
+  , soFlush :: IO () -- ^ Flush the stream (write any buffered data).
+  , soClose :: IO () -- ^ Close the stream.
   }
 
 instance Show SlawOutputStream where

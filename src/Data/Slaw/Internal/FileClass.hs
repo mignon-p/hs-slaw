@@ -37,15 +37,26 @@ import System.OsPath
 
 import Data.Slaw.Internal.Util
 
+-- | A 'Handle', and a boolean indicating whether we should
+-- close the 'Handle' when we're done with it.
 type HPair = (Handle, Bool)
 
+-- | Represents a filename (as either a 'FilePath' or an 'OsPath')
+-- or an already-open 'Handle'.
 class FileClass a where
+  -- | Returns the name of the file.
   fcName              :: a -> String
 
+  -- | Opens the file for reading, as a 'Handle'.
   fcOpenRead          :: a -> IO HPair
 
+  -- | Opens the file for writing, as a 'Handle'.
   fcOpenWrite         :: a -> IO HPair
 
+  -- | Memory-maps the entire file (read-only) if possible,
+  -- and returns it as a single 'B.ByteString' (which is backed
+  -- by the mapped memory).  If the file cannot be mapped,
+  -- opens it for reading and returns a 'Handle'.
   fcOpenReadOrMap     :: a -> IO (Either B.ByteString HPair)
   fcOpenReadOrMap name = Right <$> fcOpenRead name
 
@@ -119,6 +130,15 @@ nameFromHandle h =
 
 --
 
+-- | A handy facility for reading from a file, with the following
+-- features:
+--
+-- * May be either a 'Handle' or a 'B.ByteString'.
+--
+-- * Supports peeking an arbitrary number of bytes from the
+--   file, as well as reading.
+--
+-- * Keeps track of the byte offset within the file.
 data FileReader = FileReader
   { frBytes  :: IORef L.ByteString
   , frHandle :: Maybe HPair

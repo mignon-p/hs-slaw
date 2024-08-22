@@ -121,5 +121,7 @@ eth2mby (Left  _) = Nothing
 eth2mby (Right x) = Just x
 
 {-# INLINE tryIO #-}
+-- | This handy utility function is just 'try', but constrained
+-- to only work on 'IOException'.
 tryIO :: IO a -> IO (Either IOException a)
 tryIO = try

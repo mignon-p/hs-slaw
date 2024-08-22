@@ -47,9 +47,11 @@ import Foreign.Storable
 
 import Data.Slaw.Internal.Util
 
--- | A string, represented as a UTF-8 encoded lazy 'L.ByteString'
+-- | A string, represented as a UTF-8 encoded lazy 'L.ByteString'.
 type Utf8Str = L.ByteString
 
+-- | Represents a string of Unicode characters, and provides
+-- methods to convert it to and from other representations.
 class ( IsString a
       , Monoid   a
       , Ord      a
@@ -96,6 +98,8 @@ instance TextClass LT.Text where
   fromLazyText = id
   fromUtf8     = LT.decodeUtf8With T.lenientDecode
 
+-- | Represents a string of bytes ('Word8'), and provides
+-- methods to convert it to and from other representations.
 class ( Monoid   a
       , Ord      a
       , Hashable a
@@ -149,7 +153,13 @@ instance ByteStringClass SBS.ShortByteString where
 myStripSuffix :: LT.Text -> LT.Text -> LT.Text
 myStripSuffix sfx txt = (sfx `LT.stripSuffix` txt) ?> txt
 
-indentLines :: TextClass a => a -> a -> a
+-- | Indents all lines of a string (which may contain embedded
+-- newlines) by prepending a specified string (which is typically
+-- just some number of spaces) to the beginning of each line.
+indentLines :: TextClass a
+            => a -- ^ Indentation to add to each line.
+            -> a -- ^ (Potentially multi-line) string to indent.
+            -> a
 indentLines indent str =
   let txt             = toLazyText str
       indent'         = toLazyText indent

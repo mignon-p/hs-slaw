@@ -7,6 +7,7 @@ Maintainer  : code@funwithsoftware.org
 Portability : GHC
 -}
 
+{-# OPTIONS_GHC -Wno-unused-imports     #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 
 module Data.Slaw.Internal.OptionTypes
@@ -45,6 +46,7 @@ import qualified Data.Vector.Storable     as S
 import Foreign.Storable
 import GHC.Generics (Generic)
 -- import Numeric.Natural
+import System.IO (hIsSeekable)
 
 import Data.Slaw.Internal.EnumStrings
 import Data.Slaw.Internal.Exception
@@ -55,6 +57,11 @@ import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
 
+-- | Indicates which byte order is preferred when writing a
+-- binary slaw file.  Unlike 'ByteOrder', which only has two
+-- values ('BigEndian' and 'LittleEndian'), 'PreferredByteOrder'
+-- has a third value, 'BoNative', to indicate the native byte
+-- order of the current machine.
 data PreferredByteOrder = BoNative
                         | BoLittleEndian
                         | BoBigEndian
@@ -80,10 +87,14 @@ pboStrs = makeEnumStrings
   , ("big-endian    BigEndian    big    b", BoBigEndian   )
   ]
 
+-- | Convert 'ByteOrder' to 'PreferredByteOrder'.
 bo2pbo :: ByteOrder -> PreferredByteOrder
 bo2pbo BigEndian    = BoBigEndian
 bo2pbo LittleEndian = BoLittleEndian
 
+-- | Convert 'PreferredByteOrder' to 'ByteOrder'.
+-- 'BoNative' converts to the byte order of the machine
+-- we are currently running on.
 pbo2bo :: PreferredByteOrder -> ByteOrder
 pbo2bo BoBigEndian    = BigEndian
 pbo2bo BoLittleEndian = LittleEndian
@@ -91,9 +102,19 @@ pbo2bo BoNative       = nativeByteOrder
 
 --
 
+-- | Indicates whether to automatically flush any pending output
+-- to a stream whenever a slaw is written to the stream.
 data AutoFlush = AutoFlushNever
+                 -- ^ Do not flush automatically.
                | AutoFlushAlways
+                 -- ^ Do flush automatically.
                | AutoFlushIfNotSeekable
+                 -- ^ Flush automatically if the file handle is
+                 -- not seekable (as determined by 'hIsSeekable').
+                 -- The rationale is that you are more likely to
+                 -- want up-to-date output on a pipe, socket, or
+                 -- terminal.  For a file on disk, it probably
+                 -- doesn't matter when the data is written.
                deriving (Eq, Ord, Show, Read, Bounded, Enum,
                          Generic, NFData, Hashable)
 
@@ -122,6 +143,7 @@ afStrs = makeEnumStrings
 
 --
 
+-- | Represents either a string or an integer.
 data StrOrInt = StringValue  !T.Text
               | NumericValue !Integer
               deriving (Eq, Ord, Show, Read, Generic, NFData, Hashable)
@@ -143,6 +165,8 @@ instance ToSlaw StrOrInt where
 
 --
 
+-- | Indicates the format of a slaw file: either binary or
+-- text (YAML).
 data FileFormat = BinaryFile | YamlFile
                 deriving (Eq, Ord, Show, Read, Bounded, Enum,
                           Generic, NFData, Hashable)
@@ -291,5 +315,6 @@ coerceToMap (SlawList xs)                = SlawMap $ mapMaybe f xs
         f _              = Nothing
 coerceToMap other                        = other
 
+-- | The string “format”.
 kFormat :: T.Text
 kFormat = "format"

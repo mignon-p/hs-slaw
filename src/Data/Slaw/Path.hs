@@ -14,7 +14,9 @@ in the nested 'Slaw' structure, like traversing directories on a
 filesystem.
 
     * If the 'Slaw' is a 'SlawMap', the component specifies the key
-      to look up in the map.
+      to look up in the map.  The keys are normalized to @NFKD@
+      before comparing, and may also be case-folded, depending on
+      the value of 'spoCaseInsensitive'.
 
     * If the 'Slaw' is a 'SlawList', then the component must be a
       decimal integer, which specifies the (0-based) index to

@@ -10,8 +10,7 @@ Portability : GHC
 {-# OPTIONS_HADDOCK not-home            #-}
 
 module Data.Slaw.Internal
-  ( -- * Slaw decoding (can specify an ErrLocation)
-    -- * Strings
+  ( -- * Strings
     TextClass(..)
   , ByteStringClass(..)
   , indentLines

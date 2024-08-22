@@ -277,5 +277,7 @@ notFoundErr msg = def { peType      = EtNotFound
                       , peMessage   = msg
                       }
 
+-- | Amount to use when indenting error messages.
+-- Currently, two spaces.
 stdIndent :: String
 stdIndent = "  "
