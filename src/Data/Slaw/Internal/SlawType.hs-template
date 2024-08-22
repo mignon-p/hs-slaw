@@ -148,7 +148,7 @@ instance Default NumericFormat where
         , nfVector  = VtScalar
         }
 
--- | Wraps a 'Storable' 'S.Vector' of real numbers.  Multiple
+-- | Wraps a 'S.Vector' of real numbers.  Multiple
 -- element types are supported:
 --
 -- * 8, 16, 32, and 64-bit unsigned integers
@@ -201,10 +201,10 @@ data VectorType = VtScalar -- ^ Not a vector or multivector
                 | Vt2      -- ^ 2-dimensional vector (2 components)
                 | Vt3      -- ^ 3-dimensional vector (3 components)
                 | Vt4      -- ^ 4-dimensional vector (4 components)
-                | Vt2mv    -- ^ 2-dimensional vector (4 components)
-                | Vt3mv    -- ^ 3-dimensional vector (8 components)
-                | Vt4mv    -- ^ 4-dimensional vector (16 components)
-                | Vt5mv    -- ^ 5-dimensional vector (32 components)
+                | Vt2mv    -- ^ 2-dimensional multivector (4 components)
+                | Vt3mv    -- ^ 3-dimensional multivector (8 components)
+                | Vt4mv    -- ^ 4-dimensional multivector (16 components)
+                | Vt5mv    -- ^ 5-dimensional multivector (32 components)
                 deriving (Eq, Ord, Show, Read, Bounded, Enum,
                           Generic, NFData, Hashable)
 

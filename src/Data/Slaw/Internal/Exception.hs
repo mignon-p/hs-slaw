@@ -96,6 +96,10 @@ displayMaybeErrLocation _   (Just (ErrLocation DsNone Nothing)) = ""
 displayMaybeErrLocation sep (Just loc)                          =
   displayErrLocation loc ++ sep
 
+-- | An exception which may be raised by Plasma functions.
+--
+-- The 'Eq', 'Ord', and 'Hashable' instances only take
+-- 'peType', 'peRetort', and 'peMessage' into account.
 data PlasmaException = PlasmaException
   { peType      :: !PlasmaExceptionType
   , peRetort    :: Maybe Int64 -- ^ error code from @libPlasma/c@
@@ -146,6 +150,7 @@ instance Default PlasmaException where
         , peLocation  = Nothing
         }
 
+-- | The type of 'PlasmaException'.
 data PlasmaExceptionType = EtCorruptSlaw
                          | EtTypeMismatch
                          | EtRangeError

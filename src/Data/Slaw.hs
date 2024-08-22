@@ -79,7 +79,7 @@ module Data.Slaw
     -- cases of 'mapNumericData''.
     --
     -- Similarly, 'mapNumericData'' is just a special case of
-    -- 'mapNumericData2'', where both of the functional are the
+    -- 'mapNumericData2'', where both of the functions are the
     -- same.  Therefore, 'mapNumericData2'' is the most general
     -- of all of these functions.
   , mapNumericData

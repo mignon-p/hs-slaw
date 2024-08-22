@@ -33,7 +33,7 @@ module Data.Slaw.IO
   , siRead
   , siClose
   , readBinarySlawFile
-    -- * Writing slawx from a file
+    -- * Writing slawx to a file
   , SlawOutputStream
   , openBinarySlawOutput
   , soName
