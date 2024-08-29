@@ -7,6 +7,9 @@ Maintainer  : code@funwithsoftware.org
 Portability : GHC
 -}
 
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 module Data.Slaw.Internal.Exception
   ( DataSource(..)
   , displayDataSource
@@ -15,6 +18,7 @@ module Data.Slaw.Internal.Exception
   , PlasmaException(..)
   , displayPlasmaException
   , PlasmaExceptionType(..)
+  , Retort(..)
   , corruptSlaw
   , typeMismatch
   -- , typeMismatch'
@@ -39,17 +43,26 @@ module Data.Slaw.Internal.Exception
 
 import Control.DeepSeq
 import Control.Exception
+import Data.Bits
 import Data.Default.Class
 import Data.Hashable
 import Data.Int
 import Data.List
 import qualified Data.Text.Encoding.Error as T
 import Data.Word
+import Foreign.Storable
 import GHC.Generics (Generic)
 import GHC.Stack
+import Text.Printf
 
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
+
+-- | Represents a 64-bit error code returned from libPlasma.
+newtype Retort = Retort { unRetort :: Int64 }
+               deriving newtype (Eq, Ord, Show, NFData, Hashable, Real,
+                                 PrintfArg, Bits, FiniteBits, Bounded,
+                                 Enum, Storable, Num, Read, Integral)
 
 -- | Indicates the file, pool, or other resource in which an error
 -- was found.
@@ -102,7 +115,7 @@ displayMaybeErrLocation sep (Just loc)                          =
 -- 'peType', 'peRetort', and 'peMessage' into account.
 data PlasmaException = PlasmaException
   { peType      :: !PlasmaExceptionType
-  , peRetort    :: Maybe Int64 -- ^ error code from @libPlasma/c@
+  , peRetort    :: Maybe Retort -- ^ error code from @libPlasma/c@
   , peMessage   :: String
   , peCallstack :: Maybe CallStack   -- ^ location of code
   , peLocation  :: Maybe ErrLocation -- ^ location of data

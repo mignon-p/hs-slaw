@@ -110,6 +110,7 @@ module Data.Slaw
   , displayErrLocation
   , DataSource(..)
   , displayDataSource
+  , Retort(..)
     -- * Byte Order
   , ByteOrder(..)
   , nativeByteOrder
