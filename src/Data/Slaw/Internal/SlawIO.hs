@@ -291,10 +291,10 @@ makeSOutput nam (h, shouldClose) wbo = do
 
 writeSOutput :: SOutput -> Slaw -> IO ()
 writeSOutput sout s = do
-  let bo   = soutOrder   sout
-      af   = soutFlush   sout
-      h    = soutHandle  sout
-      bld  = encodeSlaw' bo s
+  let bo   = soutOrder           sout
+      af   = soutFlush           sout
+      h    = soutHandle          sout
+      bld  = encodeSlawToBuilder bo s
   R.hPutBuilder h bld
   if af
     then hFlush h

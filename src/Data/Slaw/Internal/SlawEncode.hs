@@ -14,7 +14,8 @@ module Data.Slaw.Internal.SlawEncode
   -- , nativeByteOrder   -- re-export
   -- , oppositeByteOrder -- re-export
     encodeSlaw
-  , encodeSlaw'
+  , encodeSlawToBuilder
+  , encodeSlawToBuilderAndLen
   , Nib(..)
   , Sym(..)
   , Oct
@@ -90,13 +91,21 @@ nib #> wrd = wrd .|. (nib' `shiftL` 60)
 (##>) :: Integral a => a -> Oct -> Oct
 bite ##> wrd = wrd .|. (fromIntegral bite `shiftL` 56)
 
--- | Encodes a given 'Slaw' into a bytestring, using the
+-- | Encodes a given 'Slaw' into a 'L.ByteString', using the
 -- specified 'ByteOrder'.
 encodeSlaw :: ByteOrder -> Slaw -> BinarySlaw
-encodeSlaw bo = R.toLazyByteString . encodeSlaw' bo
+encodeSlaw bo = R.toLazyByteString . encodeSlawToBuilder bo
 
-encodeSlaw' :: ByteOrder -> Slaw -> R.Builder
-encodeSlaw' bo s = let ?bo = bo in oBld $ encodeSlaw1 s
+-- | Encodes a given 'Slaw' into a 'R.Builder', using the
+-- specified 'ByteOrder'.
+encodeSlawToBuilder :: ByteOrder -> Slaw -> R.Builder
+encodeSlawToBuilder bo = fst . encodeSlawToBuilderAndLen bo
+
+-- | Like 'encodeSlawToBuilder', but also returns the length
+-- of the encoded slaw in bytes.
+encodeSlawToBuilderAndLen :: ByteOrder -> Slaw -> (R.Builder, Word64)
+encodeSlawToBuilderAndLen bo s = let ?bo = bo in pairify $ encodeSlaw1 s
+  where pairify octs = (oBld octs, 8 * oLen octs)
 
 encodeSlaw1 :: (?bo::ByteOrder) => Slaw -> Octs
 encodeSlaw1 (SlawProtein     des ing rude) = encProtein des ing rude

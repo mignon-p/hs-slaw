@@ -51,6 +51,8 @@ module Data.Slaw
   , decodeProteinLength'
     -- ** Encoding
   , encodeSlaw
+  , encodeSlawToBuilder
+  , encodeSlawToBuilderAndLen
     -- ** Validation
   , ValidationFlag(..)
   , validateSlaw
