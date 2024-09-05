@@ -11,14 +11,9 @@ Portability : GHC
 
 module Data.Slaw.Internal
   ( -- * Strings
-    TextClass(..)
-  , ByteStringClass(..)
-  , indentLines
+    indentLines
   , stdIndent
     -- * Util
-  , (##)
-  , (??)
-  , (?>)
   , tryIO
     -- * IO
   , FileClass(..)

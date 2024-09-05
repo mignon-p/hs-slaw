@@ -47,8 +47,8 @@ import Data.Slaw.Internal.Util
 -- | A string, represented as a UTF-8 encoded lazy 'L.ByteString'.
 type Utf8Str = L.ByteString
 
--- | Represents a string of Unicode characters, and provides
--- methods to convert it to and from other representations.
+-- | Represents a string of Unicode characters (code points), and
+-- provides methods to convert it to and from other representations.
 class ( IsString a
       , Monoid   a
       , Ord      a

@@ -77,7 +77,6 @@ module Data.Slaw.Path
     -- and case-insensitive comparison.)
   , (!)
   , (!?)
-  , (?>)
   ) where
 
 import Data.Slaw ( Slaw(..)

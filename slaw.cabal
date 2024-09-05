@@ -68,6 +68,7 @@ library
                      , Data.Slaw.IO
                      , Data.Slaw.Path
                      , Data.Slaw.Semantic
+                     , Data.Slaw.Util
 
   -- Modules included in this library but not exported.
   other-modules:       Data.Slaw.Internal.NativeInt
