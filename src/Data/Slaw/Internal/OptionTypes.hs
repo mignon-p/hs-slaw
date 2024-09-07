@@ -15,7 +15,6 @@ module Data.Slaw.Internal.OptionTypes
   , bo2pbo
   , pbo2bo
   , AutoFlush(..)
-  , StrOrInt(..)
   , FileFormat(..)
   --
   , preferNumeric
@@ -140,28 +139,6 @@ afStrs = makeEnumStrings
   , ("always a",                        AutoFlushAlways)
   , ("if-not-seekable IfNotSeekable i", AutoFlushIfNotSeekable)
   ]
-
---
-
--- | Represents either a string or an integer.
-data StrOrInt = StringValue  !T.Text
-              | NumericValue !Integer
-              deriving (Eq, Ord, Show, Read, Generic, NFData, Hashable)
-
-instance Default StrOrInt where
-  def = NumericValue (-1)
-
-instance Nameable StrOrInt where
-  typeName _ =   "StrOrInt"
-
-instance FromSlaw StrOrInt where
-  fromSlaw (SlawString    utf8) = (return . StringValue . fromUtf8) utf8
-  fromSlaw s@(SlawNumeric _ _ ) = second NumericValue $ fromSlaw s
-  fromSlaw s                    = handleOthers s
-
-instance ToSlaw StrOrInt where
-  toSlaw (NumericValue n)  = preferNumeric NumInt32 n
-  toSlaw (StringValue txt) = SlawString $ toUtf8 txt
 
 --
 

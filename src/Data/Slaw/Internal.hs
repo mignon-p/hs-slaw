@@ -13,6 +13,9 @@ module Data.Slaw.Internal
   ( -- * Strings
     indentLines
   , stdIndent
+    -- * Slaw
+  , handleOthers
+  , preferNumeric
     -- * Util
   , tryIO
     -- * IO
@@ -25,11 +28,17 @@ module Data.Slaw.Internal
   , closeFileReader
   , getOffset
     -- * Options
-  , StrOrInt(..)
+  , AutoFlush(..)
   , FileFormat(..)
-  , WriteYamlOptions(..)
-  , PoolCreateOptions(..)
+  , Option
+  , Options
   , kFormat
+  , recordFromMap
+  , recordToMap
+  , recordToMapWithFmt
+  , opt
+  , optN
+  , coerceToMap
   ) where
 
 import Data.Slaw.Internal.Exception
@@ -37,9 +46,9 @@ import Data.Slaw.Internal.FileClass
 -- import Data.Slaw.Internal.Helpers
 -- import Data.Slaw.Internal.Nameable
 -- import Data.Slaw.Internal.NumericConvert
-import Data.Slaw.Internal.OptionRecords
+-- import Data.Slaw.Internal.OptionRecords
 import Data.Slaw.Internal.OptionTypes
--- import Data.Slaw.Internal.SlawConvert
+import Data.Slaw.Internal.SlawConvert
 -- import Data.Slaw.Internal.SlawDecode
 -- import Data.Slaw.Internal.SlawEncode
 -- import Data.Slaw.Internal.SlawIO
