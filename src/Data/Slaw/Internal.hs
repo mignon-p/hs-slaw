@@ -19,9 +19,15 @@ module Data.Slaw.Internal
     -- * Util
   , tryIO
     -- * IO
+  , SlawInputStream(..)
+  , SlawOutputStream(..)
   , FileClass(..)
-  , FileReader(..)
   , HPair
+  , readAllSlawx
+  , fileMagic
+  , openBinarySlawInput1
+    -- ** FileReader
+  , FileReader(..)
   , makeFileReader
   , readBytes
   , peekBytes
@@ -51,7 +57,7 @@ import Data.Slaw.Internal.OptionTypes
 import Data.Slaw.Internal.SlawConvert
 -- import Data.Slaw.Internal.SlawDecode
 -- import Data.Slaw.Internal.SlawEncode
--- import Data.Slaw.Internal.SlawIO
+import Data.Slaw.Internal.SlawIO
 -- import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util

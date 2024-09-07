@@ -12,12 +12,14 @@ module Data.Slaw.Internal.SlawIO
   , siRead
   , SlawOutputStream(..)
   , openBinarySlawInput
+  , openBinarySlawInput1
   , readBinarySlawFile
   , openBinarySlawOutput
   , writeBinarySlawFile
   , fileMagic
   , binaryFileTypeSlaw
   , currentSlawVersion
+  , readAllSlawx
   ) where
 
 import Control.Exception
@@ -106,10 +108,19 @@ openBinarySlawInput :: (HasCallStack, FileClass a, ToSlaw b)
                     => a -- ^ name (or handle) of file to open
                     -> b -- ^ options map/protein (currently none)
                     -> IO SlawInputStream
-openBinarySlawInput file _ = withFrozenCallStack $ do
+openBinarySlawInput file opts = withFrozenCallStack $ do
   let nam = fcName file
   eth <- fcOpenReadOrMap file
   rdr <- makeFileReader eth
+  openBinarySlawInput1 nam rdr opts
+
+openBinarySlawInput1
+  :: (HasCallStack, ToSlaw b)
+  => String
+  -> FileReader
+  -> b
+  -> IO SlawInputStream
+openBinarySlawInput1 nam rdr _ = withFrozenCallStack $ do
   inp <- makeSInput nam rdr
   return $ SlawInputStream { siName  = nam
                            , siRead' = readSInput  inp
