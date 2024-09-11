@@ -10,6 +10,7 @@ Portability : GHC
 module Data.Slaw.Internal.SlawIO
   ( SlawInputStream(..)
   , siRead
+  , siClose
   , SlawOutputStream(..)
   , openBinarySlawInput
   , openBinarySlawInput1
@@ -57,9 +58,9 @@ currentSlawVersion = 2
 
 -- | A stream from which slawx can be read.
 data SlawInputStream = SlawInputStream
-  { siName  :: String -- ^ Get the name of the file we are reading from.
-  , siRead' :: CallStack -> IO (Maybe Slaw)
-  , siClose :: IO () -- ^ Close the stream.
+  { siName   :: String -- ^ Get the name of the file we are reading from.
+  , siRead'  :: CallStack -> IO (Maybe Slaw)
+  , siClose' :: CallStack -> IO ()
   }
 
 instance Show SlawInputStream where
@@ -71,6 +72,10 @@ instance Show SlawInputStream where
 -- throw 'IOException' or 'PlasmaException'.
 siRead :: HasCallStack => SlawInputStream -> IO (Maybe Slaw)
 siRead si = siRead' si callStack
+
+-- | Close the stream.
+siClose :: HasCallStack => SlawInputStream -> IO ()
+siClose si = siClose' si callStack
 
 -- | A stream to which slawx can be written.
 data SlawOutputStream = SlawOutputStream
@@ -122,9 +127,9 @@ openBinarySlawInput1
   -> IO SlawInputStream
 openBinarySlawInput1 nam rdr _ = withFrozenCallStack $ do
   inp <- makeSInput nam rdr
-  return $ SlawInputStream { siName  = nam
-                           , siRead' = readSInput  inp
-                           , siClose = closeSInput inp
+  return $ SlawInputStream { siName   = nam
+                           , siRead'  = readSInput  inp
+                           , siClose' = closeSInput inp
                            }
 
 makeSInput :: HasCallStack => String -> FileReader -> IO SInput
@@ -221,8 +226,8 @@ readSInput1 inp cs off octLen = do
     throwIO $ slawIOException' cs el msg
   return $ decodeSlaw' bo el lbs
 
-closeSInput :: SInput -> IO ()
-closeSInput = closeFileReader . sinReader
+closeSInput :: SInput -> CallStack -> IO ()
+closeSInput inp _ = closeFileReader $ sinReader inp
 
 -- | Convenience function to read all the slawx from a binary
 -- slaw file.  It opens a stream, reads all the slawx from the stream,
