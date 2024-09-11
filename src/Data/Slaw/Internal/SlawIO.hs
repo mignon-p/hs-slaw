@@ -12,6 +12,9 @@ module Data.Slaw.Internal.SlawIO
   , siRead
   , siClose
   , SlawOutputStream(..)
+  , soWrite
+  , soFlush
+  , soClose
   , openBinarySlawInput
   , openBinarySlawInput1
   , readBinarySlawFile
@@ -79,15 +82,27 @@ siClose si = siClose' si callStack
 
 -- | A stream to which slawx can be written.
 data SlawOutputStream = SlawOutputStream
-  { soName  :: String -- ^ Get the name of the file we are writing to.
-  , soWrite :: Slaw -> IO () -- ^ Write a 'Slaw' to the stream.
-  , soFlush :: IO () -- ^ Flush the stream (write any buffered data).
-  , soClose :: IO () -- ^ Close the stream.
+  { soName   :: String -- ^ Get the name of the file we are writing to.
+  , soWrite' :: CallStack -> Slaw -> IO ()
+  , soFlush' :: CallStack -> IO ()
+  , soClose' :: CallStack -> IO ()
   }
 
 instance Show SlawOutputStream where
   showsPrec n x = showParen (n > 10) s
     where s = showString "SlawOutputStream " . showString (soName x)
+
+-- | Write a 'Slaw' to the stream.
+soWrite :: HasCallStack => SlawOutputStream -> Slaw -> IO ()
+soWrite so = soWrite' so callStack
+
+-- | Flush the stream (write any buffered data).
+soFlush :: HasCallStack => SlawOutputStream -> IO ()
+soFlush so = soFlush' so callStack
+
+-- | Close the stream.
+soClose :: HasCallStack => SlawOutputStream -> IO ()
+soClose so = soClose' so callStack
 
 data SInput = SInput
   { sinName   :: String
@@ -272,10 +287,10 @@ openBinarySlawOutput file opts = do
       nam   = fcName file
   (h, shouldClose) <- fcOpenWrite file
   out <- makeSOutput nam (h, shouldClose) wbo
-  return $ SlawOutputStream { soName = nam
-                            , soWrite = writeSOutput out
-                            , soFlush = flushSOutput out
-                            , soClose = closeSOutput out
+  return $ SlawOutputStream { soName   = nam
+                            , soWrite' = writeSOutput out
+                            , soFlush' = flushSOutput out
+                            , soClose' = closeSOutput out
                             }
 
 getBo :: WriteBinaryOptions -> ByteOrder
@@ -305,8 +320,8 @@ makeSOutput nam (h, shouldClose) wbo = do
                    , soutClose  = shouldClose
                    }
 
-writeSOutput :: SOutput -> Slaw -> IO ()
-writeSOutput sout s = do
+writeSOutput :: SOutput -> CallStack -> Slaw -> IO ()
+writeSOutput sout _ s = do
   let bo   = soutOrder           sout
       af   = soutFlush           sout
       h    = soutHandle          sout
@@ -316,11 +331,11 @@ writeSOutput sout s = do
     then hFlush h
     else return ()
 
-flushSOutput :: SOutput -> IO ()
-flushSOutput = hFlush . soutHandle
+flushSOutput :: SOutput -> CallStack -> IO ()
+flushSOutput sout _ = hFlush $ soutHandle sout
 
-closeSOutput :: SOutput -> IO ()
-closeSOutput sout =
+closeSOutput :: SOutput -> CallStack -> IO ()
+closeSOutput sout _ =
   let h = soutHandle sout
   in if soutClose sout
      then hClose h
