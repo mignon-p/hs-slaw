@@ -18,6 +18,7 @@ module Data.Slaw.Internal.FileClass
   , NoClose(..)
   , HPair
   , makeFileReader
+  , makeFileReaderLazyBS
   , readBytes
   , peekBytes
   , closeFileReader
@@ -147,9 +148,7 @@ data FileReader = FileReader
 
 makeFileReader :: Either B.ByteString HPair -> IO FileReader
 makeFileReader (Left bs) = do
-  r <- newIORef $ L.fromStrict bs
-  o <- newIORef 0
-  return $ FileReader r Nothing o
+  makeFileReaderLazyBS $ L.fromStrict bs
 makeFileReader (Right h) = do
   eth <- tryIO $ hTell $ fst h
   let offset = case eth of
@@ -158,6 +157,12 @@ makeFileReader (Right h) = do
   r <- newIORef $ L.empty
   o <- newIORef offset
   return $ FileReader r (Just h) o
+
+makeFileReaderLazyBS :: L.ByteString -> IO FileReader
+makeFileReaderLazyBS lbs = do
+  r <- newIORef lbs
+  o <- newIORef 0
+  return $ FileReader r Nothing o
 
 readBytes :: FileReader -> Int -> IO L.ByteString
 readBytes fr nBytes = do

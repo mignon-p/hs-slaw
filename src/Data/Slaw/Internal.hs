@@ -33,6 +33,7 @@ module Data.Slaw.Internal
     -- ** FileReader
   , FileReader(..)
   , makeFileReader
+  , makeFileReaderLazyBS
   , readBytes
   , peekBytes
   , closeFileReader
