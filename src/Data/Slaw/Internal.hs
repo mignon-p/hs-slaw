@@ -13,6 +13,10 @@ module Data.Slaw.Internal
   ( -- * Strings
     indentLines
   , stdIndent
+    -- ** EnumStrings
+  , EnumStrings
+  , makeEnumStrings
+  , stringToEnum
     -- * Slaw
   , handleOthers
   , preferNumeric
@@ -47,6 +51,7 @@ module Data.Slaw.Internal
   , coerceToMap
   ) where
 
+import Data.Slaw.Internal.EnumStrings
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.FileClass
 -- import Data.Slaw.Internal.Helpers
