@@ -19,12 +19,16 @@ import Control.DeepSeq
 import Control.Monad
 import Data.Bits
 -- import qualified Data.ByteString.Lazy     as L
+import Data.Char
 import Data.Default.Class
+import Data.Either
 import Data.Hashable
+import qualified Data.HashMap.Strict         as HM
+import Data.List
 -- import qualified Data.Text                as T
 -- import qualified Data.Text.Encoding       as T
 -- import qualified Data.Text.Encoding.Error as T
--- import qualified Data.Text.Lazy           as LT
+import qualified Data.Text.Lazy           as LT
 import qualified Data.Text.Lazy.Encoding  as LT
 import GHC.Generics (Generic)
 
@@ -39,6 +43,7 @@ data ValidationFlag =
     VfCSlaw -- ^ Fail if slaw uses features not supported by @libPlasma/c@
   | VfUtf8  -- ^ Fail if 'SlawString' is not valid UTF-8
   | VfDesIng -- ^ Fail if descrips is not a list, or ingests is not a map
+  | VfUniqKeys -- ^ Fail if map contains duplicate keys
   deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
 
 type ValidationFlags = [ValidationFlag]
@@ -63,7 +68,7 @@ vs f     (SlawProtein d i _  ) = vsProtein f d i
 vs _     (SlawBool    _      ) = return ()
 vs _      SlawNil              = return ()
 vs f     (SlawList    ss     ) = mapM_ (vs     f) ss
-vs f     (SlawMap     pairs  ) = mapM_ (vsPair f) pairs
+vs f     (SlawMap     pairs  ) = vsMap  f pairs
 vs f     (SlawCons    car cdr) = vsPair f (car, cdr)
 vs f     (SlawNumeric nf  nd ) = vsNumeric f nf nd
 vs _     (SlawError   msg loc) = vsError   msg loc
@@ -162,6 +167,45 @@ vsError msg loc =
              , peMessage  = msg
              , peLocation = Just loc
              }
+
+vsMap :: ValidationFlags -> [(Slaw, Slaw)] -> ValRet
+vsMap vf pairs = do
+  when (VfUniqKeys `elem` vf) $ vUniqueKeys $ map fst pairs
+  mapM_ (vsPair vf) pairs
+
+vUniqueKeys :: [Slaw] -> ValRet
+vUniqueKeys ss = do
+  let onePairs     = map (, (1 :: Int)) ss
+      countMap     = HM.fromListWith (+) onePairs
+      counts       = HM.toList countMap
+      badCounts    = filter isBad counts
+      isBad (_, c) = c > 1
+      dups         = sort $ map fst badCounts
+      plural       = case dups of
+                       [_] -> ""
+                       _   -> "s"
+      msg          = "map has duplicate key" ++ plural
+  when (not $ null dups) $ do
+    let dupStrs = map showKey dups
+        dupStr  = intercalate ", " dupStrs
+    valErr $ msg ++ ": " ++ dupStr
+
+showKey :: Slaw -> String
+showKey (SlawString utf8)
+  | isOkToShow deUtf8 =
+      "\"" ++ LT.unpack (fromRight mempty deUtf8) ++ "\""
+  | otherwise = show utf8
+  where deUtf8 = LT.decodeUtf8' utf8
+showKey s = show s
+
+isOkToShow :: Either a LT.Text -> Bool
+isOkToShow (Left  _)   = False
+isOkToShow (Right txt) = LT.all isOkChar txt
+
+isOkChar :: Char -> Bool
+isOkChar '"'  = False
+isOkChar '\\' = False
+isOkChar c    = isPrint c
 
 cslawErr :: String -> ValRet
 cslawErr feature = valErr $ feature ++ " not supported by c-plasma"
