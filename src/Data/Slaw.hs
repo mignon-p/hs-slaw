@@ -11,6 +11,7 @@ module Data.Slaw
   ( -- * Slaw
     Slaw(..)
   , describeSlaw
+  , removeDups
     -- ** Predicates
   , isProtein
   , isBool

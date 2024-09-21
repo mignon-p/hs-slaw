@@ -322,13 +322,17 @@ testSlawValidation = do
   True  @=? valSlaw [VfUtf8]   comprehensiveProtein
   False @=? valSlaw [VfDesIng] comprehensiveProtein
 
-  let dupKeys =
-        SlawMap [ ( SlawBool True, 0xbaaaaaad)
-                , ( SlawBool True, SlawBool False)
-                ]
+  let dkPairs   =
+        [ ( SlawBool True, 0xbaaaaaad)
+        , ( "foo",         "bar")
+        , ( SlawBool True, SlawBool False)
+        ]
+      dupKeys   = SlawMap dkPairs
+      noDupKeys = SlawMap $ removeDups dkPairs
 
   True  @=? valSlaw []           dupKeys
   False @=? valSlaw [VfUniqKeys] dupKeys
+  True  @=? valSlaw [VfUniqKeys] noDupKeys
 
 checkConcat :: ( Storable a, Num a
                , Storable b, Num b

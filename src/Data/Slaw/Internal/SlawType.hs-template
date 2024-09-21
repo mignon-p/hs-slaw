@@ -22,7 +22,7 @@ module Data.Slaw.Internal.SlawType
   , BinarySlaw
   , ErrPair
   , describeSlaw
-  -- , removeDups
+  , removeDups
   , NumericType(..)
   , extractNumeric
   , restoreNumeric
@@ -358,9 +358,9 @@ catLists = SlawList  . concat
 catMaps :: [[(Slaw, Slaw)]] -> Slaw
 catMaps = SlawMap . removeDups . concat
 
--- Remove duplicate keys while preserving order.
--- Keeps the *last* value for a key, but at the position
--- where the key *first* appeared.
+-- | Remove duplicate keys while preserving order.
+-- Keeps the __last__ value for a key, but at the position
+-- where the key __first__ appeared.
 removeDups :: [(Slaw, Slaw)] -> [(Slaw, Slaw)]
 removeDups pairs = map (second snd) l4
   where pairs1      = zipWith f1 pairs [(1 :: Word64)..]
