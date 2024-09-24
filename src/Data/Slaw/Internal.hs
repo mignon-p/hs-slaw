@@ -22,6 +22,7 @@ module Data.Slaw.Internal
   , preferNumeric
     -- * Util
   , tryIO
+  , orList
     -- * IO
   , SlawInputStream(..)
   , SlawOutputStream(..)
