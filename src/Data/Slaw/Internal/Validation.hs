@@ -19,9 +19,9 @@ import Control.DeepSeq
 import Control.Monad
 import Data.Bits
 -- import qualified Data.ByteString.Lazy     as L
-import Data.Char
+-- import Data.Char
 import Data.Default.Class
-import Data.Either
+-- import Data.Either
 import Data.Hashable
 import qualified Data.HashMap.Strict         as HM
 import Data.List
@@ -37,6 +37,7 @@ import Data.Slaw.Internal.Helpers
 import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
+import Data.Slaw.Internal.Util
 
 -- | Flags which can be passed to modify the behavior of 'validateSlaw'.
 data ValidationFlag =
@@ -191,21 +192,11 @@ vUniqueKeys ss = do
     valErr $ msg ++ ": " ++ dupStr
 
 showKey :: Slaw -> String
-showKey (SlawString utf8)
-  | isOkToShow deUtf8 =
-      "\"" ++ LT.unpack (fromRight mempty deUtf8) ++ "\""
-  | otherwise = show utf8
-  where deUtf8 = LT.decodeUtf8' utf8
+showKey (SlawString utf8) =
+  case LT.decodeUtf8' utf8 of
+    Right txt -> showEscapedStr $ LT.unpack txt
+    Left  _   -> show utf8
 showKey s = show s
-
-isOkToShow :: Either a LT.Text -> Bool
-isOkToShow (Left  _)   = False
-isOkToShow (Right txt) = LT.all isOkChar txt
-
-isOkChar :: Char -> Bool
-isOkChar '"'  = False
-isOkChar '\\' = False
-isOkChar c    = isPrint c
 
 cslawErr :: String -> ValRet
 cslawErr feature = valErr $ feature ++ " not supported by c-plasma"

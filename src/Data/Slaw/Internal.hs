@@ -23,6 +23,7 @@ module Data.Slaw.Internal
     -- * Util
   , tryIO
   , orList
+  , showEscapedStr
     -- * IO
   , SlawInputStream(..)
   , SlawOutputStream(..)

@@ -26,6 +26,7 @@ module Data.Slaw.Internal.Util
   , orList
   , eth2mby
   , tryIO
+  , showEscapedStr
   ) where
 
 import Control.Exception
@@ -37,6 +38,7 @@ import Data.List
 import Data.Word
 import GHC.ByteOrder
 import GHC.Float
+import Text.Printf
 
 infixl 0 ##
 infix  7 ??
@@ -125,3 +127,31 @@ eth2mby (Right x) = Just x
 -- to only work on 'IOException'.
 tryIO :: IO a -> IO (Either IOException a)
 tryIO = try
+
+-- | Like 'show' for strings, but prints any printable Unicode
+-- character, and uses hex escapes for non-printable characters.
+showEscapedStr :: String -> String
+showEscapedStr str = '"' : ses0 str ++ "\""
+
+ses0 :: String -> String
+ses0 [] = []
+ses0 [c] = escChar c '"'
+ses0 (c1:c2:rest) = escChar c1 c2 ++ ses0 (c2 : rest)
+
+escChar :: Char -> Char -> String
+escChar '"'  _ = "\\\""
+escChar '\\' _ = "\\\\"
+escChar '\a' _ = "\\a"
+escChar '\b' _ = "\\b"
+escChar '\f' _ = "\\f"
+escChar '\n' _ = "\\n"
+escChar '\r' _ = "\\r"
+escChar '\t' _ = "\\t"
+escChar '\v' _ = "\\v"
+escChar c1 c2
+  | isPrint c1 = [c1]
+  | otherwise  =
+      let o1    = ord c1
+          nDigs = if o1 < 0x80     then 2     else 4
+          sfx   = if isHexDigit c2 then "\\&" else ""
+      in printf "\\x%0*X%s" (nDigs :: Int) o1 (sfx :: String)
