@@ -29,6 +29,7 @@ module Data.Slaw.IO
   ( -- * Reading slawx from a file
     SlawInputStream
   , openBinarySlawInput
+  , withBinarySlawInput
   , siName
   , siRead
   , siClose
@@ -36,6 +37,7 @@ module Data.Slaw.IO
     -- * Writing slawx to a file
   , SlawOutputStream
   , openBinarySlawOutput
+  , withBinarySlawOutput
   , soName
   , soWrite
   , soFlush

@@ -15,11 +15,16 @@ module Data.Slaw.Internal.SlawIO
   , soWrite
   , soFlush
   , soClose
+    --
   , openBinarySlawInput
-  , openBinarySlawInput1
+  , withBinarySlawInput
   , readBinarySlawFile
+    --
   , openBinarySlawOutput
+  , withBinarySlawOutput
   , writeBinarySlawFile
+    --
+  , openBinarySlawInput1
   , fileMagic
   , binaryFileTypeSlaw
   , currentSlawVersion
@@ -293,6 +298,16 @@ readSInput1 inp cs off octLen = do
 closeSInput :: SInput -> CallStack -> IO ()
 closeSInput inp _ = closeFileReader $ sinReader inp
 
+-- | Run an action with a 'SlawInputStream'.
+withBinarySlawInput
+  :: (HasCallStack, FileClass a, ToSlaw b)
+  => a                         -- ^ name (or handle) of file to read
+  -> b                         -- ^ options map/protein (currently none)
+  -> (SlawInputStream -> IO c) -- ^ action to run
+  -> IO c
+withBinarySlawInput fname opts act = withFrozenCallStack $ do
+  bracket (openBinarySlawInput fname opts) siClose act
+
 -- | Convenience function to read all the slawx from a binary
 -- slaw file.  It opens a stream, reads all the slawx from the stream,
 -- and then closes the stream.  The slawx that were read are returned
@@ -302,10 +317,7 @@ readBinarySlawFile :: (HasCallStack, FileClass a, ToSlaw b)
                    -> b -- ^ options map/protein (currently none)
                    -> IO [Slaw]
 readBinarySlawFile fname opts = withFrozenCallStack $ do
-  sis <- openBinarySlawInput fname opts
-  ss  <- readAllSlawx sis
-  siClose sis
-  return ss
+  withBinarySlawInput fname opts readAllSlawx
 
 readAllSlawx :: SlawInputStream -> IO [Slaw]
 readAllSlawx = readAllSlawx1 []
@@ -393,6 +405,16 @@ closeSOutput sout _ =
      then hClose h
      else hFlush h
 
+-- | Run an action with a 'SlawOutputStream'.
+withBinarySlawOutput
+  :: (FileClass a, ToSlaw b)
+  => a                          -- ^ name (or handle) of file to read
+  -> b                          -- ^ options map/protein
+  -> (SlawOutputStream -> IO c) -- ^ action to run
+  -> IO c
+withBinarySlawOutput fname opts act = do
+  bracket (openBinarySlawOutput fname opts) soClose act
+
 -- | Convenience function to write a binary slaw file all at once.
 -- It opens a stream, writes all the slawx to the stream,
 -- and then closes the stream.
@@ -402,6 +424,4 @@ writeBinarySlawFile :: (FileClass a, ToSlaw b)
                     -> [Slaw] -- ^ slawx to write to file
                     -> IO ()
 writeBinarySlawFile fname opts ss = do
-  sos <- openBinarySlawOutput fname opts
-  mapM_ (soWrite sos) ss
-  soClose sos
+  withBinarySlawOutput fname opts $ \sos -> mapM_ (soWrite sos) ss
