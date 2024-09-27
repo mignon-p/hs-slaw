@@ -26,12 +26,15 @@ module Data.Slaw.Internal.SlawIO
   , readAllSlawx
   ) where
 
+import Control.DeepSeq
 import Control.Exception
 import Control.Monad
 import qualified Data.ByteString         as B
 import qualified Data.ByteString.Builder as R
 import qualified Data.ByteString.Lazy    as L
 import Data.Default.Class
+import Data.Hashable
+import Data.Unique
 import Data.Word
 import GHC.Stack
 import System.IO
@@ -62,13 +65,34 @@ currentSlawVersion = 2
 -- | A stream from which slawx can be read.
 data SlawInputStream = SlawInputStream
   { siName   :: String -- ^ Get the name of the file we are reading from.
+  , siShow   :: String -- ^ Additional info for "show"
+  , siUniq   :: Unique -- ^ Identity for Eq, Ord, and Hashable
   , siRead'  :: CallStack -> IO (Maybe Slaw)
   , siClose' :: CallStack -> IO ()
   }
 
+instance Eq SlawInputStream where
+  x == y = siUniq x == siUniq y
+
+instance Ord SlawInputStream where
+  x `compare` y = siUniq x ?? siUniq y
+
+instance Hashable SlawInputStream where
+  salt `hashWithSalt` x = salt ## hashUnique (siUniq x)
+
+instance NFData SlawInputStream where
+  rnf x = siName   x `deepseq`
+          siShow   x `deepseq`
+          siUniq   x `deepseq`
+          siRead'  x `deepseq`
+          rnf (siClose' x)
+
 instance Show SlawInputStream where
-  showsPrec n x = showParen (n > 10) s
-    where s = showString "SlawInputStream " . showString (siName x)
+  showsPrec _ x = showString "{SlawInputStream: "        .
+                  showString (showEscapedStr $ siName x) .
+                  showString " "                         .
+                  showString (siShow x)                  .
+                  showString "}"
 
 -- | Read a 'Slaw' from the stream.  Returns 'Nothing' if
 -- end-of-file has been reached.  If an error occurs, may
@@ -83,14 +107,36 @@ siClose si = siClose' si callStack
 -- | A stream to which slawx can be written.
 data SlawOutputStream = SlawOutputStream
   { soName   :: String -- ^ Get the name of the file we are writing to.
+  , soShow   :: String -- ^ Additional info for "show"
+  , soUniq   :: Unique -- ^ Identity for Eq, Ord, and Hashable
   , soWrite' :: CallStack -> Slaw -> IO ()
   , soFlush' :: CallStack -> IO ()
   , soClose' :: CallStack -> IO ()
   }
 
+instance Eq SlawOutputStream where
+  x == y = soUniq x == soUniq y
+
+instance Ord SlawOutputStream where
+  x `compare` y = soUniq x ?? soUniq y
+
+instance Hashable SlawOutputStream where
+  salt `hashWithSalt` x = salt ## hashUnique (soUniq x)
+
+instance NFData SlawOutputStream where
+  rnf x = soName   x `deepseq`
+          soShow   x `deepseq`
+          soUniq   x `deepseq`
+          soWrite' x `deepseq`
+          soFlush' x `deepseq`
+          rnf (soClose' x)
+
 instance Show SlawOutputStream where
-  showsPrec n x = showParen (n > 10) s
-    where s = showString "SlawOutputStream " . showString (soName x)
+  showsPrec _ x = showString "{SlawOutputStream: "        .
+                  showString (showEscapedStr $ soName x) .
+                  showString " "                         .
+                  showString (soShow x)                  .
+                  showString "}"
 
 -- | Write a 'Slaw' to the stream.
 soWrite :: HasCallStack => SlawOutputStream -> Slaw -> IO ()
@@ -141,8 +187,11 @@ openBinarySlawInput1
   -> b
   -> IO SlawInputStream
 openBinarySlawInput1 nam rdr _ = withFrozenCallStack $ do
-  inp <- makeSInput nam rdr
+  inp  <- makeSInput nam rdr
+  uniq <- newUnique
   return $ SlawInputStream { siName   = nam
+                           , siShow   = "binary " ++ show (sinOrder inp)
+                           , siUniq   = uniq
                            , siRead'  = readSInput  inp
                            , siClose' = closeSInput inp
                            }
@@ -286,8 +335,11 @@ openBinarySlawOutput file opts = do
       wbo   = ŝm     opts' ?> def
       nam   = fcName file
   (h, shouldClose) <- fcOpenWrite file
-  out <- makeSOutput nam (h, shouldClose) wbo
+  out  <- makeSOutput nam (h, shouldClose) wbo
+  uniq <- newUnique
   return $ SlawOutputStream { soName   = nam
+                            , soShow   = "binary " ++ show (soutOrder out)
+                            , soUniq   = uniq
                             , soWrite' = writeSOutput out
                             , soFlush' = flushSOutput out
                             , soClose' = closeSOutput out
