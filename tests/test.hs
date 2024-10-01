@@ -96,6 +96,7 @@ unitTests = testGroup "HUnit tests"
   , testCase "slaw-semantic"              $ testSlawSemantic
   , testCase "slaw-validation"            $ testSlawValidation
   , testCase "slaw-monoid"                $ testSlawMonoid
+  , testCase "slaw-map"                   $ testSlawMap
   , testCase "slaw-io"                    $ testSlawIO
   ]
 
@@ -433,6 +434,47 @@ testSlawMonoid = do
   checkConcat (NumFloat16, [1000, 2000, 0,          (-1)         ])
               (NumInt64,   [500,  1500, tenBillion, (-tenBillion)])
               NumFloat64
+
+testSlawMap :: Assertion
+testSlawMap = do
+  let pairs1 = [ ("A", 1)
+               , ("b", 2)
+               , ("c", 3)
+               ]
+      pairs2 = [ ("a", 4)
+               , ("b", 5)
+               , ("d", 6)
+               ]
+      expL   = [ ("A", 1)
+               , ("b", 2)
+               , ("c", 3)
+               , ("a", 4)
+               , ("d", 6)
+               ]
+      expR   = [ ("A", 1)
+               , ("b", 5)
+               , ("c", 3)
+               , ("a", 4)
+               , ("d", 6)
+               ]
+      expLCI = [ ("A", 1)
+               , ("b", 2)
+               , ("c", 3)
+               , ("d", 6)
+               ]
+      expRCI = [ ("a", 4)
+               , ("b", 5)
+               , ("c", 3)
+               , ("d", 6)
+               ]
+
+  expL   @=? pairs1 `preferLeft`    pairs2
+  expR   @=? pairs1 `preferRight`   pairs2
+  expLCI @=? pairs1 `preferLeftCI`  pairs2
+  expRCI @=? pairs1 `preferRightCI` pairs2
+
+  expR   @=? removeDups   (pairs1 ++ pairs2)
+  expRCI @=? removeDupsCI (pairs1 ++ pairs2)
 
 testSlawIO :: Assertion
 testSlawIO = do

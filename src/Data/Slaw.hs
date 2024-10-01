@@ -11,7 +11,6 @@ module Data.Slaw
   ( -- * Slaw
     Slaw(..)
   , describeSlaw
-  , removeDups
     -- ** Predicates
   , isProtein
   , isBool
@@ -57,6 +56,13 @@ module Data.Slaw
     -- ** Validation
   , ValidationFlag(..)
   , validateSlaw
+    -- ** Map manipulation
+  , removeDups
+  , removeDupsCI
+  , preferLeft
+  , preferRight
+  , preferLeftCI
+  , preferRightCI
     -- * Typedefs
   , Utf8Str
   , BinarySlaw

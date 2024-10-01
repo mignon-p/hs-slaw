@@ -23,6 +23,11 @@ module Data.Slaw.Internal.SlawType
   , ErrPair
   , describeSlaw
   , removeDups
+  , removeDupsCI
+  , preferLeft
+  , preferRight
+  , preferLeftCI
+  , preferRightCI
   , NumericType(..)
   , extractNumeric
   , restoreNumeric
@@ -57,7 +62,8 @@ import Data.List
 import Data.Maybe
 import Data.Ratio
 import Data.String
--- import qualified Data.Text            as T
+import qualified Data.Text            as T
+import qualified Data.Text.Normalize  as T
 import qualified Data.Vector.Storable as S
 import Data.Word
 import Foreign.Storable
@@ -358,17 +364,73 @@ catLists = SlawList  . concat
 catMaps :: [[(Slaw, Slaw)]] -> Slaw
 catMaps = SlawMap . removeDups . concat
 
+type PosPair = (Word64, (Slaw, Slaw))
+
 -- | Remove duplicate keys while preserving order.
 -- Keeps the __last__ value for a key, but at the position
 -- where the key __first__ appeared.
 removeDups :: [(Slaw, Slaw)] -> [(Slaw, Slaw)]
-removeDups pairs = map (second snd) l4
+removeDups = rmDups0 keepNew
+
+-- | Remove duplicate keys while preserving order.
+-- Keeps the __last__ value for a key, but at the position
+-- where the key __first__ appeared.
+-- String keys are matched case-insensitively.
+removeDupsCI :: [(Slaw, Slaw)] -> [(Slaw, Slaw)]
+removeDupsCI = rmDupsCI keepNew
+
+rmDups0
+  :: (PosPair -> PosPair -> PosPair)
+  -> [(Slaw, Slaw)]
+  -> [(Slaw, Slaw)]
+rmDups0 = rmDups1 id
+
+rmDupsCI
+  :: (PosPair -> PosPair -> PosPair)
+  -> [(Slaw, Slaw)]
+  -> [(Slaw, Slaw)]
+rmDupsCI = rmDups1 slawFoldCase
+
+slawFoldCase :: Slaw -> Slaw
+slawFoldCase (SlawString lbs) =
+  SlawString $ toUtf8 $ T.toCaseFold $ T.normalize T.NFKD $ fromUtf8 lbs
+slawFoldCase s = s
+
+rmDups1
+  :: (Slaw -> Slaw)
+  -> (PosPair -> PosPair -> PosPair)
+  -> [(Slaw, Slaw)]
+  -> [(Slaw, Slaw)]
+rmDups1 f0 f2 pairs = map (snd . snd) l4
   where pairs1      = zipWith f1 pairs [(1 :: Word64)..]
-        f1 (k, v) n = (k, (n, v))
+        f1 (k, v) n = (f0 k, (n, (k, v)))
         hm          = HM.fromListWith f2 pairs1
-        f2 (_, newV) (oldN, _) = (oldN, newV)
         l3          = HM.toList hm
         l4          = sortOn (fst . snd) l3
+
+keepNew :: (a, b) -> (a, b) -> (a, b)
+keepNew (_, newV) (oldN, _) = (oldN, newV)
+
+keepOld :: (a, b) -> (a, b) -> (a, b)
+keepOld _ = id
+
+-- | Merge two maps, preferring values from the first map.
+preferLeft :: [(Slaw, Slaw)] -> [(Slaw, Slaw)] -> [(Slaw, Slaw)]
+preferLeft x y = rmDups0 keepOld $ removeDups x ++ removeDups y
+
+-- | Merge two maps, preferring values from the second map.
+preferRight :: [(Slaw, Slaw)] -> [(Slaw, Slaw)] -> [(Slaw, Slaw)]
+preferRight x y = removeDups $ x ++ y
+
+-- | Merge two maps, preferring values from the first map.
+-- String keys are matched case-insensitively.
+preferLeftCI :: [(Slaw, Slaw)] -> [(Slaw, Slaw)] -> [(Slaw, Slaw)]
+preferLeftCI x y = rmDupsCI keepOld $ removeDupsCI x ++ removeDupsCI y
+
+-- | Merge two maps, preferring values from the second map.
+-- String keys are matched case-insensitively.
+preferRightCI :: [(Slaw, Slaw)] -> [(Slaw, Slaw)] -> [(Slaw, Slaw)]
+preferRightCI x y = removeDupsCI $ x ++ y
 
 catNumeric :: NumericFormat -> [NumericData] -> Slaw
 catNumeric nf nds = SlawNumeric nf' nd

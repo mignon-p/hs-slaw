@@ -26,7 +26,7 @@ import Data.Hashable
 import Data.List
 import Data.Maybe
 import qualified Data.Text                as T
-import qualified Data.Text.Normalize  as T
+import qualified Data.Text.Normalize      as T
 import GHC.Generics (Generic)
 import GHC.Stack
 import Text.Read
