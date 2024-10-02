@@ -23,10 +23,11 @@ import qualified Data.ByteString.Char8    as B8
 import qualified Data.ByteString.Short    as SBS
 import qualified Data.HashMap.Strict      as HM
 import qualified Data.IntMap.Strict       as IM
-import Data.Word
+-- import Data.Word
 import GHC.Generics (Generic)
 
 import Data.Slaw.Internal.String
+import Data.Slaw.Internal.Util
 
 data EnumStrings a = EnumStrings
   { esFromString :: HM.HashMap SBS.ShortByteString a
@@ -55,11 +56,6 @@ enumToString es x =
 
 getEnumStrings :: ByteStringClass b => EnumStrings a -> [b]
 getEnumStrings = map fromByteString . IM.elems . esToString
-
-lcAscii8 :: Word8 -> Word8
-lcAscii8 c
-  | c >= 0x41 && c <= 0x5A = c + 0x20
-  | otherwise              = c
 
 boolStrings :: EnumStrings Bool
 boolStrings =

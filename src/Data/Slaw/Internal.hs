@@ -24,6 +24,7 @@ module Data.Slaw.Internal
   , tryIO
   , orList
   , showEscapedStr
+  , lcAscii8
     -- * IO
   , SlawInputStream(..)
   , SlawOutputStream(..)
@@ -51,6 +52,7 @@ module Data.Slaw.Internal
   , recordToMapWithFmt
   , opt
   , optN
+  , opt1
   , coerceToMap
   ) where
 

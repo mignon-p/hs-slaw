@@ -27,6 +27,7 @@ module Data.Slaw.Internal.Util
   , eth2mby
   , tryIO
   , showEscapedStr
+  , lcAscii8
   ) where
 
 import Control.Exception
@@ -155,3 +156,9 @@ escChar c1 c2
           nDigs = if o1 < 0x80     then 2     else 4
           sfx   = if isHexDigit c2 then "\\&" else ""
       in printf "\\x%0*X%s" (nDigs :: Int) o1 (sfx :: String)
+
+{-# INLINABLE lcAscii8 #-}
+lcAscii8 :: Word8 -> Word8
+lcAscii8 c
+  | c >= 0x41 && c <= 0x5A = c + 0x20
+  | otherwise              = c
