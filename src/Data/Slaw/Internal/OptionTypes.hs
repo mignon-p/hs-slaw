@@ -200,9 +200,9 @@ enumToSlaw es x =
 --
 
 data Option r = Option
-  { optName :: T.Text
-  , optGet  :: r -> Maybe Slaw
-  , optSet  :: r -> Slaw -> r
+  { optNames :: [T.Text]
+  , optGet   :: r -> Maybe Slaw
+  , optSet   :: r -> Slaw -> r
   }
 
 type Options r = [Option r]
@@ -230,9 +230,9 @@ opt1 :: T.Text
      -> (Slaw -> Maybe t)
      -> Option r
 opt1 name getter setter tSlaw fSlaw =
-  Option { optName = name
-         , optGet  = fmap tSlaw . getter
-         , optSet  = oset
+  Option { optNames = T.split (=='|') name
+         , optGet   = fmap tSlaw . getter
+         , optSet   = oset
          }
   where
     oset x s = case fSlaw s of
@@ -254,9 +254,16 @@ recordFromMap0 opts dflt = rfm1 dflt opts . coerceToMap
 rfm1 :: r -> Options r -> Slaw -> r
 rfm1 !x []       _ = x
 rfm1 !x (o:rest) s =
-  case s !? optName o of
+  case rfm2 s (optNames o) of
     Nothing -> rfm1           x    rest s
     Just v  -> rfm1 (optSet o x v) rest s
+
+rfm2 :: Slaw -> [T.Text] -> Maybe Slaw
+rfm2 _ [] = Nothing
+rfm2 s (name:rest) =
+  case s !? name of
+    Nothing -> rfm2 s rest
+    Just v  -> Just v
 
 recordToMap :: Options r
             -> r
@@ -275,13 +282,16 @@ recordToMapWithFmt opts fmt x = SlawMap (fmtPair : pairs)
 recordToPairs :: Options r
              -> r
              -> [(Slaw, Slaw)]
-recordToPairs opts x = mapMaybe (rtm1 x) opts
+recordToPairs opts x = concatMap (rtm1 x) opts
 
-rtm1 :: r -> Option r -> Maybe (Slaw, Slaw)
+rtm1 :: r -> Option r -> [(Slaw, Slaw)]
 rtm1 x o =
   case optGet o x of
-    Nothing -> Nothing
-    Just s  -> Just (toSlaw (optName o), s)
+    Nothing -> []
+    Just s  -> map (rtm2 s) (optNames o)
+
+rtm2 :: Slaw -> T.Text -> (Slaw, Slaw)
+rtm2 s name = (toSlaw name, s)
 
 coerceToMap :: Slaw -> Slaw
 coerceToMap (SlawProtein _ (Just ing) _) = coerceToMap ing
