@@ -25,6 +25,9 @@ module Data.Slaw.Internal
   , orList
   , showEscapedStr
   , lcAscii8
+    -- * Printf
+  , FmtType(..)
+  , chrToType
     -- * IO
   , SlawInputStream(..)
   , SlawOutputStream(..)
@@ -68,7 +71,7 @@ import Data.Slaw.Internal.SlawConvert
 -- import Data.Slaw.Internal.SlawDecode
 -- import Data.Slaw.Internal.SlawEncode
 import Data.Slaw.Internal.SlawIO
--- import Data.Slaw.Internal.SlawType
+import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
 -- import Data.Slaw.Internal.Validation
