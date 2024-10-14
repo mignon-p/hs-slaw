@@ -66,11 +66,13 @@ import qualified Data.Text            as T
 import qualified Data.Text.Normalize  as T
 import qualified Data.Vector.Storable as S
 import Data.Word
+import Foreign.Marshal.Utils (fromBool)
 import Foreign.Storable
 import GHC.Generics (Generic)
 import GHC.Stack
 import Numeric.Half
 import System.IO.Unsafe (unsafePerformIO)
+import Text.Printf
 import Text.Read (readMaybe)
 
 import Data.Slaw.Internal.Exception
@@ -755,3 +757,146 @@ fracUnOp  :: HasCallStack
           -> String -> Slaw -> Slaw
 fracUnOp f op x = fracOp (curry (f . fst)) x' x'
   where x' = slawToArg op x
+
+                    -- PrintfArg instance for Slaw --
+
+data FmtType = FmtIntegral | FmtFloat | FmtString | FmtOther
+             deriving (Eq, Ord, Show, Read, Bounded, Enum,
+                       Generic, NFData, Hashable)
+
+chrToType :: Char -> FmtType
+chrToType 'c' = FmtIntegral
+chrToType 'd' = FmtIntegral
+chrToType 'o' = FmtIntegral
+chrToType 'x' = FmtIntegral
+chrToType 'X' = FmtIntegral
+chrToType 'b' = FmtIntegral
+chrToType 'u' = FmtIntegral
+chrToType 'f' = FmtFloat
+chrToType 'F' = FmtFloat
+chrToType 'g' = FmtFloat
+chrToType 'G' = FmtFloat
+chrToType 'e' = FmtFloat
+chrToType 'E' = FmtFloat
+chrToType 's' = FmtString
+chrToType  _  = FmtOther
+
+instance PrintfArg Slaw where
+  formatArg s fFmt =
+    let t    = chrToType $ fmtChar fFmt
+        fFmr = fmtSlaw s t
+    in fFmr fFmt
+
+fmtErr :: Slaw -> FieldFormatter
+fmtErr (SlawError msg _) _    = perror msg
+fmtErr s                 fFmt =
+  let c   = fmtChar fFmt
+      msg = concat [ "Can't format "
+                   , describeSlaw s
+                   , " as "
+                   , show c
+                   ]
+  in perror msg
+
+fmtSlaw :: Slaw -> FmtType -> FieldFormatter
+fmtSlaw (SlawBool   b) FmtIntegral  = formatInteger $ fromBool b
+fmtSlaw (SlawBool   b) _            = formatString  $ show     b
+fmtSlaw SlawNil        _            = formatString  "Nil"
+fmtSlaw (SlawSymbol n) _            = formatInt     n
+fmtSlaw (SlawString u) t            = fmtStr (fromUtf8 u) t
+fmtSlaw (SlawCons car cdr) FmtFloat = fmtRat        car cdr
+fmtSlaw (SlawNumeric f d)  FmtFloat = fmtNumAsFlt   f   d
+fmtSlaw (SlawNumeric f d)  _        = fmtNum        f   d
+fmtSlaw s                  _        = fmtErr        s
+
+fmtStr :: String -> FmtType -> FieldFormatter
+fmtStr s FmtIntegral
+  | n /= Nothing = formatInteger $ fromJust n
+  where n = readMaybe s
+fmtStr s FmtFloat
+  | n /= Nothing = fmtDouble $ fromJust n
+  where n = readMaybe s
+fmtStr s _ = formatString s
+
+fmtRat :: Slaw -> Slaw -> FieldFormatter
+fmtRat car cdr =
+  case (slawToInteger car, slawToInteger cdr) of
+    (Just num, Just den) ->
+      let rat  = num % den
+          rFlt = fromRational rat
+      in fmtDouble rFlt
+    _ -> fmtErr $ SlawCons car cdr
+
+slawToInteger :: Slaw -> Maybe Integer
+slawToInteger (SlawString utf8) = readMaybe $ fromUtf8 utf8
+slawToInteger (SlawNumeric _ nd) =
+  fnd2 vecToInteger (const Nothing) nd
+slawToInteger _ = Nothing
+
+vecToInteger
+  :: (Integral a, Storable a)
+  => S.Vector a
+  -> Maybe Integer
+vecToInteger v
+  | S.length v == 1 = fmap toInteger (v S.!? 0)
+  | otherwise       = Nothing
+
+fmtNum :: NumericFormat -> NumericData -> FieldFormatter
+fmtNum nf nd =
+  case fnd2 vecToIntFmt vecToFloatFmt nd of
+    Just ff -> ff
+    Nothing -> fmtErr $ SlawNumeric nf nd
+
+fmtNumAsFlt :: NumericFormat -> NumericData -> FieldFormatter
+fmtNumAsFlt nf nd =
+  case fnd2 intVecToFloatFmt vecToFloatFmt nd of
+    Just ff -> ff
+    Nothing -> fmtErr $ SlawNumeric nf nd
+
+vecToIntFmt
+  :: (Integral a, Bounded a, Storable a)
+  => S.Vector a
+  -> Maybe FieldFormatter
+vecToIntFmt v
+  | S.length v == 1 = fmap formatInt (v S.!? 0)
+  | otherwise       = Nothing
+
+vecToFloatFmt
+  :: (RealFloat a, Storable a)
+  => S.Vector a
+  -> Maybe FieldFormatter
+vecToFloatFmt v
+  | S.length v == 1 = fmap formatRealFloat (v S.!? 0)
+  | otherwise       = Nothing
+
+intVecToFloatFmt
+  :: (Integral a, Bounded a, Storable a)
+  => S.Vector a
+  -> Maybe FieldFormatter
+intVecToFloatFmt v
+  | S.length v == 1 = fmap (fmtDouble . fromIntegral) (v S.!? 0)
+  | otherwise       = Nothing
+
+fmtDouble :: Double -> FieldFormatter
+fmtDouble = formatRealFloat
+
+-- Similar to fromNumericData2 in Helpers.hs-template
+-- (to avoid dependency problem)
+
+fnd2 :: (forall a. ( Integral a
+                   , Bounded  a
+                   , Storable a
+                   ) => S.Vector a -> c)
+        -- ^ mapping function for integers
+     -> (forall b. ( RealFloat b
+                   , Storable  b
+                   ) => S.Vector b -> c)
+        -- ^ mapping function for floating point
+     -> NumericData
+        -- ^ data to operate on
+     -> c
+--FOR sizedInt
+fnd2 func _ (NumNAMEXXX v) = func v
+--FOR floating
+fnd2 _ func (NumNAMEXXX v) = func v
+--END
