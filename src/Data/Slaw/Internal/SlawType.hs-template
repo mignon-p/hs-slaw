@@ -802,15 +802,23 @@ fmtErrMsg msg1 fFmt =
   in perror msg
 
 fmtSlaw :: Slaw -> FmtType -> FieldFormatter
-fmtSlaw (SlawBool   b) FmtIntegral  = formatInteger $ fromBool b
-fmtSlaw (SlawBool   b) _            = formatString  $ show     b
-fmtSlaw SlawNil        _            = formatString  "Nil"
-fmtSlaw (SlawSymbol n) _            = formatInt     n
-fmtSlaw (SlawString u) t            = fmtStr (fromUtf8 u) t
-fmtSlaw (SlawCons car cdr) _        = fmtRat        car cdr
-fmtSlaw (SlawNumeric f d)  FmtFloat = fmtNumAsFlt   f   d
-fmtSlaw (SlawNumeric f d)  _        = fmtNum        f   d
-fmtSlaw s                  _        = fmtErr        s
+fmtSlaw (SlawBool   b) FmtIntegral   = fmtBoolAsInt       b
+fmtSlaw (SlawBool   b) _             = formatString (show b)
+fmtSlaw SlawNil        _             = formatString "Nil"
+fmtSlaw (SlawSymbol n) _             = formatInt    n
+fmtSlaw (SlawString u) t             = fmtStr (fromUtf8 u) t
+fmtSlaw (SlawCons car cdr) _         = fmtRat       car cdr
+fmtSlaw (SlawNumeric f d)  FmtFloat  = fmtNumAsFlt  f   d
+fmtSlaw (SlawNumeric f d)  FmtString = fmtNumAsStr  f   d
+fmtSlaw (SlawNumeric f d)  _         = fmtNum       f   d
+fmtSlaw s                  _         = fmtErr       s
+
+fmtBoolAsInt :: Bool -> FieldFormatter
+fmtBoolAsInt b fFmt =
+  case (fmtChar fFmt, b) of
+    ('c', False) -> formatChar    'F'          fFmt
+    ('c', True)  -> formatChar    'T'          fFmt
+    _            -> formatInteger (fromBool b) fFmt
 
 fmtStr :: String -> FmtType -> FieldFormatter
 fmtStr s FmtIntegral
@@ -863,6 +871,12 @@ fmtNumAsFlt nf nd =
     Just ff -> ff
     Nothing -> fmtErr $ SlawNumeric nf nd
 
+fmtNumAsStr :: NumericFormat -> NumericData -> FieldFormatter
+fmtNumAsStr nf nd =
+  case fnd2 vecToStrFmt vecToStrFmt nd of
+    Just ff -> ff
+    Nothing -> fmtErr $ SlawNumeric nf nd
+
 vecToIntFmt
   :: (Integral a, Bounded a, Storable a)
   => S.Vector a
@@ -887,6 +901,14 @@ intVecToFloatFmt v
   | S.length v == 1 = fmap (fmtDouble . fromIntegral) (v S.!? 0)
   | otherwise       = Nothing
 
+vecToStrFmt
+  :: (Storable a, Show a)
+  => S.Vector a
+  -> Maybe FieldFormatter
+vecToStrFmt v
+  | S.length v == 1 = fmap (formatString . show) (v S.!? 0)
+  | otherwise       = Nothing
+
 fmtDouble :: Double -> FieldFormatter
 fmtDouble = formatRealFloat
 
@@ -896,10 +918,12 @@ fmtDouble = formatRealFloat
 fnd2 :: (forall a. ( Integral a
                    , Bounded  a
                    , Storable a
+                   , Show     a
                    ) => S.Vector a -> c)
         -- ^ mapping function for integers
      -> (forall b. ( RealFloat b
                    , Storable  b
+                   , Show      b
                    ) => S.Vector b -> c)
         -- ^ mapping function for floating point
      -> NumericData
