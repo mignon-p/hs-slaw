@@ -788,11 +788,14 @@ instance PrintfArg Slaw where
     in fFmr fFmt
 
 fmtErr :: Slaw -> FieldFormatter
-fmtErr (SlawError msg _) _    = perror msg
-fmtErr s                 fFmt =
+fmtErr (SlawError msg _) = perror msg
+fmtErr s                 = fmtErrMsg (describeSlaw s)
+
+fmtErrMsg :: String -> FieldFormatter
+fmtErrMsg msg1 fFmt =
   let c   = fmtChar fFmt
       msg = concat [ "Can't format "
-                   , describeSlaw s
+                   , msg1
                    , " as "
                    , show c
                    ]
@@ -804,7 +807,7 @@ fmtSlaw (SlawBool   b) _            = formatString  $ show     b
 fmtSlaw SlawNil        _            = formatString  "Nil"
 fmtSlaw (SlawSymbol n) _            = formatInt     n
 fmtSlaw (SlawString u) t            = fmtStr (fromUtf8 u) t
-fmtSlaw (SlawCons car cdr) FmtFloat = fmtRat        car cdr
+fmtSlaw (SlawCons car cdr) _        = fmtRat        car cdr
 fmtSlaw (SlawNumeric f d)  FmtFloat = fmtNumAsFlt   f   d
 fmtSlaw (SlawNumeric f d)  _        = fmtNum        f   d
 fmtSlaw s                  _        = fmtErr        s
@@ -825,7 +828,14 @@ fmtRat car cdr =
       let rat  = num % den
           rFlt = fromRational rat
       in fmtDouble rFlt
-    _ -> fmtErr $ SlawCons car cdr
+    _ ->
+      let msg = concat [ "cons ("
+                       , describeSlaw car
+                       , ", "
+                       , describeSlaw cdr
+                       , ")"
+                       ]
+      in fmtErrMsg msg
 
 slawToInteger :: Slaw -> Maybe Integer
 slawToInteger (SlawString utf8) = readMaybe $ fromUtf8 utf8
