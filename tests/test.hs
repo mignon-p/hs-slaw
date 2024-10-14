@@ -25,7 +25,7 @@ import qualified Data.Vector              as V
 import qualified Data.Vector.Storable     as S
 import Data.Word
 import Foreign.Storable
--- import Numeric.Half
+import Numeric.Half
 -- import System.Directory
 import System.Environment
 -- import System.IO
@@ -33,6 +33,7 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import qualified Test.Tasty.QuickCheck    as QC
 import qualified Test.QuickCheck.Monadic  as QC
+import Text.Printf
 
 import Data.Slaw
 import Data.Slaw.IO
@@ -98,6 +99,7 @@ unitTests = testGroup "HUnit tests"
   , testCase "slaw-monoid"                $ testSlawMonoid
   , testCase "slaw-map"                   $ testSlawMap
   , testCase "slaw-io"                    $ testSlawIO
+  , testCase "slaw-printf"                $ testSlawPrintf
   ]
 
 rtIoProp :: ByteOrder -> Slaw -> QC.Property
@@ -509,3 +511,27 @@ testSlawIO = do
   checkSlawWrite cle cProt LittleEndian
   checkSlawRead  cbe cProt
   checkSlawWrite cbe cProt BigEndian
+
+testSlawPrintf :: Assertion
+testSlawPrintf = do
+  let num = 3 :: Word8
+      den = 4 :: Word8
+
+  asStr "True"              @=? printf "%s"   (SlawBool True)
+  asStr "1"                 @=? printf "%u"   (SlawBool True)
+  asStr "True"              @=? printf "%v"   (SlawBool True)
+  asStr "hello"             @=? printf "%v"   ("hello" :: Slaw)
+  asStr "hell"              @=? printf "%.4s" ("hello" :: Slaw)
+  asStr "Nil"               @=? printf "%s"   SlawNil
+  asStr "8675309"           @=? printf "%d"   (SlawSymbol 8675309)
+  asStr "0.75"              @=? printf "%v"   (SlawCons (š num) (š den))
+  asStr "3.141592653589793" @=? printf "%v"   (š (pi :: Double))
+  asStr "3.1415927"         @=? printf "%v"   (š (pi :: Float))
+  asStr "3.14"              @=? printf "%v"   (š (pi :: Half))
+  asStr "004"               @=? printf "%03u" (š den)
+  asStr "3"                 @=? printf "%s"   (š num)
+  asStr "T"                 @=? printf "%c"   (SlawBool True)
+  asStr "defacedbadfacade"  @=? printf "%x"   ("16067382063509719774" :: Slaw)
+
+asStr :: String -> String
+asStr = id
