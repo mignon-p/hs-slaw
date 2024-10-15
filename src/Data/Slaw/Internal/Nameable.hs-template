@@ -46,7 +46,9 @@ import Numeric.Natural
 -- import System.IO.Unsafe (unsafePerformIO)
 -- import Text.Read
 
+import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.SlawType
+import Data.Slaw.Internal.Util
 import Data.Slaw.Internal.VectorTypes
 
 -- | Typeclass to get the name of a type.
@@ -81,7 +83,15 @@ instance Nameable L.ByteString where
 instance Nameable SBS.ShortByteString where
   typeName _ = "ShortByteString"
 
---FORSTR (), Bool, Slaw, Char, Integer, Natural
+--FORSTR (), Bool, Slaw, Char, Integer, Natural, ByteOrder, Retort
+instance Nameable STR where
+  typeName _ = "STR"
+
+--END
+
+           -- Nameable instance for exception-related types --
+
+--FORSTR DataSource, ErrLocation, PlasmaException, PlasmaExceptionType
 instance Nameable STR where
   typeName _ = "STR"
 
@@ -89,7 +99,7 @@ instance Nameable STR where
 
                   -- Nameable instances for FFI types --
 
---FORSTR CChar, CSChar,   CUChar,     CWchar
+--FORSTR CChar, CSChar, CUChar, CWchar, CFloat, CDouble
 instance Nameable STR where
   typeName _ = "STR"
 
