@@ -8,14 +8,16 @@ Portability : GHC
 -}
 
 module Data.Slaw.Util
-  ( -- * Typeclasses for strings and bytestrings
+  ( -- * Useful typeclasses
     TextClass(..)
   , ByteStringClass(..)
+  , Merge(..)
     -- * Handy operators
   , (##)
   , (??)
   , (?>)
   ) where
 
+import Data.Slaw.Internal.Merge
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util

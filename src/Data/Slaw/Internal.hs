@@ -25,6 +25,8 @@ module Data.Slaw.Internal
   , orList
   , showEscapedStr
   , lcAscii8
+  , prefLeftAsSlaw
+  , prefRightAsSlaw
     -- * Printf
   , FmtType(..)
   , chrToType
@@ -63,6 +65,7 @@ import Data.Slaw.Internal.EnumStrings
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.FileClass
 -- import Data.Slaw.Internal.Helpers
+import Data.Slaw.Internal.Merge
 -- import Data.Slaw.Internal.Nameable
 -- import Data.Slaw.Internal.NumericConvert
 -- import Data.Slaw.Internal.OptionRecords

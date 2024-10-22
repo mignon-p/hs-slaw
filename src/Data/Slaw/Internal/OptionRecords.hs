@@ -18,6 +18,7 @@ import Data.Default.Class
 import Data.Hashable
 import GHC.Generics (Generic)
 
+import Data.Slaw.Internal.Merge
 import Data.Slaw.Internal.Nameable
 import Data.Slaw.Internal.OptionTypes
 import Data.Slaw.Internal.SlawConvert
@@ -71,6 +72,10 @@ instance FromSlaw WriteBinaryOptions where
 
 instance ToSlaw WriteBinaryOptions where
   toSlaw = recordToMapWithFmt writeBinaryOptions BinaryFile
+
+instance Merge WriteBinaryOptions where
+  prefLeft  = prefLeftAsSlaw
+  prefRight = prefRightAsSlaw
 
 writeBinaryOptions :: Options WriteBinaryOptions
 writeBinaryOptions =
