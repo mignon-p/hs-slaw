@@ -39,6 +39,7 @@ import Data.Slaw
 import Data.Slaw.IO
 import Data.Slaw.Path
 import Data.Slaw.Semantic
+import Data.Slaw.Util
 
 import Comprehensive
 import SlawInstances ()
@@ -100,6 +101,7 @@ unitTests = testGroup "HUnit tests"
   , testCase "slaw-map"                   $ testSlawMap
   , testCase "slaw-io"                    $ testSlawIO
   , testCase "slaw-printf"                $ testSlawPrintf
+  , testCase "Merge typeclass"            $ testMerge
   ]
 
 rtIoProp :: ByteOrder -> Slaw -> QC.Property
@@ -535,3 +537,34 @@ testSlawPrintf = do
 
 asStr :: String -> String
 asStr = id
+
+testMerge :: Assertion
+testMerge = do
+  let nuthin' = Nothing :: Maybe Char
+
+  Just 'x' @=? (Just 'x' `prefLeft`  Just 'y')
+  Just 'y' @=? (Just 'x' `prefRight` Just 'y')
+  Just 'x' @=? (Just 'x' `prefLeft`  Nothing)
+  Just 'x' @=? (Just 'x' `prefRight` Nothing)
+  Just 'y' @=? (Nothing  `prefLeft`  Just 'y')
+  Just 'y' @=? (Nothing  `prefRight` Just 'y')
+  nuthin'  @=? (Nothing  `prefLeft`  Nothing)
+  nuthin'  @=? (Nothing  `prefRight` Nothing)
+
+  let m1  = SlawMap [ ("foo", 1)
+                    , ("bar", 2)
+                    ]
+      m2  = SlawMap [ ("bar", 3)
+                    , ("baz", 4)
+                    ]
+      mLt = SlawMap [ ("foo", 1)
+                    , ("bar", 2)
+                    , ("baz", 4)
+                    ]
+      mRt = SlawMap [ ("foo", 1)
+                    , ("bar", 3)
+                    , ("baz", 4)
+                    ]
+
+  mLt @=? (m1 `prefLeft`  m2)
+  mRt @=? (m1 `prefRight` m2)
