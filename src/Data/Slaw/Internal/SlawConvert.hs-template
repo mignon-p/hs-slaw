@@ -14,12 +14,20 @@ Portability : GHC
 module Data.Slaw.Internal.SlawConvert
   ( FromSlaw(..)
   , ToSlaw(..)
+    --
   , š
+  , šs
+  , št
+  , ši
+  , šd
+    --
   , ŝ
+  , ŝi
   , ŝm
   , ŝes
   , ŝee
   , (?:)
+    --
   , handleOthers
   , Protein(..)
   ) where
@@ -92,6 +100,26 @@ class ToSlaw a where
 š :: ToSlaw a => a -> Slaw
 š = toSlaw
 
+-- | “to slaw, from String”
+{-# INLINE šs #-}
+šs :: String -> Slaw
+šs = toSlaw
+
+-- | “to slaw, from Text”
+{-# INLINE št #-}
+št :: T.Text -> Slaw
+št = toSlaw
+
+-- | “to slaw, from Integer”
+{-# INLINE ši #-}
+ši :: Integer -> Slaw
+ši = toSlaw
+
+-- | “to slaw, from Double”
+{-# INLINE šd #-}
+šd :: Double -> Slaw
+šd = toSlaw
+
 -- | “from slaw” because arrow points away from “s”.
 --
 -- Throws a 'PlasmaException' if conversion fails.
@@ -101,6 +129,16 @@ class ToSlaw a where
         Left exc ->
           throw $ exc { peCallstack = Just callStack }
         Right x  -> x
+
+-- | “from slaw, in IO monad”
+--
+-- Throws a 'PlasmaException' in IO monad if conversion fails.
+{-# INLINABLE ŝi #-}
+ŝi :: (HasCallStack, FromSlaw a) => Slaw -> IO a
+ŝi s = case fromSlaw s of
+        Left exc ->
+          throwIO $ exc { peCallstack = Just callStack }
+        Right x  -> return x
 
 -- | “from slaw, maybe”
 --

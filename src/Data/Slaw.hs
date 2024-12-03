@@ -29,8 +29,24 @@ module Data.Slaw
     -- Unicode characters are used to give these very short names.
     -- @š@ (arrow points towards the @s@) means “to slaw”, while
     -- @ŝ@ (arrow points away from the @s@) means “from slaw”.
+    --
+    -- *** Conversion to 'Slaw'
   , š
+    -- **** Converstion to 'Slaw' from specific types.
+    --
+    -- | These are all synonyms for 'toSlaw'.  However, they take
+    -- a specific type, rather than the 'ToSlaw' typeclass.
+    -- This can be handy with overloaded literals, or other cases
+    -- where the type is not fully specified, to force it to a
+    -- particular type, with a notation that is more compact than
+    -- adding a type annotation.
+  , šs
+  , št
+  , ši
+  , šd
+    -- *** Conversion from 'Slaw'
   , ŝ
+  , ŝi
   , ŝm
   , ŝes
   , ŝee
