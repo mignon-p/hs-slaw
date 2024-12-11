@@ -7,7 +7,7 @@ Maintainer  : code@funwithsoftware.org
 Portability : GHC
 -}
 
-{-# OPTIONS_HADDOCK not-home            #-}
+{-# OPTIONS_HADDOCK hide                #-}
 
 module Data.Slaw.Internal
   ( -- * Strings

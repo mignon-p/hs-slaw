@@ -22,12 +22,15 @@ import Data.Slaw.Internal.SlawConvert
 import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.Util
 
+-- | A typeclass for datatypes which can be “merged” (i. e. union).
 class Merge a where
   {-# MINIMAL (prefLeft | prefRight) #-}
 
+  -- | Merge two things, preferring the first one if they conflict.
   prefLeft :: a -> a -> a
   prefLeft = flip prefRight
 
+  -- | Merge two things, preferring the second one if they conflict.
   prefRight :: a -> a -> a
   prefRight = flip prefLeft
 

@@ -5,6 +5,8 @@ Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org
 Portability : GHC
+
+Some handy stuff that's not directly related to slaw.
 -}
 
 module Data.Slaw.Util

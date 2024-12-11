@@ -5,6 +5,10 @@ Copyright   : © Mignon Pelletier, 2024
 License     : MIT
 Maintainer  : code@funwithsoftware.org
 Portability : GHC
+
+Slawx (the plural of “slaw”) are general-purpose, self-describing data
+structures, which can be marshaled to and from a stable, binary
+representation.
 -}
 
 module Data.Slaw
@@ -29,7 +33,7 @@ module Data.Slaw
     -- Unicode characters are used to give these very short names.
     -- @š@ (arrow points towards the @s@) means “to slaw”, while
     -- @ŝ@ (arrow points away from the @s@) means “from slaw”.
-    --
+
     -- *** Conversion to 'Slaw'
   , š
     -- **** Converstion to 'Slaw' from specific types.

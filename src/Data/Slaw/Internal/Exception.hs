@@ -114,11 +114,17 @@ displayMaybeErrLocation sep (Just loc)                          =
 -- The 'Eq', 'Ord', and 'Hashable' instances only take
 -- 'peType', 'peRetort', and 'peMessage' into account.
 data PlasmaException = PlasmaException
-  { peType      :: !PlasmaExceptionType
-  , peRetort    :: Maybe Retort -- ^ error code from @libPlasma/c@
+  { -- | General category that the exception falls into.
+    peType      :: !PlasmaExceptionType
+    -- | Error code from @libPlasma/c@.
+  , peRetort    :: Maybe Retort
+    -- | Error message.
   , peMessage   :: String
-  , peCallstack :: Maybe CallStack   -- ^ location of code
-  , peLocation  :: Maybe ErrLocation -- ^ location of data
+    -- | Backtrace of the code that threw the exception.
+  , peCallstack :: Maybe CallStack
+    -- | Location within a file, pool, slaw, etc. where the
+    -- error was encountered.
+  , peLocation  :: Maybe ErrLocation
   } deriving (Show)
 
 instance Ord PlasmaException where
@@ -164,18 +170,32 @@ instance Default PlasmaException where
         }
 
 -- | The type of 'PlasmaException'.
-data PlasmaExceptionType = EtCorruptSlaw
-                         | EtTypeMismatch
-                         | EtRangeError
-                         | EtInvalidArgument
-                         | EtValidationError
-                         | EtUnicodeError
-                         | EtNotFound
-                         | EtSlawIO
-                         | EtPools
-                         | EtOther
-                         deriving (Eq, Ord, Show, Read, Bounded, Enum,
-                                   Generic, NFData, Hashable)
+data PlasmaExceptionType =
+    -- | An error occurred when decoding a slaw from binary data.
+    EtCorruptSlaw
+    -- | Was expecting a slaw of a certain type, but got another
+    -- type instead.
+  | EtTypeMismatch
+    -- | Something was out of range, such as an integer which
+    -- cannot be represented in a given type.
+  | EtRangeError
+    -- | An argument had an unacceptable value.
+  | EtInvalidArgument
+    -- | The given slaw did not meet criteria in 'Data.Slaw.validateSlaw'.
+  | EtValidationError
+    -- | Unicode encoding error (probably invalid UTF-8).
+  | EtUnicodeError
+    -- | Something that was requested could not be found.
+  | EtNotFound
+    -- | An exception occurred when reading or writing slawx
+    -- to or from a file.
+  | EtSlawIO
+    -- | An exception occurred when accessing a pool.
+  | EtPools
+    -- | Something else happened.
+  | EtOther
+  deriving (Eq, Ord, Show, Read, Bounded, Enum,
+            Generic, NFData, Hashable)
 
 corruptSlaw :: String -> ErrLocation -> PlasmaException
 corruptSlaw msg loc = def { peType      = EtCorruptSlaw
