@@ -27,11 +27,12 @@ module Data.Slaw.Internal.FileClass
 
 import Control.Exception
 import Control.Monad
-import qualified Data.ByteString           as B
-import qualified Data.ByteString.Lazy      as L
+import qualified Data.ByteString               as B
+import qualified Data.ByteString.Lazy          as L
+import qualified Data.ByteString.Lazy.Internal as L
 import Data.IORef
 import Data.List
-import qualified System.File.OsPath        as F
+import qualified System.File.OsPath            as F
 import System.IO
 import System.IO.MMap
 import System.OsPath
@@ -60,6 +61,10 @@ class FileClass a where
   -- opens it for reading and returns a 'Handle'.
   fcOpenReadOrMap     :: a -> IO (Either B.ByteString HPair)
   fcOpenReadOrMap name = Right <$> fcOpenRead name
+
+  -- | Reads the entire file into a lazy 'L.ByteString'.
+  fcReadAsLBS         :: a -> IO L.ByteString
+  fcReadAsLBS          = defaultReadAsLBS
 
 instance FileClass FilePath where
   fcName           = id
@@ -128,6 +133,25 @@ nameFromHandle h =
   in if pfx `isPrefixOf` hname && sfx `isSuffixOf` hname
      then take nameLen $ drop pfxLen hname
      else hname
+
+--
+
+defaultReadAsLBS :: FileClass a => a -> IO L.ByteString
+defaultReadAsLBS fc = do
+  eth <- fcOpenReadOrMap fc
+  case eth of
+    Left bs          -> return $ L.fromStrict bs
+    Right (h, True)  -> L.hGetContents h
+    Right (h, False) -> do
+      chunks <- readChunks h L.smallChunkSize []
+      return $ L.fromChunks chunks
+
+readChunks :: Handle -> Int -> [B.ByteString] -> IO [B.ByteString]
+readChunks h chunkSize revChunks = do
+  bs <- B.hGet h chunkSize
+  if B.null bs
+    then return $ reverse revChunks
+    else readChunks h L.defaultChunkSize $ bs : revChunks
 
 --
 
