@@ -56,14 +56,16 @@ data Input = Input
   , iBo  ::                !ByteOrder
   }
 
+newtype ELo = ELo { unELo :: ErrLocation }
+
 class IsLocation a where
   getLocation :: a -> ErrLocation
 
 instance IsLocation Input where
   getLocation inp = ErrLocation (iSrc inp) (Just $ iOff inp)
 
-instance IsLocation ErrLocation where
-  getLocation = id
+instance IsLocation ELo where
+  getLocation = unELo
 
 makeInput :: HasCallStack => ByteOrder -> String -> L.ByteString -> Input
 makeInput bo what lbs = Input { iLbs = lbs
@@ -93,8 +95,8 @@ addLoc ilo s = (s, getLocation ilo)
 -- If they want to signal an error in the header oct itself, use
 -- this function, which indicates an error one oct before the
 -- current position of the Input.  (Yeah, this is a bit ugly.)
-prev :: IsLocation a => a -> ErrLocation
-prev ilo = loc { elOffset = fmap f (elOffset loc) }
+prev :: IsLocation a => a -> ELo
+prev ilo = ELo $ loc { elOffset = fmap f (elOffset loc) }
   where loc = getLocation ilo
         f x = x - 8
 
