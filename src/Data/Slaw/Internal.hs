@@ -33,8 +33,6 @@ module Data.Slaw.Internal
     -- * IO
   , SlawInputStream(..)
   , SlawOutputStream(..)
-  , FileClass(..)
-  , HPair
   , readAllSlawx
   , fileMagic
   , openBinarySlawInput1

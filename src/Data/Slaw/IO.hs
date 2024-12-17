@@ -50,8 +50,9 @@ module Data.Slaw.IO
   , pbo2bo
   , AutoFlush(..)
     -- * File-related types
-  , FileClass
+  , FileClass(..)
   , NoClose(..)
+  , HPair
   ) where
 
 import System.OsPath (OsPath)
