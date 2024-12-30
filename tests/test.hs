@@ -151,9 +151,9 @@ exampleSlawx =
   [ š (5 :: Word64)
   , š ("stuff" :: String, (-3) :: Int8)
   , š (V4 0 0 0 (0 :: Float))
-  , mySlaw ! "pair"
+  , mySlaw !: "pair"
   , slawPath fv mySlaw "descrips"
-  , mySlaw ! "vaults/33/neighbors"
+  , mySlaw !: "vaults/33/neighbors"
   ]
   where fv = def { spoProteinMode = PmFullyVisible }
 
@@ -189,42 +189,42 @@ testSlawPath = do
 
   Just (SlawNumeric nf nd) @=? sp "rude"
 
-  jstr "fake"      @=? mySlaw !? "vaults/31/status"
-  jstr "destroyed" @=? mySlaw !? "vaults/32/statUs"
-  jstr "good"      @=? mySlaw !? "vauLts/33/status"
+  jstr "fake"      @=? mySlaw !:? "vaults/31/status"
+  jstr "destroyed" @=? mySlaw !:? "vaults/32/statUs"
+  jstr "good"      @=? mySlaw !:? "vauLts/33/status"
 
-  Just (32 :: Int) @=? mySlaw !? "vaults/31/neighbors/0"
-  Just (33 :: Int) @=? mySlaw !? "vaults/31/neighbors/1"
+  Just (32 :: Int) @=? mySlaw !:? "vaults/31/neighbors/0"
+  Just (33 :: Int) @=? mySlaw !:? "vaults/31/neighbors/1"
 
-  Just (31 :: Int) @=? mySlaw !? "vaults/32/neighbors/0"
-  Just (33 :: Int) @=? mySlaw !? "vaults/32/neighbors/1"
+  Just (31 :: Int) @=? mySlaw !:? "vaults/32/neighbors/0"
+  Just (33 :: Int) @=? mySlaw !:? "vaults/32/neighbors/1"
 
-  Just (31 :: Int) @=? mySlaw !? "vaults/33/neighbors/0"
-  Just (32 :: Int) @=? mySlaw !? "vaults/33/neighbors/1"
+  Just (31 :: Int) @=? mySlaw !:? "vaults/33/neighbors/0"
+  Just (32 :: Int) @=? mySlaw !:? "vaults/33/neighbors/1"
 
-  Just (1 :: Double) @=? mySlaw !? "vectors/0/x/re"
-  Just (2 :: Double) @=? mySlaw !? "vectors/0/X/im"
-  Just (3 :: Double) @=? mySlaw !? "vectors/0/y/re"
-  Just (4 :: Double) @=? mySlaw !? "vectors/0/y/im"
-  Just (5 :: Double) @=? mySlaw !? "vectors/0/Z/re"
-  Just (6 :: Double) @=? mySlaw !? "vectors/0/z/im"
-  Just (7 :: Double) @=? mySlaw !? "vectors/0/w/re"
-  Just (8 :: Double) @=? mySlaw !? "vectors/0/w/im"
+  Just (1 :: Double) @=? mySlaw !:? "vectors/0/x/re"
+  Just (2 :: Double) @=? mySlaw !:? "vectors/0/X/im"
+  Just (3 :: Double) @=? mySlaw !:? "vectors/0/y/re"
+  Just (4 :: Double) @=? mySlaw !:? "vectors/0/y/im"
+  Just (5 :: Double) @=? mySlaw !:? "vectors/0/Z/re"
+  Just (6 :: Double) @=? mySlaw !:? "vectors/0/z/im"
+  Just (7 :: Double) @=? mySlaw !:? "vectors/0/w/re"
+  Just (8 :: Double) @=? mySlaw !:? "vectors/0/w/im"
 
-  Semantic 9 @=? Semantic (mySlaw ! "vectors/1/x/re")
-  Semantic 8 @=? Semantic (mySlaw ! "vectors/1/x/im")
-  Semantic 7 @=? Semantic (mySlaw ! "vectors/1/y/RE")
-  Semantic 6 @=? Semantic (mySlaw ! "vectors/1/y/im")
-  Semantic 5 @=? Semantic (mySlaw ! "vectors/1/z/re")
-  Semantic 4 @=? Semantic (mySlaw ! "vectors/1/z/IM")
-  Semantic 3 @=? Semantic (mySlaw ! "vectors/1/w/re")
-  Semantic 2 @=? Semantic (mySlaw ! "Vectors/1/w/im")
+  Semantic 9 @=? Semantic (mySlaw !: "vectors/1/x/re")
+  Semantic 8 @=? Semantic (mySlaw !: "vectors/1/x/im")
+  Semantic 7 @=? Semantic (mySlaw !: "vectors/1/y/RE")
+  Semantic 6 @=? Semantic (mySlaw !: "vectors/1/y/im")
+  Semantic 5 @=? Semantic (mySlaw !: "vectors/1/z/re")
+  Semantic 4 @=? Semantic (mySlaw !: "vectors/1/z/IM")
+  Semantic 3 @=? Semantic (mySlaw !: "vectors/1/w/re")
+  Semantic 2 @=? Semantic (mySlaw !: "Vectors/1/w/im")
 
-  (Nothing :: Maybe Double) @=? mySlaw !? "vectors/0/w/banana"
-  Just (14 :: Double)       @=? mySlaw !? "vectors/-1/-1/0"
+  (Nothing :: Maybe Double) @=? mySlaw !:? "vectors/0/w/banana"
+  Just (14 :: Double)       @=? mySlaw !:? "vectors/-1/-1/0"
 
-  SemanticCI "FOO" @=? SemanticCI (mySlaw ! "pair/0")
-  SemanticCI "bAr" @=? SemanticCI (mySlaw ! "Pair/1")
+  SemanticCI "FOO" @=? SemanticCI (mySlaw !: "pair/0")
+  SemanticCI "bAr" @=? SemanticCI (mySlaw !: "Pair/1")
 
 testSlawConvert :: Assertion
 testSlawConvert = do

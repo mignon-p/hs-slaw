@@ -75,8 +75,8 @@ module Data.Slaw.Path
     --
     -- | These use the default 'SlawPathOpts'.  ('PmUseIngests',
     -- and case-insensitive comparison.)
-  , (!)
-  , (!?)
+  , (!:)
+  , (!:?)
   ) where
 
 import Data.Slaw ( Slaw(..)

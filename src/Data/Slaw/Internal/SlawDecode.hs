@@ -45,7 +45,6 @@ import Data.Slaw.Internal.Util
 -- import Data.Slaw.Internal.VectorConvert
 
 infix 5 //
-infix 5 !?
 
 type Special = B.ByteString
 
@@ -127,8 +126,8 @@ getNib o = toEnum $ fromIntegral $ o `shiftR` 60
 getNib8 :: Word8 -> Nib
 getNib8 o = toEnum $ fromIntegral $ o `shiftR` 4
 
-(!?) :: Input -> Word64 -> Either ErrPair Word8
-inp !? idx =
+fetchByte :: Input -> Word64 -> Either ErrPair Word8
+fetchByte inp idx =
   let lbs  = iLbs inp
       idx' = fromIntegral idx
   in case lbs L.!? idx' of
@@ -226,8 +225,8 @@ decodeProtein1 inp = setProteinEndian inp >>= decodeSlaw1
 
 setProteinEndian :: Input -> Either ErrPair Input
 setProteinEndian inp = do
-  byte0  <- inp !? 0
-  byte7  <- inp !? 7
+  byte0  <- inp `fetchByte` 0
+  byte7  <- inp `fetchByte` 7
   bo     <- case (getNib8 byte0, getNib8 byte7) of
               (NibSwappedProtein, NibProtein) -> return LittleEndian
               (NibProtein, NibSwappedProtein) -> return BigEndian

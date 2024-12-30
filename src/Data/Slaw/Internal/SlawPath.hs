@@ -14,8 +14,8 @@ module Data.Slaw.Internal.SlawPath
   , slawPath_m
   , slawPath_es
   , slawPath_ee
-  , (!)
-  , (!?)
+  , (!:)
+  , (!:?)
   ) where
 
 import Control.DeepSeq
@@ -39,8 +39,8 @@ import Data.Slaw.Internal.SlawType
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
 
-infixl 9 !
-infixl 9 !?
+infixl 9 !:
+infixl 9 !:?
 
 -- | Specifies how proteins are to be handled, when they
 -- are encountered.
@@ -63,8 +63,8 @@ instance Default SlawPathOpts where
 -- | Retrieve a path from a given 'Slaw', using default options.
 -- If path is not found, throws an exception.
 -- Converts the result to any instance of 'FromSlaw'.
-(!) :: (HasCallStack, FromSlaw a) => Slaw -> T.Text -> a
-(!) s path =
+(!:) :: (HasCallStack, FromSlaw a) => Slaw -> T.Text -> a
+(!:) s path =
   case slawPathCvt s path of
     Left exc -> throw $ exc { peCallstack = Just callStack }
     Right x  -> x
@@ -72,8 +72,8 @@ instance Default SlawPathOpts where
 -- | Retrieve a path from a given 'Slaw', using default options.
 -- If path is not found, returns 'Nothing'.
 -- Converts the result to any instance of 'FromSlaw'.
-(!?) :: FromSlaw a => Slaw -> T.Text -> Maybe a
-s !? path = eth2mby $ slawPathCvt s path
+(!:?) :: FromSlaw a => Slaw -> T.Text -> Maybe a
+(!:?) s path = eth2mby $ slawPathCvt s path
 
 slawPathCvt :: FromSlaw a
             => Slaw

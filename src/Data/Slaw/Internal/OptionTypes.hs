@@ -261,7 +261,7 @@ rfm1 !x (o:rest) s =
 rfm2 :: Slaw -> [T.Text] -> Maybe Slaw
 rfm2 _ [] = Nothing
 rfm2 s (name:rest) =
-  case s !? name of
+  case s !:? name of
     Nothing -> rfm2 s rest
     Just v  -> Just v
 
