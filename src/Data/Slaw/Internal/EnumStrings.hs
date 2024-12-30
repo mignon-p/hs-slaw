@@ -23,6 +23,7 @@ import qualified Data.ByteString.Char8    as B8
 import qualified Data.ByteString.Short    as SBS
 import qualified Data.HashMap.Strict      as HM
 import qualified Data.IntMap.Strict       as IM
+import Data.Maybe
 -- import Data.Word
 import GHC.Generics (Generic)
 
@@ -40,8 +41,11 @@ makeEnumStrings pairs = EnumStrings efs ets
         efs         = HM.fromList $ concatMap f pairs'
         f (strs, x) = map (g x) strs
         g x bs      = (SBS.pack $ map lcAscii8 $ B.unpack bs, x)
-        ets         = IM.fromList $ map h pairs'
-        h (strs, x) = (fromEnum x, head strs)
+        ets         = IM.fromList $ mapMaybe etsPair pairs'
+
+etsPair :: Enum a => ([B.ByteString], a) -> Maybe (Int, B.ByteString)
+etsPair (str1 : _, x) = Just (fromEnum x, str1)
+etsPair _             = Nothing
 
 stringToEnum :: ByteStringClass b => EnumStrings a -> b -> Maybe a
 stringToEnum es bs = HM.lookup k (esFromString es)

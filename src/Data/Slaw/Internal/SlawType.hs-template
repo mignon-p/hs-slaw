@@ -444,11 +444,11 @@ catNumeric nf nds = SlawNumeric nf' nd
     nf'         = nf { nfArray = True }
     pairs       = map (extractNumeric bo) nds
     (typs, bss) = unzip pairs
-    typ0        = head typs
-    sameType    = all (== typ0) typs
-    nd          = if sameType
-                  then restoreNumeric bo typ0 $ mconcat bss
-                  else listToNum $ concatMap numToList nds
+    nd          = case typs of
+                    (typ0:_)
+                      | all (== typ0) typs ->
+                          restoreNumeric bo typ0 $ mconcat bss
+                    _ ->  listToNum $ concatMap numToList nds
 
 extractNumeric :: ByteOrder -> NumericData -> (NumericType, B.ByteString)
 --FOR sizedInt, floating
