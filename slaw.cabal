@@ -13,10 +13,20 @@ name:                slaw
 version:             0.1.0.0
 
 -- A short (one-line) description of the package.
--- synopsis:
+synopsis:
+        Haskell implementation of slaw-v2 data serialization format
 
 -- A longer description of the package.
--- description:
+description:
+        This library is a pure-Haskell implementation of the
+        <https://purl.org/funwithsoftware/slaw-v2 slaw-v2>
+        data serialization format, whose canonical implementation
+        is in the C library
+        <https://purl.org/funwithsoftware/libPlasma libPlasma>.
+
+        For “pool” functionality, see the
+        <https://github.com/mignon-p/hs-plasma plasma> package,
+        which wraps the libPlasma C library.
 
 -- The license under which the package is released.
 license:             MIT
@@ -31,8 +41,12 @@ author:              Mignon Pelletier
 -- patches.
 maintainer:          code@funwithsoftware.org
 
+homepage:            https://github.com/mignon-p/hs-slaw
+
+bug-reports:         https://github.com/mignon-p/hs-slaw/issues
+
 -- A copyright notice.
--- copyright:
+copyright:           © Mignon Pelletier, 2024
 
 category:            Data
 
@@ -45,15 +59,17 @@ extra-source-files:  CHANGELOG.md
                    , doc/template.txt
                    , scripts/preprocess-template.pl
                    , stack.yaml
-                   , test-files/big-endian-protein-version2.slaw
-                   , test-files/comprehensive-BigEndian.slaw
-                   , test-files/comprehensive-LittleEndian.slaw
-                   , test-files/example.slaw
-                   , test-files/kp_enter.slaw
-                   , test-files/little-endian-protein-version2.slaw
+                   , test-files/*.slaw
 
 -- Constraint on the version of Cabal needed to build this package.
 cabal-version:       1.24
+
+tested-with:         GHC==8.6.5
+                   , GHC==9.8.4
+
+source-repository head
+  Type:     git
+  Location: https://github.com/mignon-p/hs-slaw.git
 
 
 custom-setup
