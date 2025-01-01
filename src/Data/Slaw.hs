@@ -36,7 +36,7 @@ module Data.Slaw
 
     -- *** Conversion to 'Slaw'
   , š
-    -- **** Converstion to 'Slaw' from specific types.
+    -- **** Conversion to 'Slaw' from specific types.
     --
     -- | These are all synonyms for 'toSlaw'.  However, they take
     -- a specific type, rather than the 'ToSlaw' typeclass.
