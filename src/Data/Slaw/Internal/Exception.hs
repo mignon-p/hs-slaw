@@ -39,6 +39,7 @@ module Data.Slaw.Internal.Exception
   , unicodeError1
   , notFoundErr
   , stdIndent
+  , tryPE
   ) where
 
 import Control.DeepSeq
@@ -319,3 +320,9 @@ notFoundErr msg = def { peType      = EtNotFound
 -- Currently, two spaces.
 stdIndent :: String
 stdIndent = "  "
+
+{-# INLINE tryPE #-}
+-- | This handy utility function is just 'try', but constrained
+-- to only work on 'PlasmaException'.
+tryPE :: IO a -> IO (Either PlasmaException a)
+tryPE = try

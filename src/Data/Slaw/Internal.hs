@@ -21,7 +21,6 @@ module Data.Slaw.Internal
   , handleOthers
   , preferNumeric
     -- * Util
-  , tryIO
   , orList
   , showEscapedStr
   , lcAscii8

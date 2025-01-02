@@ -18,8 +18,12 @@ module Data.Slaw.Util
   , (##)
   , (??)
   , (?>)
+    -- * Specialized “try”
+  , tryIO
+  , tryPE
   ) where
 
+import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Merge
 import Data.Slaw.Internal.String
 import Data.Slaw.Internal.Util
