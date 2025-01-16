@@ -167,7 +167,7 @@ sub doTypeTemplate {
         my $ltype  = lc ($type);
         my $typexx = sprintf ("%-6s", $type);
         my $name   = $type;
-        $name      =~ s/Word/Unt/;
+        # $name      =~ s/Word/Unt/;
         my $vtype  = $type;
         $vtype     =~ s/^V(\d)$/Vt$1/;
         my $uniq   = sprintf ("%04d", $uniqueCounter++);

@@ -314,7 +314,7 @@ nfScalarArray = nfScalar { nfArray = True }
 slawFromByteString :: ByteStringClass a => a -> Slaw
 slawFromByteString x = SlawNumeric nfScalarArray nd
   where bs = toByteString x
-        nd = restoreNumeric bo TypUnt8 bs
+        nd = restoreNumeric bo TypWord8 bs
         -- Byte order should not matter, since we are using
         -- a single-byte type (unt8)
         bo = BigEndian
@@ -325,7 +325,7 @@ slawToByteString :: (FromSlaw a, ByteStringClass a)
 slawToByteString (SlawProtein _ _ rude) = Right $ fromLazyByteString rude
 slawToByteString (SlawString  lbs     ) = Right $ fromLazyByteString lbs
 slawToByteString (SlawNumeric nf nd   )
-  | nf == nfScalarArray && nt `elem` [TypInt8, TypUnt8] =
+  | nf == nfScalarArray && nt `elem` [TypInt8, TypWord8] =
       Right $ fromByteString bs
   where (nt, bs) = extractNumeric bo nd
         -- Again, byte order does not matter for int8/unt8
@@ -777,7 +777,7 @@ instance FromSlaw Char where
 
 instance ToSlaw Char where
   toSlaw c = SlawNumeric nfScalar nd
-    where nd = (NumUnt32 . S.singleton . fromIntegral . ord) c
+    where nd = (NumWord32 . S.singleton . fromIntegral . ord) c
 
   listToSlaw = slawFromString
 

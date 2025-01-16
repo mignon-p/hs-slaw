@@ -163,7 +163,7 @@ testSlawPath = do
       spCI  = slawPath_m spoCI mySlaw
       jstr  = Just . T.unpack
       nf    = def { nfArray = True }
-      nd    = NumUnt8 S.empty
+      nd    = NumWord8 S.empty
       spoCI = def   { spoProteinMode     = PmFullyVisible }
       spo   = spoCI { spoCaseInsensitive = False          }
 
@@ -407,11 +407,11 @@ testSlawMonoid = do
       a3   = S.fromList [ 9, 10, 11, 12]
       a12  = S.fromList [ 1, 2, 3, 4, 5, 6, 7, 8]
       a13  = a1 <> a3
-      nd1  = NumUnt32 a1
-      nd2  = NumUnt64 a2
-      nd3  = NumUnt32 a3
-      nd12 = NumUnt8  a12
-      nd13 = NumUnt32 a13
+      nd1  = NumWord32 a1
+      nd2  = NumWord64 a2
+      nd3  = NumWord32 a3
+      nd12 = NumWord8  a12
+      nd13 = NumWord32 a13
       nf   = NumericFormat { nfArray   = True
                            , nfComplex = False
                            , nfVector  = VtScalar
