@@ -55,8 +55,8 @@ module Data.Slaw.IO
   , HPair
   ) where
 
-import System.OsPath (OsPath)
 import System.IO (Handle)
+import System.OsPath (OsPath)
 
 import Data.Slaw.Internal.FileClass
 import Data.Slaw.Internal.OptionRecords

@@ -29,10 +29,10 @@ import Numeric.Half
 -- import System.Directory
 import System.Environment
 -- import System.IO
+import qualified Test.QuickCheck.Monadic  as QC
 import Test.Tasty
 import Test.Tasty.HUnit
 import qualified Test.Tasty.QuickCheck    as QC
-import qualified Test.QuickCheck.Monadic  as QC
 import Text.Printf
 
 import Data.Slaw
