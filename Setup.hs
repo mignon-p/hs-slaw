@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings          #-}
+
 import Control.Exception
 import Data.List
 import Distribution.Simple

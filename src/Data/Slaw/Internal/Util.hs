@@ -9,6 +9,10 @@ Portability : GHC
 
 {-# LANGUAGE ScopedTypeVariables        #-}
 
+-- Because "import Data.List (foldl')" may or may not be needed,
+-- depending on version of base.
+{-# OPTIONS_GHC -Wno-unused-imports     #-}
+
 module Data.Slaw.Internal.Util
   ( (##)
   , (??)
@@ -35,7 +39,7 @@ import Data.Bits
 -- import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.Char
 import Data.Hashable
-import Data.List
+import Data.List (foldl')
 import Data.Word
 import GHC.ByteOrder
 import GHC.Float
