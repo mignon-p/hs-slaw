@@ -55,6 +55,7 @@ build-type:          Custom
 -- Extra files to be distributed with the package, such as examples or a
 -- README.
 extra-source-files:  CHANGELOG.md
+                   , README.md
                    , doc/example.el
                    , doc/template.txt
                    , scripts/preprocess-template.pl
