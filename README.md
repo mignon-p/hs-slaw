@@ -1,6 +1,6 @@
 This library is a pure-Haskell implementation of the [slaw-v2](https://purl.org/funwithsoftware/slaw-v2) data serialization format, whose canonical implementation is in the C library [libPlasma](https://purl.org/funwithsoftware/libPlasma).
 
-For "pool" functionality, see the [plasma](https://github.com/mignon-p/hs-plasma) package, which wraps the libPlasma C library.
+For "pool" functionality, see the [hs-plasma](https://github.com/mignon-p/hs-plasma) package, which wraps the libPlasma C library.
 
 Some differences from the C implementation of libPlasma:
 
@@ -10,6 +10,6 @@ Some differences from the C implementation of libPlasma:
 
 ## Building
 
-To build both the slaw and [plasma](https://github.com/mignon-p/hs-plasma) libraries, see the [hs-plasma](https://github.com/mignon-p/hs-plasma) repo.
+To build both the hs-slaw and [hs-plasma](https://github.com/mignon-p/hs-plasma) libraries, see the [hs-plasma](https://github.com/mignon-p/hs-plasma) repo.
 
-To build the slaw library alone, just build as normal with either Cabal or Stack.
+To build the hs-slaw library alone, just build as normal with either Cabal or Stack.

@@ -2,7 +2,7 @@
 -- see http://haskell.org/cabal/users-guide/
 
 -- The name of the package.
-name:                slaw
+name:                hs-slaw
 
 -- The package version.  See the Haskell package versioning policy (PVP)
 -- for standards guiding when and how versions should be incremented.
@@ -25,7 +25,7 @@ description:
         <https://purl.org/funwithsoftware/libPlasma libPlasma>.
 
         For “pool” functionality, see the
-        <https://github.com/mignon-p/hs-plasma plasma> package,
+        <https://github.com/mignon-p/hs-plasma hs-plasma> package,
         which wraps the libPlasma C library.
 
 -- The license under which the package is released.
@@ -191,7 +191,7 @@ test-suite test
                      , half                 >= 0.3.1     && < 0.4
                      , QuickCheck           >= 2.14.3    && < 2.16
                      , quickcheck-unicode   >= 1.0.1.0   && < 1.1
-                     , slaw
+                     , hs-slaw
                      , tasty                >= 1.4.3     && < 1.6
                      , tasty-hunit          >= 0.10.1    && < 0.11
                      , tasty-quickcheck     >= 0.10.2    && < 0.12
