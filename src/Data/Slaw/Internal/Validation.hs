@@ -207,8 +207,8 @@ valErr = Left . validationError
 -- | Validates the following:
 --
 -- * 'SlawError' does not appear
--- * 'NumericFormat' passes 'isNumericFormatLegal'
--- * 'NumericData' has a legal number of elements for the given 'NumericFormat'
+-- * t'NumericFormat' passes 'isNumericFormatLegal'
+-- * 'NumericData' has a legal number of elements for the given t'NumericFormat'
 -- * 'Symbol' is between 'minSymbol' and 'maxSymbol', inclusive
 --
 -- If one or more 'ValidationFlag' is specified, will validate

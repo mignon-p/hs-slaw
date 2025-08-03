@@ -98,7 +98,7 @@ data ErrLocation = ErrLocation
 instance Default ErrLocation where
   def = ErrLocation DsNone Nothing
 
--- | Convert an 'ErrLocation' to a human-readable 'String'.
+-- | Convert an t'ErrLocation' to a human-readable 'String'.
 displayErrLocation :: ErrLocation -> String
 displayErrLocation (ErrLocation ds  Nothing  ) = displayDataSource ds
 displayErrLocation (ErrLocation ds (Just off)) =
@@ -151,7 +151,7 @@ instance NFData PlasmaException where
 instance Exception PlasmaException where
   displayException = displayPlasmaException True
 
--- | Convert a 'PlasmaException' to a human-readable 'String'.
+-- | Convert a t'PlasmaException' to a human-readable 'String'.
 displayPlasmaException :: Bool -- ^ Do you want to display the call stack?
                        -> PlasmaException -- ^ Exception to display
                        -> String
@@ -170,7 +170,7 @@ instance Default PlasmaException where
         , peLocation  = Nothing
         }
 
--- | The type of 'PlasmaException'.
+-- | The type of t'PlasmaException'.
 data PlasmaExceptionType =
     -- | An error occurred when decoding a slaw from binary data.
     EtCorruptSlaw
@@ -323,6 +323,6 @@ stdIndent = "  "
 
 {-# INLINE tryPE #-}
 -- | This handy utility function is just 'try', but constrained
--- to only work on 'PlasmaException'.
+-- to only work on t'PlasmaException'.
 tryPE :: IO a -> IO (Either PlasmaException a)
 tryPE = try

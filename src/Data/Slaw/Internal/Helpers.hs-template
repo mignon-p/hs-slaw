@@ -275,7 +275,7 @@ isProtein _                   = False
 
                          -- Creating a Protein --
 
--- | Construct a 'Protein'.  Rude data is empty.
+-- | Construct a t'Protein'.  Rude data is empty.
 protein :: T.Text -- ^ Split on whitespace into a list of descrips
         -> [(T.Text, Slaw)] -- ^ Key/value pairs for ingests
         -> Protein

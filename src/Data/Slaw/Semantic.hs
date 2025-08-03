@@ -6,10 +6,10 @@ License     : MIT
 Maintainer  : code@funwithsoftware.org
 Portability : GHC
 
-'Semantic' wraps a 'Slaw', but its 'Eq', 'Ord', and 'Hashable'
+t'Semantic' wraps a 'Slaw', but its 'Eq', 'Ord', and 'Hashable'
 instances behave differently.
 
-'SlawNumeric' is treated as equal if the 'NumericFormat' is equal,
+'SlawNumeric' is treated as equal if the t'NumericFormat' is equal,
 and the 'NumericData' represents the same numbers mathematically,
 regardless of their bit width and whether they are signed, unsigned,
 or floating point.

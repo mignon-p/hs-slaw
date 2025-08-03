@@ -122,7 +122,7 @@ class ToSlaw a where
 
 -- | “from slaw” because arrow points away from “s”.
 --
--- Throws a 'PlasmaException' if conversion fails.
+-- Throws a t'PlasmaException' if conversion fails.
 {-# INLINABLE ŝ #-}
 ŝ :: (HasCallStack, FromSlaw a) => Slaw -> a
 ŝ s = case fromSlaw s of
@@ -132,7 +132,7 @@ class ToSlaw a where
 
 -- | “from slaw, in IO monad”
 --
--- Throws a 'PlasmaException' in IO monad if conversion fails.
+-- Throws a t'PlasmaException' in IO monad if conversion fails.
 {-# INLINABLE ŝi #-}
 ŝi :: (HasCallStack, FromSlaw a) => Slaw -> IO a
 ŝi s = case fromSlaw s of
@@ -156,7 +156,7 @@ class ToSlaw a where
 
 -- | “from slaw, either exception”
 --
--- Returns a 'PlasmaException' if conversion fails.
+-- Returns a t'PlasmaException' if conversion fails.
 {-# INLINE ŝee #-}
 ŝee :: (HasCallStack, FromSlaw a) => Slaw -> Either PlasmaException a
 ŝee = first f . fromSlaw

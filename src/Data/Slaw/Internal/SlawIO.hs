@@ -101,7 +101,7 @@ instance Show SlawInputStream where
 
 -- | Read a 'Slaw' from the stream.  Returns 'Nothing' if
 -- end-of-file has been reached.  If an error occurs, may
--- throw 'IOException' or 'PlasmaException'.
+-- throw 'IOException' or t'PlasmaException'.
 siRead :: HasCallStack => SlawInputStream -> IO (Maybe Slaw)
 siRead si = siRead' si callStack
 
@@ -169,8 +169,8 @@ data SOutput = SOutput
   , soutClose  :: !Bool
   }
 
--- | Opens a 'SlawInputStream' for reading from a binary slaw file.
--- If an error occurs, may throw 'IOException' or 'PlasmaException'.
+-- | Opens a t'SlawInputStream' for reading from a binary slaw file.
+-- If an error occurs, may throw 'IOException' or t'PlasmaException'.
 --
 -- Does not currently take any options, so the second argument is
 -- placeholder which is just ignored.  The easiest thing to do
@@ -298,7 +298,7 @@ readSInput1 inp cs off octLen = do
 closeSInput :: SInput -> CallStack -> IO ()
 closeSInput inp _ = closeFileReader $ sinReader inp
 
--- | Run an action with a 'SlawInputStream'.
+-- | Run an action with a t'SlawInputStream'.
 withBinarySlawInput
   :: (HasCallStack, FileClass a, ToSlaw b)
   => a                         -- ^ name (or handle) of file to read
@@ -331,11 +331,11 @@ readAllSlawx1 revSlawx sis = do
 
 --
 
--- | Opens a 'SlawOutputStream' for writing to a binary slaw file.
--- If an error occurs, may throw 'IOException' or 'PlasmaException'.
+-- | Opens a t'SlawOutputStream' for writing to a binary slaw file.
+-- If an error occurs, may throw 'IOException' or t'PlasmaException'.
 --
 -- The second argument is a map or protein which specifies options.
--- The easiest thing is to pass in 'WriteBinaryOptions' if you want
+-- The easiest thing is to pass in t'WriteBinaryOptions' if you want
 -- to specify any non-default options, or just pass @()@ to use
 -- the defaults.
 openBinarySlawOutput :: (FileClass a, ToSlaw b)
@@ -405,7 +405,7 @@ closeSOutput sout _ =
      then hClose h
      else hFlush h
 
--- | Run an action with a 'SlawOutputStream'.
+-- | Run an action with a t'SlawOutputStream'.
 withBinarySlawOutput
   :: (FileClass a, ToSlaw b)
   => a                          -- ^ name (or handle) of file to read

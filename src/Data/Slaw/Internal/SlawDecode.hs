@@ -184,7 +184,7 @@ decodeSlaw :: HasCallStack => ByteOrder -> BinarySlaw -> Slaw
 decodeSlaw bo lbs = withFrozenCallStack $
   handleSlawResult $ decodeSlaw1 $ makeInput bo "slaw" lbs
 
--- | Like 'decodeSlaw', but an explicit 'ErrLocation' may be
+-- | Like 'decodeSlaw', but an explicit t'ErrLocation' may be
 -- specified.
 decodeSlaw' :: ByteOrder -> ErrLocation -> BinarySlaw -> Slaw
 decodeSlaw' bo el lbs =
@@ -213,7 +213,7 @@ decodeProtein lbs = withFrozenCallStack $
   handleSlawResult $ decodeProtein1 $ makeInput bo "protein" lbs
   where bo = nativeByteOrder
 
--- | Like 'decodeProtein', but an explicit 'ErrLocation' may be
+-- | Like 'decodeProtein', but an explicit t'ErrLocation' may be
 -- specified.
 decodeProtein' :: ErrLocation -> BinarySlaw -> Slaw
 decodeProtein' el lbs = withFrozenCallStack $
@@ -598,7 +598,7 @@ lengthFromHeader' oHdr = do
 -- call 'decodeSlawLength', and then read the remaining bytes
 -- (subtracting the 8 that were already read).
 --
--- Returns a 'PlasmaException' if an error occurs.  (e. g. less than
+-- Returns a t'PlasmaException' if an error occurs.  (e. g. less than
 -- 8 bytes are provided, or the 8 bytes do not represent the first
 -- 8 bytes of a valid slaw)
 decodeSlawLength :: HasCallStack
@@ -608,7 +608,7 @@ decodeSlawLength :: HasCallStack
 decodeSlawLength bo lbs = withFrozenCallStack $
   handleLen $ decodeSlawLength1 $ makeInput bo "slaw" lbs
 
--- | Like 'decodeSlawLength', but an explicit 'ErrLocation' may be
+-- | Like 'decodeSlawLength', but an explicit t'ErrLocation' may be
 -- specified.
 decodeSlawLength' :: ByteOrder
                   -> ErrLocation
@@ -627,7 +627,7 @@ decodeProteinLength lbs = withFrozenCallStack $
   handleLen $ decodeProteinLength1 $ makeInput bo "slaw" lbs
   where bo = nativeByteOrder
 
--- | Like 'decodeProteinLength', but an explicit 'ErrLocation' may be
+-- | Like 'decodeProteinLength', but an explicit t'ErrLocation' may be
 -- specified.
 decodeProteinLength' :: ErrLocation
                      -> BinarySlaw

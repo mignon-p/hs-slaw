@@ -16,10 +16,10 @@ be any of:
 
     * 'FilePath' (i. e. 'String')
     * 'OsPath'
-    * 'Handle', which is closed when the 'SlawInputStream' or
-      'SlawOutputStream' is closed
-    * 'NoClose', a @newtype@ which wraps a 'Handle', and leaves the
-      handle open when the 'SlawInputStream' or 'SlawOutputStream'
+    * 'Handle', which is closed when the t'SlawInputStream' or
+      t'SlawOutputStream' is closed
+    * t'NoClose', a @newtype@ which wraps a 'Handle', and leaves the
+      handle open when the t'SlawInputStream' or t'SlawOutputStream'
       is closed
 -}
 

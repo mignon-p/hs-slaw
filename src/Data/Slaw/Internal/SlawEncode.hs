@@ -297,7 +297,7 @@ vectorSize :: VectorType -> Int
 vectorSize vt = "123448@P" #! fromEnum vt
 
 -- | Returns the number of components in the type represented
--- by 'NumericFormat'.  Ignores 'nfArray'.  (In other words,
+-- by t'NumericFormat'.  Ignores 'nfArray'.  (In other words,
 -- for an array, returns the number of components in a single
 -- element of the array.)
 --

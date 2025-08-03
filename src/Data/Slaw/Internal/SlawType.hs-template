@@ -201,7 +201,7 @@ data NumericType =
 --END
   deriving (Eq, Ord, Show, Read, Bounded, Enum, Generic, NFData, Hashable)
 
--- | Used in 'NumericFormat' to indicate whether a number is a
+-- | Used in t'NumericFormat' to indicate whether a number is a
 -- scalar, a vector, or a multivector.
 --
 -- The datatypes 'V2', 'V3', and 'V4' correspond to 'Vt2', 'Vt3',
@@ -245,7 +245,7 @@ describeVectorType Vt4mv = ["4-multivector of"]
 describeVectorType Vt5mv = ["5-multivector of"]
 
 -- | Returns a 'String' which describes the type of a
--- 'NumericFormat' and 'NumericData' together, such as
+-- t'NumericFormat' and 'NumericData' together, such as
 -- “2-vector of complex 64-bit floating point”.
 describeNumeric :: NumericFormat -> NumericData -> String
 describeNumeric nf nd = intercalate " " (nfl ++ [nds])
@@ -267,7 +267,7 @@ describeSlaw (SlawCons    _ _  ) = "cons"
 describeSlaw (SlawNumeric nf nd) = describeNumeric nf nd
 describeSlaw (SlawError   _ _  ) = "error"
 
--- | Returns a 'String' which describes the type of a 'NumericFormat'.
+-- | Returns a 'String' which describes the type of a t'NumericFormat'.
 describeNumericFormat :: NumericFormat -> String
 describeNumericFormat nf =
   case describeNumericFormat1 nf of

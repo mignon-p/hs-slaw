@@ -41,7 +41,7 @@ filesystem.
             * @rudeData@ (abbreviated @r@, @rude@, or @2@)
 
     * If the 'Slaw' is a 'SlawNumeric', then it may be treated as
-      zero or more levels, depending on its 'NumericFormat'.
+      zero or more levels, depending on its t'NumericFormat'.
 
         * If 'nfArray' is 'True', then the next component must be a
           decimal integer, which specifies the (0-based) index
@@ -73,7 +73,7 @@ module Data.Slaw.Path
   , slawPath_ee
     -- * Operators
     --
-    -- | These use the default 'SlawPathOpts'.  ('PmUseIngests',
+    -- | These use the default t'SlawPathOpts'.  ('PmUseIngests',
     -- and case-insensitive comparison.)
   , (!:)
   , (!:?)

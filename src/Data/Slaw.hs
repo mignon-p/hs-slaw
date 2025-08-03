@@ -62,7 +62,7 @@ module Data.Slaw
   , decodeProteinLength
     -- *** Specify an explicit ErrLocation
     --
-    -- | As above, but each function accepts an 'ErrLocation' to indicate
+    -- | As above, but each function accepts an t'ErrLocation' to indicate
     -- where the slaw came from.  This allows the location to be
     -- accurately reported in error messages.
   , decodeSlaw'

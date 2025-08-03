@@ -53,11 +53,11 @@ pattern Semantic :: Slaw -> Semantic
 pattern Semantic x <- Semantic1 (SemWrap { swOrig = x }) where
   Semantic x = Semantic1 (semWrap textFunc x)
 
--- | Retrieve the original 'Slaw' from a 'Semantic'.
+-- | Retrieve the original 'Slaw' from a t'Semantic'.
 unSemantic :: Semantic -> Slaw
 unSemantic (Semantic1 sw) = swOrig sw
 
--- | Like 'Semantic', but the comparison is also case-insensitive
+-- | Like t'Semantic', but the comparison is also case-insensitive
 -- for strings.
 newtype SemanticCI = SemanticCI1 SemWrap
                    deriving newtype (Eq, Ord, Show, NFData, Hashable)
@@ -66,7 +66,7 @@ pattern SemanticCI :: Slaw -> SemanticCI
 pattern SemanticCI x <- SemanticCI1 (SemWrap { swOrig = x }) where
   SemanticCI x = SemanticCI1 (semWrap textFuncCI x)
 
--- | Retrieve the original 'Slaw' from a 'SemanticCI'.
+-- | Retrieve the original 'Slaw' from a t'SemanticCI'.
 unSemanticCI :: SemanticCI -> Slaw
 unSemanticCI (SemanticCI1 sw) = swOrig sw
 
