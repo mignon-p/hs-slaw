@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE OverloadedStrings          #-}
 
 import Control.Exception
@@ -11,6 +12,12 @@ import Distribution.Types.ComponentLocalBuildInfo
 import Distribution.Verbosity
 import System.IO
 import System.IO.Error
+
+#if defined(VERSION_Cabal) && MIN_VERSION_Cabal(3,14,0)
+#define FWS_CWD Nothing
+#else
+#define FWS_CWD
+#endif
 
 main :: IO ()
 main = defaultMainWithHooks hooks
@@ -48,7 +55,7 @@ processTemplate inFile outFile verbosity = do
                        , script
                        ]
       info verbosity msg
-      rawSystemExit verbosity "perl" [script, inFile, outFile]
+      rawSystemExit verbosity FWS_CWD "perl" [script, inFile, outFile]
 
 parentDir :: FilePath -> FilePath
 parentDir = dropWhileEnd (/= '/') . dropWhileEnd (== '/')
