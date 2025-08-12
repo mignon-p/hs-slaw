@@ -67,9 +67,17 @@ binaryFileTypeSlaw = 1
 currentSlawVersion :: Word8
 currentSlawVersion = 2
 
+binTypeStr :: ByteOrder -> String
+binTypeStr bo = "binary slaw file, " ++ endianName bo
+
+endianName :: ByteOrder -> String
+endianName BigEndian    = "big-endian"
+endianName LittleEndian = "little-endian"
+
 -- | A stream from which slawx can be read.
 data SlawInputStream = SlawInputStream
   { siName   :: String -- ^ Get the name of the file we are reading from.
+  , siType   :: String -- ^ Get a description of the file type.
   , siShow   :: String -- ^ Additional info for "show"
   , siUniq   :: Unique -- ^ Identity for Eq, Ord, and Hashable
   , siRead'  :: CallStack -> IO (Maybe Slaw)
@@ -87,6 +95,7 @@ instance Hashable SlawInputStream where
 
 instance NFData SlawInputStream where
   rnf x = siName   x `deepseq`
+          siType   x `deepseq`
           siShow   x `deepseq`
           siUniq   x `deepseq`
           siRead'  x `deepseq`
@@ -112,6 +121,7 @@ siClose si = siClose' si callStack
 -- | A stream to which slawx can be written.
 data SlawOutputStream = SlawOutputStream
   { soName   :: String -- ^ Get the name of the file we are writing to.
+  , soType   :: String -- ^ Get a description of the file type.
   , soShow   :: String -- ^ Additional info for "show"
   , soUniq   :: Unique -- ^ Identity for Eq, Ord, and Hashable
   , soWrite' :: CallStack -> Slaw -> IO ()
@@ -130,6 +140,7 @@ instance Hashable SlawOutputStream where
 
 instance NFData SlawOutputStream where
   rnf x = soName   x `deepseq`
+          soType   x `deepseq`
           soShow   x `deepseq`
           soUniq   x `deepseq`
           soWrite' x `deepseq`
@@ -195,6 +206,7 @@ openBinarySlawInput1 nam rdr _ = withFrozenCallStack $ do
   inp  <- makeSInput nam rdr
   uniq <- newUnique
   return $ SlawInputStream { siName   = nam
+                           , siType   = binTypeStr (sinOrder inp)
                            , siShow   = "binary " ++ show (sinOrder inp)
                            , siUniq   = uniq
                            , siRead'  = readSInput  inp
@@ -350,6 +362,7 @@ openBinarySlawOutput file opts = do
   out  <- makeSOutput nam (h, shouldClose) wbo
   uniq <- newUnique
   return $ SlawOutputStream { soName   = nam
+                            , soType   = binTypeStr (soutOrder out)
                             , soShow   = "binary " ++ show (soutOrder out)
                             , soUniq   = uniq
                             , soWrite' = writeSOutput out

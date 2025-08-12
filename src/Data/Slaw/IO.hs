@@ -31,6 +31,7 @@ module Data.Slaw.IO
   , openBinarySlawInput
   , withBinarySlawInput
   , siName
+  , siType
   , siRead
   , siClose
   , readBinarySlawFile
@@ -39,6 +40,7 @@ module Data.Slaw.IO
   , openBinarySlawOutput
   , withBinarySlawOutput
   , soName
+  , soType
   , soWrite
   , soFlush
   , soClose
