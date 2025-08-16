@@ -27,10 +27,11 @@ import qualified Data.HashMap.Strict         as HM
 import Data.List
 -- import qualified Data.Text                as T
 -- import qualified Data.Text.Encoding       as T
--- import qualified Data.Text.Encoding.Error as T
+import qualified Data.Text.Encoding.Error as T
 import qualified Data.Text.Lazy           as LT
 import qualified Data.Text.Lazy.Encoding  as LT
 import GHC.Generics (Generic)
+import Text.Printf
 
 import Data.Slaw.Internal.Exception
 import Data.Slaw.Internal.Helpers
@@ -127,7 +128,9 @@ vsSymbol n
 vsString :: Utf8Str -> ValRet
 vsString utf8 =
   case LT.decodeUtf8' utf8 of
-    Left ue -> Left $ unicodeError1 ue
+    Left (T.DecodeError _ (Just w8)) ->
+      valErr $ printf "bad byte 0x%02X in UTF-8 string" w8
+    Left  _ -> valErr "invalid UTF-8 string"
     Right _ -> Right ()
 
 vsPair :: ValidationFlags -> (Slaw, Slaw) -> ValRet
