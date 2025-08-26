@@ -395,6 +395,7 @@ decCons o _ inp = do
   first   (addLoc inp) $ do
     case elems of
       [car, cdr] -> return $ SlawCons car cdr
+      [se@(SlawError _ _)] -> return se
       _ -> Left $ concat [ butMsg
                          , "actually found "
                          , show (length elems)
