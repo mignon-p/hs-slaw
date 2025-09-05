@@ -1,4 +1,4 @@
-# Revision history for slaw
+# Revision history for hs-slaw
 
 ## 0.1.0.0 -- YYYY-mm-dd
 

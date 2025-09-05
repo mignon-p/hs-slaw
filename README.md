@@ -7,6 +7,9 @@ For "pool" functionality, see the
 [hs-plasma](https://github.com/mignon-p/hs-plasma) package, which
 wraps the libPlasma C library.
 
+Pre-built Haddock documentation for `hs-slaw` and `hs-plasma` is
+available [here](https://funwithsoftware.org/hs-plasma/).
+
 Some differences from the C implementation of libPlasma:
 
 * Although multivectors are minimally supported, there is not a
